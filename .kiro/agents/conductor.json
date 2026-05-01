@@ -1,0 +1,43 @@
+{
+  "name": "conductor",
+  "description": "Orchestrator - plans, delegates, verifies. Never implements directly.",
+  "prompt": "file://~/.kiro/steering/workflow.md",
+  "tools": [
+    "read",
+    "write",
+    "shell",
+    "code",
+    "todo",
+    "subagent",
+    "introspect",
+    "web_search",
+    "web_fetch"
+  ],
+  "allowedTools": [
+    "read",
+    "todo",
+    "subagent",
+    "introspect",
+    "web_search",
+    "web_fetch"
+  ],
+  "resources": [
+    "file://README.md",
+    "file://AGENTS.md",
+    "file://.kiro/steering/**/*.md",
+    "file://~/.kiro/steering/**/*.md"
+  ],
+  "hooks": {
+    "agentSpawn": [
+      {
+        "command": "git status --porcelain 2>/dev/null | head -20 || echo 'Not a git repo'",
+        "timeout_ms": 3000
+      }
+    ]
+  },
+  "toolsSettings": {
+    "shell": {
+      "autoAllowReadOnly": true
+    }
+  }
+}
