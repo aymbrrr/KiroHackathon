@@ -1,203 +1,189 @@
-# Sensly — Full Build Plan
+# Sensly — Build Plan
+
+> **Source of truth for the hackathon build.**
+> Full architecture, schemas, and component detail: `agents/planning/sensoryscout/design/detailed-design.md`
+> Requirements Q&A and decisions: `agents/planning/sensoryscout/idea-honing.md`
+> Feature summary: `agents/planning/sensoryscout/rough-idea.md`
+
+---
 
 ## The Concept
 
 A crowdsourced sensory environment map that uses your phone's microphone to automatically measure venue noise levels, combined with user ratings on lighting, crowding, smell, and predictability. Think Wheelmap for sensory needs — but the phone does half the work.
 
-**Tagline:** "Monitor. Predict. Prevent."
+**Tagline:** "Know before you go. Your phone listens so you can prepare."
+
+---
+
+## Platform
+
+**React Native (Expo)** — single codebase for iOS and Android. Desktop is read-only, not a priority.
+Test on device during development using **Expo Go** (scan QR code, no build step needed).
+
+---
+
+## Tech Stack
+
+| Layer | Choice | Notes |
+|---|---|---|
+| Framework | React Native (Expo managed) | Single codebase iOS + Android |
+| Navigation | React Navigation v6 — bottom tab bar | 4 tabs: Map, Search, Followed, Profile |
+| State | Zustand | One store per domain |
+| Backend | Supabase (Auth + Postgres + RLS + Edge Functions + Realtime) | Free tier sufficient |
+| Map | react-native-maps | Apple Maps (iOS) / Google Maps (Android) — free at hackathon scale |
+| Microphone | expo-av with `isMeteringEnabled` | Replaces Web Audio API — more reliable on native |
+| Offline queue | expo-sqlite | Pending ratings queue locally, sync on reconnect |
+| Token storage | expo-secure-store | iOS Keychain / Android Keystore — never AsyncStorage |
+| Haptics | expo-haptics | Sensory budget threshold alerts |
+| Voice logging | expo-av + expo-speech | On-device transcription, no external API |
+| Push notifications | expo-notifications | Venue follow alerts, morning briefing |
+| Calendar | expo-calendar | Morning sensory briefing |
+| Health data | expo-health / expo-health-connect | Opt-in heart rate context on ratings |
+| Localization | react-i18next + expo-localization | English + Spanish; RTL-ready |
+| Charts | victory-native | Radar chart, time heatmap |
+| Geocoding | Nominatim (free, no key) | 1 req/sec — debounce + cache |
+| POI queries | Overpass API (free, no key) | 200m radius, cache per bounding box |
+| AI insights | Groq free tier (llama-3) | Weekly journal only — the only LLM call |
 
 ---
 
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    React PWA                         │
-│                                                     │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │  Map     │  │  Venue   │  │  Auto-Sense      │  │
-│  │  View    │  │  Detail  │  │  Engine          │  │
-│  │ (Leaflet)│  │  + Rate  │  │  (Web Audio API) │  │
-│  └────┬─────┘  └────┬─────┘  └────────┬─────────┘  │
-│       │              │                 │             │
-│       └──────────────┼─────────────────┘             │
-│                      │                               │
-│              ┌───────▼────────┐                      │
-│              │  Supabase      │                      │
-│              │  - venues      │                      │
-│              │  - ratings     │                      │
-│              │  - auto_sense  │                      │
-│              │  - profiles    │                      │
-│              └───────┬────────┘                      │
-│                      │                               │
-│              ┌───────▼────────┐                      │
-│              │  Nominatim /   │                      │
-│              │  Overpass API  │                      │
-│              │  (free, no key)│                      │
-│              └────────────────┘                      │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    React Native App (Expo)                       │
+│                                                                  │
+│  React Navigation v6 — Bottom Tab Navigator (4 tabs)            │
+│  [Map]   [Search]   [Followed]   [Profile]                       │
+│                                                                  │
+│  Zustand Stores                                                  │
+│  authStore  profileStore  venueStore  queueStore  settingsStore  │
+│                                                                  │
+│  expo-av    react-native-maps    expo-sqlite    expo-notifications│
+│  expo-calendar  expo-speech  Supabase Realtime  expo-secure-store│
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+              ┌────────────────▼──────────────────┐
+              │              Supabase              │
+              │  Auth  Postgres  RLS  Edge Fns     │
+              │  Realtime  Storage                 │
+              └────────────────┬──────────────────┘
+                               │
+              ┌────────────────▼──────────────────┐
+              │          External APIs             │
+              │  Nominatim   Overpass   Groq       │
+              └───────────────────────────────────┘
 ```
 
-### Key API Decision: Skip Google Places, Use OpenStreetMap
-
-Google Places requires billing setup and has per-request costs. For a hackathon, use:
-
-- **Nominatim** (free, no API key): Reverse geocoding (lat/long → address/venue name)
-- **Overpass API** (free, no API key): Query nearby POIs from OpenStreetMap
-- **Leaflet + OpenStreetMap tiles** (free): Map rendering
-
-This keeps the entire stack zero-cost and zero-setup.
+### Key data flow decisions
+- App reads/writes Supabase directly — no separate API layer
+- RLS policies enforce all access control at the DB layer — no client-side security logic
+- Offline ratings queue in expo-sqlite; sync on network reconnect
+- Venue aggregates recalculated by Postgres trigger on each new rating insert
+- Comment moderation runs in a Supabase Edge Function before insert
+- Learning engine runs as Edge Function via SQL pattern queries — no LLM
+- Morning briefing is fully deterministic: calendar + venue score + template string — no LLM
+- Journal insights use Groq free tier once per week per user — the only LLM call
+- Voice logging transcribed on-device via expo-speech — no external API
 
 ---
 
-## Web Audio API — dB Measurement Pipeline
+## Audio Measurement (expo-av)
 
-This is the core technical differentiator. Here's exactly how it works:
+Replaces Web Audio API. Uses `Audio.Recording` with `isMeteringEnabled: true`.
 
-### Step 1: Request Microphone Access
-```javascript
-const stream = await navigator.mediaDevices.getUserMedia({ 
-  audio: { 
-    echoCancellation: false, 
-    noiseSuppression: false, 
-    autoGainControl: false  // Critical: disable AGC for accurate readings
-  } 
-});
-```
+```typescript
+// hooks/useAudioMeter.ts
+import { Audio } from 'expo-av';
 
-### Step 2: Create Audio Processing Chain
-```javascript
-const audioContext = new AudioContext();
-const source = audioContext.createMediaStreamSource(stream);
-const analyser = audioContext.createAnalyser();
-analyser.fftSize = 2048;
-analyser.smoothingTimeConstant = 0.8;
-source.connect(analyser);
-// Do NOT connect to destination — we listen, not play
-```
-
-### Step 3: Calculate dB Level (runs in requestAnimationFrame loop)
-```javascript
-const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-function measureLevel() {
-  analyser.getByteTimeDomainData(dataArray);
-  
-  // RMS calculation
-  let sum = 0;
-  for (let i = 0; i < dataArray.length; i++) {
-    const normalized = (dataArray[i] - 128) / 128;
-    sum += normalized * normalized;
-  }
-  const rms = Math.sqrt(sum / dataArray.length);
-  
-  // Convert to dBFS
-  const dbfs = 20 * Math.log10(Math.max(rms, 0.00001));
-  
-  // Estimate dB SPL (approximate — phone mics vary)
-  // Most phone mics clip around 90-100 dB SPL
-  // -60 dBFS ≈ 30 dB SPL (quiet room)
-  // 0 dBFS ≈ 90 dB SPL (very loud)
-  const dbSPL = Math.round(Math.max(30, Math.min(100, dbfs + 90)));
-  
-  return dbSPL;
-}
-```
-
-### Step 4: 30-Second Measurement Window
-```javascript
-function runMeasurement(onComplete) {
-  const readings = [];
-  const duration = 30000; // 30 seconds
-  const start = Date.now();
-  
-  function tick() {
-    readings.push(measureLevel());
-    if (Date.now() - start < duration) {
-      requestAnimationFrame(tick);
-    } else {
-      const avg = Math.round(readings.reduce((a, b) => a + b) / readings.length);
-      const peak = Math.max(...readings);
-      const min = Math.min(...readings);
-      onComplete({ avg, peak, min, samples: readings.length });
+const { recording } = await Audio.Recording.createAsync(
+  { ...Audio.RecordingOptionsPresets.HIGH_QUALITY, isMeteringEnabled: true },
+  (status) => {
+    if (status.metering !== undefined) {
+      // status.metering is dBFS (negative, 0 = max)
+      // Map: -60 dBFS → 30 dB SPL, 0 dBFS → 90 dB SPL
+      const dbSPL = Math.round(Math.max(30, Math.min(100, status.metering + 90)));
+      setDb(dbSPL);
     }
-  }
-  tick();
-}
+  },
+  100  // update interval ms
+);
 ```
 
-### What the User Sees
-- Live dB gauge animating in real-time during measurement
-- After 30 seconds: "This venue is currently **62 dB** — moderate conversation level"
-- Auto-translated to sensory rating: 30-40 dB = "Very quiet", 40-55 dB = "Quiet", 55-70 dB = "Moderate", 70-85 dB = "Loud", 85+ dB = "Very loud — hearing risk"
+**dB labels:** < 40 = "Very quiet", 40–54 = "Quiet", 55–69 = "Moderate", 70–84 = "Loud", 85+ = "Very loud — hearing risk"
+**Note:** Label readings as relative ("quieter than a busy café"), not absolute SPL — phone mics vary across devices.
 
 ---
 
-## Rating Schema
+## Navigation Structure
 
-### Venue Record (Supabase `venues` table)
-```sql
-create table venues (
-  id uuid primary key default gen_random_uuid(),
-  osm_id text,                    -- OpenStreetMap reference
-  name text not null,
-  category text,                  -- restaurant, cafe, store, clinic, theater...
-  lat numeric not null,
-  lng numeric not null,
-  address text,
-  avg_noise_db numeric,           -- rolling average from auto-sense
-  avg_lighting numeric,           -- 1-5 user rating
-  avg_crowding numeric,           -- 1-5 user rating
-  avg_smell numeric,              -- 1-5 user rating
-  avg_predictability numeric,     -- 1-5 user rating
-  total_ratings integer default 0,
-  quiet_hours jsonb,              -- e.g. [{"day": "tue", "start": "18:00", "end": "20:00", "label": "Quiet hour"}]
-  sensory_features jsonb,         -- e.g. ["dim lighting available", "outdoor seating", "no background music"]
-  created_at timestamptz default now()
-);
+```
+RootNavigator
+├── AuthStack
+│   ├── WelcomeScreen
+│   ├── SignInScreen
+│   ├── SignUpScreen
+│   └── OnboardingScreen
+│       ├── OnboardingModeScreen       — Self / Support toggle
+│       ├── OnboardingTriggersScreen   — chip-based trigger selector
+│       ├── OnboardingThresholdScreen  — noise comfort slider (40–90 dB)
+│       ├── OnboardingHealthScreen     — opt-in HealthKit / Health Connect
+│       └── OnboardingReadyScreen
+│
+└── AppTabs
+    ├── Map tab
+    │   ├── MapScreen
+    │   ├── VenueDetailScreen (modal)
+    │   └── RatingFlowScreen (modal stack)
+    │       ├── AutoSenseScreen
+    │       ├── VoiceLogScreen
+    │       ├── ManualRatingScreen
+    │       └── RatingConfirmScreen
+    ├── Search tab
+    ├── Followed tab  (watched venues + Familiar Places)
+    ├── Journal tab   (weekly insights, morning briefing, home log)
+    └── Profile tab
+        ├── ProfileScreen + DailyCheckInModal
+        ├── CompanionScreen  ← stretch goal
+        └── SettingsScreen (accessibility, language, health)
 ```
 
-### Individual Rating (Supabase `ratings` table)
-```sql
-create table ratings (
-  id uuid primary key default gen_random_uuid(),
-  venue_id uuid references venues(id),
-  user_id uuid,                   -- anonymous or authenticated
-  noise_db numeric,               -- auto-measured
-  noise_manual integer,           -- 1-5 manual override
-  lighting integer,               -- 1-5: 1=very dim, 5=harsh fluorescent
-  crowding integer,               -- 1-5: 1=empty, 5=packed
-  smell integer,                  -- 1-5: 1=none, 5=overwhelming
-  predictability integer,         -- 1-5: 1=chaotic, 5=very predictable
-  time_of_day text,               -- morning, afternoon, evening, night
-  day_of_week integer,            -- 0-6
-  notes text,                     -- "has a quiet corner in the back"
-  photo_url text,
-  created_at timestamptz default now()
-);
-```
+### Self mode vs Support mode
 
-### User Sensory Profile (Supabase `profiles` table)
-```sql
-create table profiles (
-  id uuid primary key default gen_random_uuid(),
-  noise_threshold integer,        -- max dB before discomfort (e.g., 65)
-  lighting_preference text,       -- 'dim', 'moderate', 'bright'
-  triggers jsonb,                 -- ["fluorescent lights", "perfume", "crowds > 20"]
-  comfort_items jsonb,            -- ["noise-canceling headphones", "sunglasses"]
-  created_at timestamptz default now()
-);
-```
+`settingsStore.uiMode` (`'self' | 'support'`) controls:
 
-### The Five Sensory Dimensions
+| Setting | Self mode | Support mode |
+|---|---|---|
+| Font size | 18sp minimum | Standard |
+| Tab labels | Icon only | Icon + label |
+| Rating steps | 3 (noise, lighting, crowding) | Full 5 dimensions |
+| Sensory budget alert | Haptic only | Haptic + banner |
+| Radar chart | Hidden (single key stat) | Shown |
+| Daily check-in | Always on app open | Optional |
 
-| Dimension | How Rated | Scale | Auto-Sensed? |
-|-----------|-----------|-------|--------------|
-| **Noise** | Microphone auto-measurement | dB value → mapped to 1-5 | Yes — primary differentiator |
-| **Lighting** | User taps visual scale | 1 (dim/cozy) → 5 (harsh/fluorescent) | Partial (AmbientLightSensor on Chrome) |
-| **Crowding** | User taps visual scale | 1 (empty) → 5 (packed/no personal space) | No |
-| **Smell** | User taps visual scale | 1 (neutral) → 5 (overwhelming) | No |
-| **Predictability** | User taps visual scale | 1 (chaotic/changing) → 5 (consistent/routine) | No |
+---
+
+## Database Schema (Supabase)
+
+Full schema with RLS policies and Postgres trigger in `detailed-design.md` section 4. Key tables:
+
+| Table | Purpose |
+|---|---|
+| `venues` | Crowdsourced venue data + aggregates (maintained by trigger) |
+| `ratings` | Individual ratings — `user_id` stored internally, never exposed |
+| `profiles` | Sensory profiles — multiple per account, private to owner |
+| `comments` | Anonymous venue comments, moderated via Edge Function |
+| `venue_follows` | Followed venues + `is_familiar` flag for Familiar Places |
+| `user_activity` | Streak tracking + learning engine input |
+| `daily_checkins` | Daily threshold overrides ("rough day" mode) |
+| `companion_sessions` | Going With Me sessions *(stretch goal)* |
+| `journal_insights` | Weekly AI insight cache (Groq, generated once/week) |
+
+**Diagnosis tags** (`profiles.diagnosis_tags`) are GDPR Article 9 special category data:
+- Explicit consent required (`diagnosis_consent` boolean must be `true` before storing)
+- Encrypted at rest (Supabase AES-256)
+- Never exposed in any public-facing query
+- Pre-fills research-backed noise thresholds: autism/migraine = 55 dB, PTSD/anxiety = 60 dB, ADHD/general = 65 dB
 
 ---
 
@@ -205,176 +191,205 @@ create table profiles (
 
 ```
 src/
-├── App.jsx                      # Router, auth context, theme
 ├── components/
-│   ├── Map/
-│   │   ├── MapView.jsx          # Leaflet map with venue pins
-│   │   ├── VenuePin.jsx         # Color-coded pin by overall score
-│   │   └── LocationButton.jsx   # "Center on me" GPS button
-│   ├── Venue/
-│   │   ├── VenueCard.jsx        # Summary card on map tap
-│   │   ├── VenueDetail.jsx      # Full detail view with ratings
-│   │   ├── SensoryRadar.jsx     # 5-axis radar chart (recharts)
-│   │   └── TimeHeatmap.jsx      # Best/worst times grid
-│   ├── Rating/
-│   │   ├── RatingFlow.jsx       # Step-by-step rating wizard
-│   │   ├── SensorySlider.jsx    # Visual 1-5 scale with icons
-│   │   └── AutoSenseGauge.jsx   # Live dB gauge during measurement
-│   ├── Sensing/
-│   │   ├── AudioMeter.jsx       # Web Audio API dB measurement
-│   │   ├── VenueDetector.jsx    # GPS → Nominatim reverse geocode
-│   │   └── SensoryBudget.jsx    # "You're at X dB — within your comfort"
-│   ├── Profile/
-│   │   ├── ProfileSetup.jsx     # Onboarding — set thresholds
-│   │   └── TriggerManager.jsx   # Manage personal triggers
-│   └── Shared/
-│       ├── SensoryIcon.jsx      # Visual icons for each dimension
-│       └── DbLabel.jsx          # "62 dB — moderate conversation"
-├── hooks/
-│   ├── useAudioMeter.js         # Web Audio API hook
-│   ├── useGeolocation.js        # GPS watch position hook
-│   ├── useNearbyVenues.js       # Overpass API query hook
-│   └── useVibrate.js            # Haptic feedback hook
-├── lib/
-│   ├── supabase.js              # Supabase client
-│   ├── nominatim.js             # Reverse geocoding
-│   ├── overpass.js              # Nearby POI query
-│   ├── sensoryUtils.js          # dB → label, score calculations
-│   └── dbMeter.js               # Audio measurement engine
-└── data/
-    └── quietHours.json          # Pre-loaded chain quiet hours (Target, Lidl, etc.)
+│   ├── map/          MapView, VenuePin (colorblind-safe), VenueBottomSheet,
+│   │                 LocationFAB, RecoveryModeFAB
+│   ├── venue/        VenueCard, VenueDetail, SensoryRadar, TimeHeatmap,
+│   │                 CommentList, CommentInput
+│   ├── rating/       RatingFlow, AutoSenseStep, VoiceLogStep,
+│   │                 SensorySlider, RatingConfirm
+│   ├── sensing/      DbGauge (SVG arc), VenueDetector, SensoryBudgetBanner
+│   ├── profile/      ProfileCard, ProfileSwitcher, TriggerChips,
+│   │                 DailyCheckIn, StreakIndicator
+│   ├── companion/    CompanionSession, CompanionView, ProfileShareCard
+│   ├── journal/      WeeklyInsights, SensoryBriefing, HomeLogEntry, InsightCard
+│   ├── accessibility/ ColorBlindFilter (color matrix), DyslexiaText
+│   └── shared/       SensoryIcon, ScoreChip, OfflineBanner, LoadingState
+├── stores/           authStore, profileStore, venueStore, queueStore,
+│                     companionStore, settingsStore
+├── hooks/            useAudioMeter, useGeolocation, useNearbyVenues,
+│                     useOfflineSync, useHealthData, useVoiceLog,
+│                     useCompanion, useCalendarBriefing
+├── lib/              supabase, secureStorage, validation, nominatim,
+│                     overpass, sensoryUtils, learningEngine, i18n, notifications
+├── types/            venue, rating, profile, companion, supabase (generated)
+└── constants/        sensoryScales, quietHours, triggerOptions, theme
 ```
 
----
-
-## Key UX Flows
-
-### Flow 1: "What's it like here?" (Auto-Sense on Arrival)
-1. User opens app → GPS detects location
-2. Nominatim reverse-geocodes to nearest venue: "You're at Blue Bottle Coffee"
-3. If venue exists in DB: show existing ratings + "Measure now?"
-4. If new venue: "First one here! Want to rate it?"
-5. User taps "Measure" → microphone activates → live dB gauge for 30 seconds
-6. After measurement: "This venue is 58 dB — quiet conversation level"
-7. Quick-rate remaining dimensions (lighting, crowding, smell, predictability) via visual sliders
-8. Submit → venue appears on map for all users
-
-### Flow 2: "Where should I go?" (Search Before Leaving)
-1. User searches "coffee shops" or browses map
-2. Pins colored by overall sensory score (green = low-stim, yellow = moderate, red = high-stim)
-3. Tap pin → see radar chart of 5 dimensions + "best time to visit" recommendation
-4. Filter: "Show only venues under 60 dB average" or "Dim lighting preferred"
-5. If user has a sensory profile: venues auto-filtered to match their thresholds
-
-### Flow 3: Sensory Budget Warning (Passive Background)
-1. If mic permission is granted and app is open: passive dB monitoring
-2. If current environment exceeds user's noise threshold → gentle haptic pulse + banner: "Current noise: 74 dB — above your comfort level (65 dB). Need a break?"
-3. Tap banner → shows nearest quiet-rated venues on map
+**Map pins are colorblind-safe:** blue circle = calm, orange square = moderate, red triangle = loud (shape + color, not color alone).
 
 ---
 
-## 13-Hour Build Timeline
+## Zero-Cost API Stack
 
-### Hour 0-1: Foundation (60 min)
-- [ ] `npx create-expo-app sensly` or Vite + React
-- [ ] Install: `leaflet react-leaflet recharts @supabase/supabase-js`
-- [ ] Create Supabase project (free tier) — run SQL for venues, ratings, profiles tables
-- [ ] Set up Leaflet map with OpenStreetMap tiles, center on user location
-- [ ] Basic GPS hook (`useGeolocation.js`) with `navigator.geolocation.watchPosition`
+| Service | Use | Cost |
+|---|---|---|
+| OpenStreetMap + react-native-maps | Map tiles | Free |
+| Nominatim | Reverse geocoding | Free, no key |
+| Overpass API | Nearby POI queries | Free, no key |
+| Supabase free tier | DB, auth, realtime, edge functions | Free (500MB, 50k rows) |
+| expo-av | Microphone measurement | Built-in |
+| expo-speech | On-device voice transcription | Built-in |
+| Groq free tier (llama-3) | Weekly journal insights only | Free |
+| ARASAAC picture symbols | Accessibility icons | CC BY-NC-SA, free |
 
-### Hour 1-3: Audio Measurement Engine (120 min) ⚡ CRITICAL PATH
-- [ ] Build `dbMeter.js` — the Web Audio API pipeline (exact code above)
-- [ ] Build `useAudioMeter.js` hook — returns `{ db, isListening, start, stop }`
-- [ ] Build `AutoSenseGauge.jsx` — animated SVG gauge showing live dB level
-- [ ] 30-second measurement flow with countdown timer
-- [ ] Map dB to human-readable labels ("quiet library", "busy cafe", "loud bar")
-- [ ] Test on actual phone — verify readings make sense
-- [ ] **Checkpoint:** Mic measurement working, gauge animating, readings reasonable
+---
 
-### Hour 3-5: Venue Detection + Map (120 min)
-- [ ] Build `nominatim.js` — reverse geocode (lat,lng) → venue name + address
-- [ ] Build `overpass.js` — query nearby amenities (cafes, restaurants, shops, clinics)
-- [ ] Build `VenueDetector.jsx` — "You're at [venue name]" banner
-- [ ] Build `VenuePin.jsx` — color-coded map pins (green/yellow/red)
-- [ ] Build `VenueCard.jsx` — tap a pin → see summary card with name, address, and aggregate scores
-- [ ] Supabase query: fetch venues within map bounding box
-- [ ] **Checkpoint:** Map loads, GPS works, nearby venues shown as pins, tapping works
+## Security & Privacy Summary
 
-### Hour 5-7: Rating Flow (120 min)
-- [ ] Build `SensorySlider.jsx` — visual 1-5 scale with descriptive icons for each level
-- [ ] Build `RatingFlow.jsx` — step wizard: auto-sense noise → rate lighting → crowding → smell → predictability → optional notes → submit
-- [ ] Wire dB measurement into rating flow — noise auto-populated
-- [ ] Supabase insert for new rating
-- [ ] Aggregate calculation: update venue averages on new rating
-- [ ] Photo attachment via camera API (optional — add if time allows)
-- [ ] **Checkpoint:** Full rate flow works end-to-end, data appears in Supabase
-
-### Hour 7-9: Venue Detail + Visualization (120 min)
-- [ ] Build `SensoryRadar.jsx` — 5-axis radar chart using Recharts
-- [ ] Build `VenueDetail.jsx` — full page with radar, rating history, features list
-- [ ] Build `TimeHeatmap.jsx` — grid showing noise levels by day-of-week × time-of-day
-- [ ] "Best time to visit" recommendation based on lowest average noise
-- [ ] Sensory features tags: "outdoor seating", "no background music", "dim lighting option"
-- [ ] Individual rating cards with timestamps and notes
-- [ ] **Checkpoint:** Venue detail page looks polished, radar chart renders, time patterns visible
-
-### Hour 9-10.5: Sensory Profile + Filtering (90 min)
-- [ ] Build `ProfileSetup.jsx` — onboarding: "What's your noise threshold?" slider (40-90 dB), lighting preference, known triggers
-- [ ] Store profile in Supabase (or localStorage for anonymous users)
-- [ ] Filter venues on map by profile match — pins that exceed thresholds show as red
-- [ ] "Venues within your comfort zone" quick filter toggle
-- [ ] `SensoryBudget.jsx` — banner when current environment exceeds profile threshold
-- [ ] Vibration API: gentle haptic pulse on threshold breach (Android)
-- [ ] **Checkpoint:** Profile works, map filters dynamically, threshold warning fires
-
-### Hour 10.5-12: UI Polish + Pre-loaded Data (90 min)
-- [ ] Styling pass: typography (distinctive, not generic), color system, spacing
-- [ ] Mobile-first responsive layout — this is primarily a phone app
-- [ ] Transitions and micro-interactions on rating submission
-- [ ] Pre-load `quietHours.json` — known quiet hours for major chains (Target, Walmart, Lidl, Morrisons, AMC Sensory Friendly)
-- [ ] Seed 10-15 sample venues in your local area with realistic ratings for demo
-- [ ] Empty states: "Be the first to rate this venue"
-- [ ] Error handling: mic permission denied, GPS unavailable, offline state
-
-### Hour 12-13: Demo Prep (60 min)
-- [ ] Script the 2-minute demo flow:
-  1. Open app → "I'm autistic and I want to find a quiet place for lunch"
-  2. Map shows nearby venues color-coded by sensory score
-  3. Filter: "Under 60 dB only" → map updates
-  4. Open Sensly at current location → live dB gauge measures the room
-  5. Auto-detects venue → pre-fills rating → quick-rate remaining dimensions
-  6. Show radar chart comparison: "This cafe vs. that one"
-  7. Show time heatmap: "Come here Tuesday afternoon, not Saturday"
-- [ ] Pre-cache demo data for offline resilience
-- [ ] Test full flow on phone 3x — identify any crash points
-- [ ] Prepare 1-slide context screen: "300M people worldwide are neurodivergent. Most can't answer 'what's this place like?' before they get there."
+- Auth tokens in expo-secure-store (hardware-backed) — never AsyncStorage
+- Diagnosis tags: GDPR Article 9 — explicit consent, encrypted at rest, never public
+- All ratings/comments anonymous to other users — `user_id` internal only
+- RLS enforces all data access at DB layer
+- Screenshot prevention on sensitive screens (expo-screen-capture)
+- GDPR rights: access, erasure, rectification, portability
+- Input validation + diagnosis tag whitelist in `lib/validation.ts`
+- Location: never stored as history — GPS used in-session only, discarded after use
 
 ---
 
 ## Technical Risks + Mitigations
 
 | Risk | Impact | Mitigation |
-|------|--------|------------|
-| Mic readings inaccurate across devices | Medium | Don't claim SPL accuracy — label as "relative noise level". Show comparative labels ("quieter than a library") not absolute dB. Add disclaimer. |
-| Nominatim rate limiting (1 req/sec) | Low | Cache results, debounce requests, batch nearby venue lookups |
-| Overpass API slow for large areas | Medium | Limit query radius to 200m, cache results per bounding box |
-| Supabase free tier limits (500MB, 50k rows) | None for hackathon | More than sufficient for demo + months of real use |
-| AmbientLightSensor browser support | Low | Mark as "bonus" feature. Chrome-only behind flag. Primary value is mic, not light sensor. |
-| User doesn't grant mic permission | Medium | App still works with manual ratings only. Mic is enhancement, not requirement. |
+|---|---|---|
+| expo-av dB accuracy across devices | Medium | Label as relative ("quieter than a busy café"), not absolute SPL |
+| Nominatim rate limiting (1 req/sec) | Low | Debounce + cache results |
+| Overpass API slow for large areas | Medium | Limit radius to 200m, cache per bounding box |
+| Supabase free tier limits | None for hackathon | 500MB / 50k rows — more than sufficient |
+| react-native-maps offline tiles | Low | Map requires connectivity — show clear offline state |
+| Apple HealthKit App Store review | Low-Medium | Requires entitlement justification — straightforward for this use case |
+| User declines mic permission | Medium | App works with manual ratings only — mic is enhancement, not requirement |
 
 ---
 
 ## What Makes This Win
 
-1. **The phone listens for you.** No other sensory mapping app auto-measures noise. NeuroHub requires manual ratings for everything. Sensly turns the phone into a sensory instrument.
+1. **The phone listens for you.** No other sensory mapping app auto-measures noise. Sensly turns the phone into a sensory instrument.
+2. **The demo is visceral.** Open the app, the gauge starts moving, the room's noise level appears in real-time. Judges experience the solution, not just hear about it.
+3. **It serves 300M+ people.** Autism, ADHD, PTSD, SPD, anxiety, migraine — the audience is enormous and underserved.
+4. **Zero-cost stack.** No paid APIs, no billing setup, no API key stress during demo.
+5. **Self-improving.** Every rating makes the map better. Classic network effect story for judges.
 
-2. **The demo is visceral.** Open the app, the gauge starts moving, the room's noise level appears in real-time. Judges don't need to imagine the problem — they experience the solution.
+---
 
-3. **It serves 300M+ people.** Autism, ADHD, PTSD, sensory processing disorder, anxiety disorders, migraine sufferers — the audience for sensory-friendly venue information is enormous.
+## Out of Scope (v1)
 
-4. **Zero-cost stack.** OpenStreetMap (free), Nominatim (free), Overpass (free), Supabase free tier, Web Audio API (built into every browser). No paid APIs, no billing setup, no API key stress during demo.
+- Home screen widget (requires native WidgetKit — not possible in Expo managed workflow)
+- Auto-report on short dwell time (background location — App Store review risk)
+- Business owner portal
+- Wearable integration
+- Offline map tile caching
 
-5. **Self-improving system.** Every rating makes the map better. Every auto-sense measurement enriches the noise data. The more people use it, the more useful it becomes — classic network effect story for judges.
+---
+
+## Key UX Flows
+
+### Flow 1: "What's it like here?" (Rate on Arrival)
+1. User opens app → GPS detects location
+2. Nominatim reverse-geocodes to nearest venue: "You're at Blue Bottle Coffee"
+3. If venue exists: show existing ratings + "Measure now?"
+4. If new venue: "First one here! Want to rate it?"
+5. User taps "Measure" → expo-av activates → live dB gauge for 30 seconds
+6. After measurement: "This venue is 58 dB — quiet conversation level"
+7. Rate remaining dimensions (lighting, crowding, smell, predictability) via visual sliders
+8. Optional: voice log a note while walking (transcribed on-device)
+9. Submit → venue appears on map for all users; queued locally if offline
+
+### Flow 2: "Where should I go?" (Search Before Leaving)
+1. User searches or browses map
+2. Pins colorblind-safe: blue circle = calm, orange square = moderate, red triangle = loud
+3. Tap pin → see radar chart of 5 dimensions + "best time to visit"
+4. Filter: "Show only venues under 60 dB" or "My comfort zone only"
+5. If user has a sensory profile: venues auto-filtered and scored against their thresholds
+
+### Flow 3: Sensory Budget Warning
+1. App is open, mic permission granted → passive dB monitoring
+2. Current environment exceeds user's noise threshold → haptic pulse
+3. Self mode: haptic only. Support mode: haptic + banner "Current noise: 74 dB — above your comfort level"
+4. Tap banner → map filters to nearest quiet-rated venues
+
+### Flow 4: Morning Sensory Briefing
+1. expo-calendar reads today's events
+2. Edge Function geocodes event locations → looks up venue scores
+3. Push notification before user leaves: "Heads up — your 2pm meeting is at a venue rated 72 dB"
+
+---
+
+## 13-Hour Build Timeline
+
+### Hour 0-1: Foundation
+- [ ] `npx create-expo-app sensly --template blank-typescript`
+- [ ] Install: `react-native-maps @supabase/supabase-js zustand expo-av expo-location expo-sqlite expo-secure-store expo-haptics victory-native react-i18next`
+- [ ] Create Supabase project — run SQL schema (venues, ratings, profiles tables + RLS + trigger)
+- [ ] Set up react-native-maps centered on user location
+- [ ] Basic `useGeolocation` hook with `expo-location`
+- [ ] **Checkpoint:** Map loads, GPS dot visible
+
+### Hour 1-3: Audio Measurement Engine ⚡ CRITICAL PATH
+- [ ] Build `useAudioMeter.ts` — expo-av with `isMeteringEnabled`, dBFS → dB SPL conversion
+- [ ] Build `DbGauge.tsx` — animated SVG arc showing live dB level
+- [ ] 30-second measurement flow with countdown timer
+- [ ] Map dB to human-readable labels
+- [ ] Test on actual phone — verify readings make sense
+- [ ] **Checkpoint:** Mic measurement working, gauge animating, readings reasonable
+
+### Hour 3-5: Venue Detection + Map
+- [ ] Build `nominatim.ts` — reverse geocode with 1 req/sec debounce
+- [ ] Build `overpass.ts` — nearby amenities query, 200m radius, cached
+- [ ] Build `VenueDetector.tsx` — "You're at [venue name]" banner
+- [ ] Build `VenuePin.tsx` — colorblind-safe markers (shape + color)
+- [ ] Build `VenueBottomSheet.tsx` — tap pin → summary card
+- [ ] Supabase query: fetch venues within map bounding box
+- [ ] **Checkpoint:** Map loads, nearby venues shown as pins, tapping works
+
+### Hour 5-7: Rating Flow
+- [ ] Build `SensorySlider.tsx` — visual 1-5 scale with icons
+- [ ] Build `RatingFlow.tsx` — step wizard: auto-sense → lighting → crowding → smell → predictability → notes
+- [ ] Wire expo-av measurement into rating flow
+- [ ] Supabase insert for new rating
+- [ ] Postgres trigger recalculates venue aggregates automatically
+- [ ] Offline queue: enqueue to expo-sqlite if no connection, flush on reconnect
+- [ ] **Checkpoint:** Full rate flow works end-to-end, data appears in Supabase
+
+### Hour 7-9: Venue Detail + Visualization
+- [ ] Build `SensoryRadar.tsx` — 5-axis radar chart (victory-native)
+- [ ] Build `VenueDetail.tsx` — full page with radar, tags, rating history
+- [ ] Build `TimeHeatmap.tsx` — day × time noise grid
+- [ ] "Best time to visit" from heatmap
+- [ ] Sensory feature tags: "outdoor seating", "no background music", "dim lighting", "quiet zone"
+- [ ] **Checkpoint:** Venue detail looks polished, radar renders, time patterns visible
+
+### Hour 9-10.5: Sensory Profile + Filtering
+- [ ] Build onboarding: mode select (Self/Support) → trigger chips → noise threshold slider
+- [ ] Store profile in Supabase via `profileStore`
+- [ ] Filter map pins by profile match — recommendation score applied
+- [ ] "My comfort zone only" toggle
+- [ ] `SensoryBudgetBanner.tsx` — threshold exceeded alert
+- [ ] expo-haptics: gentle pulse on threshold breach
+- [ ] Daily check-in modal: "How are you today?" → sets `dailyThresholdOverride`
+- [ ] **Checkpoint:** Profile works, map filters dynamically, threshold warning fires
+
+### Hour 10.5-12: Polish + Stretch Features
+- [ ] Styling pass: color tokens, typography, spacing, Self vs Support mode differences
+- [ ] Colorblind-safe pin shapes confirmed
+- [ ] WCAG 2.1 AA contrast check on all text
+- [ ] Seed 10-15 sample venues with realistic ratings for demo
+- [ ] Empty states, error states (mic denied, GPS unavailable, offline)
+- [ ] **If time:** Voice logging in rating notes (expo-av + expo-speech)
+- [ ] **If time:** Familiar places (is_familiar flag on venue_follows)
+- [ ] **If time:** Anonymous comments on venue detail
+
+### Hour 12-13: Demo Prep
+- [ ] Script the 2-minute demo:
+  1. "I'm autistic and want a quiet place for lunch"
+  2. Map shows colorblind-safe pins filtered to comfort zone
+  3. Open Sensly at current location → live dB gauge measures the room
+  4. Auto-detects venue → rate it → data appears on map
+  5. Show radar chart comparison: "This café vs. that one"
+  6. Show time heatmap: "Come Tuesday morning, not Saturday afternoon"
+- [ ] Pre-cache demo data for offline resilience
+- [ ] Test full flow on phone 3×
+- [ ] Prepare context slide: "300M+ people worldwide are neurodivergent. Most can't answer 'what's this place like?' before they get there."
 
 ---
 

@@ -1,0 +1,20 @@
+# Environment variables — never commit these
+.env
+.env.local
+.env.*.local
+
+# Personal planning files
+TODO.md
+
+# Expo
+.expo/
+dist/
+node_modules/
+
+# Supabase
+supabase/.branches
+supabase/.temp
+
+# OS
+.DS_Store
+*.log
