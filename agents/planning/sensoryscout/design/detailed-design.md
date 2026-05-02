@@ -137,7 +137,7 @@ src/
 ├── components/
 │   ├── map/
 │   │   ├── MapView.tsx           # react-native-maps wrapper, venue pins
-│   │   ├── VenuePin.tsx          # color-coded marker (green/yellow/red by score)
+│   │   ├── VenuePin.tsx          # colorblind-safe marker: blue/circle, orange/square, red/triangle
 │   │   ├── VenueBottomSheet.tsx  # slide-up sheet on pin tap (react-native-bottom-sheet)
 │   │   ├── LocationFAB.tsx       # floating "center on me" button
 │   │   └── RecoveryModeFAB.tsx   # "Find me somewhere quiet" preset filter button
@@ -277,13 +277,19 @@ create table ratings (
 );
 
 -- User sensory profiles (multiple per account)
+-- Default thresholds are research-informed baselines:
+--   noise_threshold 65 dB: upper comfortable limit for most autistic adults in social settings
+--     (below the 70 dB Hearing Health Foundation safe limit; above quiet-room baseline of ~40 dB)
+--   crowding_threshold 3: mid-scale default; highly individual, adjusted via daily check-in
+--   lighting_preference 'moderate': warm white (2700K–3000K) is recommended for autism/ADHD
+--     (fluorescent/cool white >4000K associated with increased sensory distress per neurolaunch.com research)
 create table profiles (
   id                  uuid primary key default gen_random_uuid(),
   user_id             uuid references auth.users(id) on delete cascade,
   display_name        text not null,               -- "My profile", "Jamie's profile"
-  noise_threshold     smallint default 65,         -- max dB before alert
-  lighting_preference text check (lighting_preference in ('dim','moderate','bright')),
-  crowding_threshold  smallint default 3,          -- max crowding score (1-5)
+  noise_threshold     smallint default 65,         -- dB SPL; 65 = comfortable social setting upper limit
+  lighting_preference text check (lighting_preference in ('dim','moderate','bright')) default 'moderate',
+  crowding_threshold  smallint default 3,          -- 1-5 scale; 3 = moderate crowd tolerance
   triggers            jsonb default '[]',          -- ["fluorescent lights","perfume","crowds","sirens"]
   trigger_categories  jsonb default '[]',          -- ["sound","smell","lighting","texture","unpredictability"]
   comfort_items       jsonb default '[]',          -- ["noise-canceling headphones","sunglasses"]
@@ -715,13 +721,15 @@ Mode is toggled in Profile → Settings → "Who is using this app?" and persist
 ## 8. Sensory Score System
 
 ### Noise → Score mapping
-| dB SPL | Score | Label |
-|---|---|---|
-| < 40 | 1 | Very quiet — library level |
-| 40–54 | 2 | Quiet — soft conversation |
-| 55–69 | 3 | Moderate — busy café |
-| 70–84 | 4 | Loud — restaurant at peak |
-| 85+ | 5 | Very loud — hearing risk |
+Research basis: Hearing Health Foundation cites 70 dB as the upper safe limit for sustained exposure. Studies on autism (SPARK for Autism, 2021 review) show 50–70% of autistic people experience hypersensitivity to everyday sounds, with discomfort commonly reported at levels neurotypical people find unremarkable (as low as 55–65 dB in busy environments). NIOSH recommends 85 dB as the occupational damage threshold.
+
+| dB SPL | Score | Label | Typical context |
+|---|---|---|---|
+| < 40 | 1 | Very quiet | Empty library, quiet bedroom |
+| 40–54 | 2 | Quiet | Soft conversation, small café |
+| 55–69 | 3 | Moderate | Busy café, open-plan office |
+| 70–84 | 4 | Loud | Restaurant at peak, busy bar |
+| 85+ | 5 | Very loud | Hearing risk — NIOSH damage threshold |
 
 ### Overall venue score (for pin color)
 ```
@@ -733,10 +741,12 @@ overall_score = weighted average:
   smell:           5%
 ```
 
-### Pin color thresholds
-- Green (score 1.0–2.4): sensory-friendly
-- Yellow (score 2.5–3.4): moderate
-- Red (score 3.5–5.0): high-stimulation
+### Pin color thresholds (colorblind-safe — blue/orange/red + shape redundancy)
+- Blue + circle (score 1.0–2.4): sensory-friendly
+- Orange + square (score 2.5–3.4): moderate
+- Red + triangle (score 3.5–5.0): high-stimulation
+
+See Section 16.2 for the full colorblind-safe rationale and hex values.
 
 ---
 
@@ -1122,3 +1132,88 @@ RTL layout enabled automatically via `I18nManager.forceRTL` for Arabic/Hebrew if
 | Companion mode transport | Supabase Realtime vs WebSockets | Supabase Realtime — already in stack, no extra infrastructure |
 | Morning briefing scheduling | Local expo-notifications vs server-side push | Local notification — no server needed, works without internet |
 | Streak reset behavior | Silent reset vs notification | Silent reset — no punishment messaging, aligns with low-pressure design philosophy |
+
+---
+
+## 16. Neurodivergent & Trauma-Informed Design Guidelines
+
+These are small, specific design constraints applied throughout the app — not separate features. Every component should be built with these in mind.
+
+### 16.1 Motion & Animation
+- **Respect `reduceMotionEnabled`** — all animations check `AccessibilityInfo.isReduceMotionEnabled()` and fall back to instant transitions
+- **No looping animations** anywhere in the UI — looping motion is a known ADHD attention disruptor ([WebAIM, 2024](https://webaim.org/techniques/carousels))
+- **Animation duration cap: 200ms** for transitions; 300ms max for the dB gauge arc fill — longer durations increase cognitive load for ADHD users
+- **No parallax effects** — vestibular disorders (common co-occurrence with autism) cause nausea from parallax
+- **No auto-playing anything** — no sounds, no videos, no carousels that advance without user input
+
+### 16.2 Color & Contrast
+- **Minimum contrast ratio: 4.5:1** for all body text (WCAG AA); 7:1 target for Self mode (WCAG AAA)
+- **Never use color as the only signal** — every status indicator (venue pin, score chip, alert) must also use shape, icon, or text label. Covers deuteranopia (~6% of men) and protanopia (~1% of men)
+- **Avoid red/green as the primary signal pair** — the most common color blindness type (deuteranopia) makes these indistinguishable. Use blue/orange as the safe alternative
+- **Venue pin color system (colorblind-safe)**:
+  - Sensory-friendly: **blue** `#0077BB` + circle shape
+  - Moderate: **orange** `#EE7733` + square shape
+  - High-stimulation: **red** `#CC3311` + triangle shape
+  - Shape redundancy means the map is readable without color perception
+- **Muted, desaturated palette** for the app UI — high saturation increases visual stress for autistic users. Research recommends less-saturated, cool-to-neutral tones ([ResearchGate, 2018](https://www.researchgate.net/publication/327177712))
+- **No pure white backgrounds** — use off-white `#F8F6F2` (warm neutral) to reduce glare-induced eye strain for photosensitive users
+
+### 16.3 Typography
+- **Minimum body font size: 16sp** (Support mode), **20sp** (Self mode)
+- **Line height: 1.5×** font size minimum — tight line spacing is a primary dyslexia barrier
+- **Left-aligned text only** — never justified. Justified text creates uneven word spacing that disrupts reading flow for dyslexic users
+- **No all-caps text** — reduces readability for dyslexic users and reads as shouting
+- **Letter spacing: +0.5px** on body text in dyslexia mode (applied alongside OpenDyslexic font)
+- **Sentence case for all labels** — not title case, not all-caps
+
+### 16.4 Language & Content
+- **Plain language throughout** — target B1 reading level (short sentences, common words, no jargon). ND-friendly web design standard ([arocom.de, 2025](https://www.arocom.de/en/knowledge/inclusion/nd-friendly-webdesign))
+- **Neutral error messages** — never "You failed", "Wrong", "Error". Use "Something didn't work — try again"
+- **Consistent labels** — the same action always has the same label across all screens. Never rename "Submit" to "Done" to "Save"
+- **Predictable navigation** — back button always goes to the previous screen, never to an unexpected destination
+
+### 16.5 PTSD & Trauma-Informed Design
+Research basis: Trauma-informed design ([UXPA Magazine](https://uxpamagazine.org/inclusive-by-design-use-a-trauma-informed-approach), [ACM 2024](https://dl.acm.org/doi/10.1145/3676310)) centers five principles — safety, trustworthiness, choice, collaboration, empowerment.
+
+- **No sudden alerts or sounds** — all notifications are silent by default; sound is opt-in only. Unexpected sounds are a known PTSD hypervigilance trigger
+- **Sensory budget alerts use haptic-only by default** — `expo-haptics.impactAsync(Light)`, not Heavy or audio
+- **User always in control** — every step in the rating wizard has a visible "Skip" or "Cancel". No dead ends
+- **No countdown pressure** — the 30-second measurement has a prominent "Done early" button. Timers that can't be stopped increase anxiety
+- **Opt-in for everything sensitive** — mic, location, health data, notifications all require explicit opt-in with plain-language explanation. No dark patterns
+- **Exit is always one tap away** — rating flow can be abandoned at any step without confirmation dialog
+- **No loss framing** — streak tracking never says "you broke your streak". Shows current count only. No punishment messaging
+
+### 16.6 ADHD-Specific
+- **One primary action per screen** — no screen presents more than one main CTA
+- **Progress always visible** — step indicators show "Step 2 of 3" in the rating wizard
+- **Auto-save everything** — partial ratings saved to local state immediately; user returns to where they left off
+- **Forgiving UI** — 10-second "Undo" snackbar after rating submission. No irreversible actions without confirmation
+- **Chunked information** — Self mode shows one stat prominently with "See more" to expand. Never a wall of data
+
+### 16.7 Lighting Scale — Research-Backed Descriptions
+
+The lighting dimension (1–5) maps to real-world illuminance and color temperature. Research basis: autism-friendly lighting studies recommend warm white 2700K–3000K and < 300 lux for comfortable autistic environments ([neurolaunch.com](https://neurolaunch.com/best-lighting-for-autism), [totalcareaba.com](https://totalcareaba.com/autism/light-sensitivity-and-autism)). Fluorescent/cool white > 4000K is consistently associated with increased sensory distress. Eaton research confirms ADHD and migraine sufferers also benefit from warm, lower-intensity lighting.
+
+| Score | Label | Illuminance | Color temp | Example |
+|---|---|---|---|---|
+| 1 | Very dim | < 50 lux | Warm (2700K) | Candlelit restaurant, dim lounge |
+| 2 | Dim | 50–150 lux | Warm white (2700–3000K) | Cozy café, bookshop |
+| 3 | Moderate | 150–300 lux | Neutral white (3000–4000K) | Standard office, casual restaurant |
+| 4 | Bright | 300–500 lux | Cool white (4000K+) | Supermarket, fast food |
+| 5 | Harsh | > 500 lux | Daylight/fluorescent (5000K+) | Hospital, big-box retail, stadium |
+
+**Onboarding default**: `lighting_preference = 'moderate'` (score 3). Users with strong preferences adjust during onboarding trigger setup.
+
+### 16.8 Noise Threshold Defaults by Profile Type
+
+When a user selects a profile type during onboarding, pre-fill the noise threshold as a starting point (always adjustable):
+
+| Profile type | Default noise_threshold | Rationale |
+|---|---|---|
+| Autism / sensory processing | **55 dB** | Below typical social-setting discomfort onset; 50–70% of autistic people report hypersensitivity at everyday levels ([SPARK for Autism, 2021](https://sparkforautism.org)) |
+| ADHD | **65 dB** | Moderate sensitivity; ADHD noise sensitivity is real but typically less acute than autism hyperacusis |
+| PTSD / anxiety | **60 dB** | Hypervigilance lowers effective tolerance; sudden loud sounds are a known trigger |
+| Migraine | **55 dB** | Phonophobia during and between episodes; conservative threshold appropriate |
+| General / unsure | **65 dB** | Safe middle ground; below the 70 dB Hearing Health Foundation safe limit |
+
+These are starting points only — the daily check-in and profile edit allow fine-tuning. The app never labels a user by diagnosis; these are internal defaults mapped from the trigger chips selected during onboarding.

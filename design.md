@@ -4,7 +4,7 @@
 
 A crowdsourced sensory environment map that uses your phone's microphone to automatically measure venue noise levels, combined with user ratings on lighting, crowding, smell, and predictability. Think Wheelmap for sensory needs — but the phone does half the work.
 
-**Tagline:** "Know before you go. Your phone listens so you can prepare."
+**Tagline:** "Monitor. Predict. Prevent."
 
 ---
 
