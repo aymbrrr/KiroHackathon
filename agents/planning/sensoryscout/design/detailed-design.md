@@ -30,12 +30,12 @@
 │  │ voice)   │  │maps      │  │(offline  │  │(follow+brief) │   │
 │  │          │  │          │  │queue)    │  │               │   │
 │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └───────┬───────┘   │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                       │
-│  │expo-     │  │expo-     │  │Supabase  │                       │
-│  │calendar  │  │speech    │  │Realtime  │                       │
-│  │(briefing)│  │(voice log│  │(companion│                       │
-│  │          │  │ transcr.)│  │ mode)    │                       │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘                       │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────────┐   │
+│  │expo-     │  │expo-     │  │Supabase  │  │expo-secure-   │   │
+│  │calendar  │  │speech    │  │Realtime  │  │store (tokens) │   │
+│  │(briefing)│  │(voice log│  │(companion│  │expo-screen-   │   │
+│  │          │  │ transcr.)│  │ mode)    │  │capture (PII)  │   │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └───────┬───────┘   │
 └───────┼─────────────┼─────────────┼─────────────────┼───────────┘
         │             │             │                 │
         └─────────────┴──────┬──────┘                 │
@@ -199,6 +199,8 @@ src/
 │   └── useCalendarBriefing.ts    # expo-calendar → venue score lookup for today's events
 ├── lib/
 │   ├── supabase.ts               # Supabase client init
+│   ├── secureStorage.ts          # expo-secure-store wrapper (tokens, push token)
+│   ├── validation.ts             # input sanitization, rating bounds, diagnosis tag whitelist
 │   ├── nominatim.ts              # reverse geocode with 1 req/sec debounce
 │   ├── overpass.ts               # nearby POI query, 200m radius, cached
 │   ├── sensoryUtils.ts           # dB → label, score → color, aggregate math
@@ -283,6 +285,13 @@ create table ratings (
 --   crowding_threshold 3: mid-scale default; highly individual, adjusted via daily check-in
 --   lighting_preference 'moderate': warm white (2700K–3000K) is recommended for autism/ADHD
 --     (fluorescent/cool white >4000K associated with increased sensory distress per neurolaunch.com research)
+--
+-- GDPR/PRIVACY NOTE on diagnosis_tags:
+--   Diagnosis is GDPR Article 9 "special category" health data — requires explicit consent.
+--   It is: optional, user-provided, stored encrypted at rest (Supabase AES-256),
+--   never exposed to other users, never used for advertising, never shared with third parties.
+--   Explicit consent collected at point of entry with plain-language explanation.
+--   User can delete at any time via Account → Delete my data.
 create table profiles (
   id                  uuid primary key default gen_random_uuid(),
   user_id             uuid references auth.users(id) on delete cascade,
@@ -293,6 +302,12 @@ create table profiles (
   triggers            jsonb default '[]',          -- ["fluorescent lights","perfume","crowds","sirens"]
   trigger_categories  jsonb default '[]',          -- ["sound","smell","lighting","texture","unpredictability"]
   comfort_items       jsonb default '[]',          -- ["noise-canceling headphones","sunglasses"]
+  -- Optional self-reported diagnosis tags (GDPR Article 9 special category — explicit consent required)
+  -- Stored as free-form tags, not clinical codes. Examples: ["autism","adhd","ptsd","migraine","spd"]
+  -- Used only to pre-fill threshold defaults and improve personal recommendations.
+  -- Never shared, never exposed in any public-facing query.
+  diagnosis_tags      jsonb default '[]',
+  diagnosis_consent   boolean default false,       -- explicit consent flag; must be true before storing tags
   is_default          boolean default false,
   created_at          timestamptz default now()
 );
@@ -635,7 +650,19 @@ export function ColorBlindFilter({ children, mode }: {
 ## 6. Zustand Stores
 
 ```typescript
-// stores/settingsStore.ts
+// stores/authStore.ts
+// Auth tokens stored in expo-secure-store (iOS Keychain / Android Keystore)
+// NEVER in AsyncStorage — it is unencrypted plaintext
+interface AuthStore {
+  session: Session | null;
+  user: User | null;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  // Session persisted via secureStorage.set('supabase_session', ...)
+  // Restored on app launch via secureStorage.get('supabase_session')
+}
 interface SettingsStore {
   uiMode: 'self' | 'support';
   language: string;                          // BCP 47 tag e.g. 'en', 'es'
@@ -669,6 +696,26 @@ interface ProfileStore {
   updateProfile: (id: string, data: Partial<SensoryProfile>) => Promise<void>;
   // Derived: effective threshold = dailyThresholdOverride ?? activeProfile.noise_threshold
   effectiveNoiseThreshold: number;
+}
+
+// types/profile.ts
+interface SensoryProfile {
+  id: string;
+  user_id: string;
+  display_name: string;
+  noise_threshold: number;
+  lighting_preference: 'dim' | 'moderate' | 'bright';
+  crowding_threshold: number;
+  triggers: string[];
+  trigger_categories: string[];
+  comfort_items: string[];
+  // Optional diagnosis — GDPR Article 9 special category
+  // Only present if diagnosis_consent = true
+  // Never sent to any third party or exposed in public queries
+  diagnosis_tags: string[];          // e.g. ["autism", "adhd", "ptsd", "migraine", "spd"]
+  diagnosis_consent: boolean;
+  is_default: boolean;
+  created_at: string;
 }
 
 // stores/venueStore.ts
@@ -754,11 +801,22 @@ See Section 16.2 for the full colorblind-safe rationale and hex values.
 
 ### 9.1 Richer Onboarding — Trigger Preference Builder
 
-Onboarding expands from a single noise slider to a 5-screen flow:
+Onboarding expands from a single noise slider to a 6-screen flow:
 
 ```
 Screen 1: Mode select (Self / Support)
-Screen 2: Trigger chips — user taps any that apply
+Screen 2: Diagnosis tags — OPTIONAL, clearly marked as such
+  Header: "Do you have any diagnoses you'd like to share? (completely optional)"
+  Subtext: "This helps us set better starting defaults. It's private, never shared,
+            and you can remove it any time."
+  Chips (multi-select, free-form add also available):
+    "Autism / ASD", "ADHD", "PTSD", "Sensory Processing Disorder",
+    "Migraine", "Anxiety", "OCD", "Dyslexia", "Other"
+  "Skip" is the primary CTA — "Add" is secondary
+  If any chip selected → show explicit consent checkbox:
+    "I understand this is optional health information stored privately on my account"
+    → sets diagnosis_consent = true before any tags are saved
+Screen 3: Trigger chips — user taps any that apply
   Categories: Sound | Lighting | Smell | Texture | Unpredictability
   Examples per category (from constants/triggerOptions.ts):
     Sound:           "Loud music", "Crowds talking", "Sirens", "High-pitched sounds", "Sudden noises"
@@ -766,12 +824,19 @@ Screen 2: Trigger chips — user taps any that apply
     Smell:           "Perfume/cologne", "Food smells", "Cleaning products", "Smoke"
     Texture:         "Certain fabrics", "Sticky surfaces"
     Unpredictability:"Unexpected changes", "Loud announcements", "Busy visual environments"
-Screen 3: Noise comfort threshold slider (40–90 dB) with live label
-Screen 4: Health integration opt-in
-Screen 5: Ready — "Your profile is set up"
+  If diagnosis tags were selected, relevant triggers are pre-checked (e.g. autism → fluorescent lights)
+Screen 4: Noise comfort threshold slider (40–90 dB) with live label
+  If diagnosis tags selected, slider pre-fills to research-backed default (see Section 16.8)
+Screen 5: Health integration opt-in
+Screen 6: Ready — "Your profile is set up"
 ```
 
-Selected triggers stored as `profiles.triggers` (string array) and `profiles.trigger_categories` (category array). Used by the learning engine to weight pattern detection.
+Diagnosis tags are used only to:
+1. Pre-fill threshold defaults (Section 16.8)
+2. Pre-check relevant trigger chips
+3. Improve personal learning engine pattern weighting
+
+They are never: shown to other users, used in venue aggregates, sent to third parties, or used for advertising.
 
 ---
 
@@ -1093,6 +1158,11 @@ RTL layout enabled automatically via `I18nManager.forceRTL` for Arabic/Hebrew if
 | Learning engine Edge Function timeout | Warning silently suppressed. No proactive warning shown — fail safe, not fail loud. |
 | Groq API unavailable (journal insights) | Show cached insights if available. If none: "Insights will appear after a few days of logging." |
 | Daily check-in dismissed | No override set — use profile defaults. Check-in shown again next day. |
+| JWT expired / auth session invalid | Auto-refresh via Supabase refresh token. If refresh fails, redirect to sign-in screen. Never expose raw auth error to user. |
+| SecureStore read failure (device locked) | Show "Unlock your device to continue" — do not attempt to read tokens from AsyncStorage as fallback. |
+| Diagnosis consent not given | `diagnosis_tags` field never written. UI shows tags as unset. No error. |
+| RLS policy violation (403) | Log internally. Show generic "Something went wrong" to user — never expose policy details. |
+| Jailbreak/root detected | Show one-time warning: "Your device may be modified. Sensitive data like your profile is less protected." Do not block app use. |
 
 ---
 
@@ -1217,3 +1287,198 @@ When a user selects a profile type during onboarding, pre-fill the noise thresho
 | General / unsure | **65 dB** | Safe middle ground; below the 70 dB Hearing Health Foundation safe limit |
 
 These are starting points only — the daily check-in and profile edit allow fine-tuning. The app never labels a user by diagnosis; these are internal defaults mapped from the trigger chips selected during onboarding.
+
+---
+
+## 17. Security & Privacy Architecture
+
+### 17.1 Data Classification
+
+Sensly handles two tiers of sensitive data. Every design decision should be made with this classification in mind:
+
+| Data type | Classification | Examples | Regulation |
+|---|---|---|---|
+| Diagnosis tags | **Tier 1 — Special category** | "autism", "ptsd", "adhd" | GDPR Article 9; explicit consent required |
+| Health metrics | **Tier 1 — Special category** | Heart rate from HealthKit | GDPR Article 9; HIPAA if US healthcare context |
+| Sensory profile | **Tier 2 — Sensitive personal** | Noise threshold, triggers | GDPR Article 6; legitimate interest + consent |
+| Ratings & measurements | **Tier 2 — Sensitive personal** | dB readings, venue ratings | GDPR Article 6 |
+| Account data | **Tier 2 — Personal** | Email address | GDPR Article 6 |
+| Venue data | **Tier 3 — Non-personal** | Venue name, aggregated scores | No special regulation |
+
+### 17.2 Token & Credential Storage
+
+**Rule: Never store sensitive values in AsyncStorage — it is unencrypted plaintext on the device.**
+
+| Data | Storage | Reason |
+|---|---|---|
+| Supabase JWT session token | `expo-secure-store` | iOS Keychain / Android Keystore — hardware-backed encryption |
+| Supabase refresh token | `expo-secure-store` | Same — never AsyncStorage |
+| Push notification token | `expo-secure-store` | Sensitive — links device to user identity |
+| Sensory profile (thresholds, triggers) | AsyncStorage (Zustand persist) | Not credential-level; acceptable |
+| Diagnosis tags | **Never stored locally** | Fetched from Supabase on session start only; not persisted to device storage |
+| API keys (Supabase URL + anon key) | `.env` via `expo-constants` | Never hardcoded in source; excluded from git via `.gitignore` |
+
+```typescript
+// lib/secureStorage.ts — wrapper around expo-secure-store
+import * as SecureStore from 'expo-secure-store';
+
+export const secureStorage = {
+  set: (key: string, value: string) =>
+    SecureStore.setItemAsync(key, value, {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY
+    }),
+  get: (key: string) => SecureStore.getItemAsync(key),
+  delete: (key: string) => SecureStore.deleteItemAsync(key),
+};
+
+// Auth tokens stored as:
+// secureStorage.set('supabase_session', JSON.stringify(session))
+// secureStorage.set('supabase_refresh', refreshToken)
+```
+
+### 17.3 Supabase Security Configuration
+
+**RLS is the primary security layer — all access control enforced at the database level.**
+
+Critical Supabase settings to verify before launch:
+
+```
+✅ Row Level Security enabled on ALL tables (verify in Supabase dashboard)
+✅ No table left with RLS disabled — a single unprotected table exposes all data
+✅ Anon key is safe to expose ONLY because RLS is enabled
+✅ Service role key NEVER in client code — only in Edge Functions via env vars
+✅ JWT expiry: 1 hour (Supabase default) — do not extend
+✅ Refresh token rotation: enabled
+✅ Email confirmation: enabled for new signups
+✅ Supabase project region: choose closest to primary user base (data residency)
+```
+
+**Additional RLS hardening for diagnosis data:**
+
+```sql
+-- Diagnosis tags: extra-restrictive policy
+-- Only the profile owner can read their own diagnosis_tags
+-- Service role (Edge Functions) can read for learning engine — but only aggregated, never raw
+create policy "profiles_diagnosis_owner_only" on profiles
+  for select
+  using (auth.uid() = user_id);
+
+-- Ensure diagnosis_tags is excluded from any public/aggregate queries
+-- Create a view for public venue data that explicitly excludes profiles
+create view public_venue_stats as
+  select id, name, category, lat, lng, avg_noise_db, avg_lighting,
+         avg_crowding, avg_smell, avg_predictability, overall_score,
+         total_ratings, quiet_hours, sensory_features
+  from venues;
+-- Grant select on view, not on base table, for anonymous reads
+```
+
+### 17.4 Transport Security
+
+- **All Supabase communication over HTTPS/TLS 1.3** — enforced by Supabase, no configuration needed
+- **Certificate pinning**: not required for Supabase (managed infrastructure with valid CA certs); add if self-hosting
+- **Nominatim + Overpass requests**: HTTPS only — both support it; enforce in `nominatim.ts` and `overpass.ts` by hardcoding `https://` base URLs
+- **No HTTP fallback** — `expo-network` used to detect connectivity; if offline, queue locally rather than retry over insecure channel
+
+### 17.5 Input Validation & Injection Prevention
+
+```typescript
+// All user-provided text sanitized before Supabase insert
+// Supabase JS client uses parameterized queries — SQL injection not possible via the client
+// But validate at application layer too:
+
+// lib/validation.ts
+export const sanitize = {
+  text: (input: string, maxLength = 500): string =>
+    input.trim().slice(0, maxLength),
+
+  rating: (value: number): number => {
+    if (!Number.isInteger(value) || value < 1 || value > 5)
+      throw new Error('Rating must be integer 1-5');
+    return value;
+  },
+
+  db: (value: number): number => {
+    if (value < 0 || value > 140)
+      throw new Error('dB value out of range');
+    return Math.round(value);
+  },
+
+  diagnosisTag: (tag: string): string => {
+    // Whitelist approach — only allow known tags
+    const ALLOWED = ['autism','adhd','ptsd','spd','migraine','anxiety','ocd','dyslexia','other'];
+    if (!ALLOWED.includes(tag.toLowerCase()))
+      throw new Error('Unknown diagnosis tag');
+    return tag.toLowerCase();
+  }
+};
+```
+
+### 17.6 Rate Limiting & Abuse Prevention
+
+- **Supabase built-in rate limiting**: enabled by default on Auth endpoints (sign-up, sign-in, password reset)
+- **Edge Function rate limiting**: add `X-RateLimit` check in `moderate-comment` and `detect-patterns` functions — max 10 calls/minute per user
+- **Nominatim**: self-imposed 1 req/sec limit (their ToS requirement) — enforced in `nominatim.ts` debounce
+- **Overpass**: 200m radius cap + bounding box cache prevents hammering the free API
+- **Rating submission**: client-side debounce — disable submit button for 2 seconds after tap to prevent duplicate submissions
+
+### 17.7 GDPR Compliance Checklist
+
+Sensly collects data from EU residents and must comply with GDPR. Diagnosis tags are Article 9 special category data requiring the highest protection level.
+
+| Requirement | Implementation |
+|---|---|
+| **Lawful basis** | Explicit consent for diagnosis tags; legitimate interest for sensory profile; contract performance for account data |
+| **Explicit consent for Article 9 data** | `diagnosis_consent` boolean; consent UI shown before any tag is stored; consent timestamp logged |
+| **Data minimization** | Diagnosis stored as self-reported tags only, not clinical codes; no medical records |
+| **Right to access** | Account → "Download my data" → exports all profile, ratings, check-ins as JSON |
+| **Right to erasure** | Account → "Delete my data" → cascading delete via `on delete cascade` on all user-linked tables |
+| **Right to rectification** | Profile edit screen allows updating all fields including diagnosis tags |
+| **Data portability** | JSON export covers all personal data |
+| **Privacy policy** | Required before account creation; plain-language explanation of what's collected and why |
+| **No third-party sharing** | Diagnosis tags and health data never sent to Groq, analytics, or any external service |
+| **Data residency** | Supabase project region selected to match primary user base; document in privacy policy |
+
+### 17.8 HIPAA Considerations
+
+Sensly is **not a covered entity** under HIPAA (it does not provide healthcare services or process insurance claims). However, it handles health-adjacent data and should follow HIPAA-aligned best practices as a matter of user trust:
+
+- Diagnosis tags and heart rate data encrypted at rest (Supabase AES-256 by default)
+- No PHI shared with third parties without explicit consent
+- Audit log of data access available via Supabase logs
+- If the app ever integrates with a healthcare provider or insurance context in the future, a formal HIPAA assessment would be required
+
+### 17.9 App-Level Security Hardening
+
+```typescript
+// Prevent screenshots of sensitive screens (profile with diagnosis, health data)
+// iOS: UIScreen.main.isCaptured detection
+// Android: FLAG_SECURE on sensitive screens
+import { usePreventScreenCapture } from 'expo-screen-capture';
+
+// In ProfileEditScreen and HealthIntegrationScreen:
+export function ProfileEditScreen() {
+  usePreventScreenCapture(); // prevents screenshots + screen recording
+  // ...
+}
+```
+
+Additional hardening:
+- **Jailbreak/root detection**: `expo-device` `isRooted` check on app launch — warn user that security may be compromised (do not block, just inform)
+- **Biometric lock (optional)**: `expo-local-authentication` — user can require Face ID / fingerprint to open app. Recommended for users storing diagnosis data
+- **Session timeout**: auto sign-out after 30 days of inactivity (Supabase JWT expiry handles this)
+- **No clipboard access to sensitive data**: diagnosis tags and health data never copied to clipboard
+- **Debug mode detection**: strip all `console.log` statements in production build via Babel plugin
+
+### 17.10 Diagnosis Data — UX Security Contract
+
+The following rules govern every UI interaction with diagnosis data:
+
+1. **Always optional** — "Skip" is the primary button on the diagnosis screen, never secondary
+2. **Explicit consent before storage** — checkbox with plain-language text must be checked; cannot be pre-checked
+3. **Visible in profile** — user can always see what diagnosis tags are stored
+4. **One-tap removal** — each tag has an ✕ to remove it; removing all tags sets `diagnosis_consent = false`
+5. **Not shown in companion mode** — companion sees sensory thresholds and alerts, never diagnosis tags
+6. **Not shown in shared profile link** — the read-only shareable profile (Section 9.10) explicitly excludes diagnosis tags
+7. **Not used in public aggregates** — diagnosis data never influences venue scores or any data visible to other users
+8. **Deletion is immediate and complete** — deleting a profile cascades to all associated data including diagnosis tags; no soft-delete retention
