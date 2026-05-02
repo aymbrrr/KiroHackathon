@@ -200,3 +200,117 @@ The workflow improvement that would otherwise be difficult: **keeping the design
 | `agentSpawn` hook in `conductor.json` | Runs `git status` on every session start | Repo state awareness, pairs with git pull rule |
 
 The through-line across all of these: I wrote the tools first, then used them. The steering files, agent configs, hooks, and PDD process were all authored before the Sensly design work began. That investment paid off because every rule I wrote applied automatically to every subsequent interaction — I didn't have to repeat myself, and Kiro didn't have to guess.
+
+---
+
+## Research-Backed Steering — Sensory Research File
+
+### What we built
+
+We created `.kiro/steering/sensory-research.md` — a steering file containing clinical research findings that guide every implementation decision involving user profiles, recommendation logic, onboarding, and AI-generated content.
+
+### How it was created
+
+We used the conductor/librarian pattern to research sensory trigger profiles across five populations: autism, ADHD, PTSD, sensory processing disorder, and anxiety disorders. The librarian agent searched published clinical sources (NIH, Frontiers in Psychiatry, Cleveland Clinic, Child Mind Institute, Psychology Today) and returned structured findings with citations.
+
+From those findings, we built:
+- A diagnosis × place field priority matrix showing which venue fields matter most for each population
+- A recommendation score algorithm (weighted penalty system, 0–100) with hard filters and asymmetric weights informed by the research
+- Onboarding UX guidelines based on preference-based framing rather than clinical labels
+- Privacy rules for diagnosis data (GDPR Article 9 compliance, never sent to LLM layer, hard-delete on account deletion)
+- AI content rules (trauma-informed language, no clinical terms in user-facing copy)
+
+### Why it matters
+
+The steering file is set to `inclusion: manual` — it's not injected into every conversation. When implementing recommendation logic, onboarding, or any user-facing AI content, the developer loads it via `#sensory-research` in chat. This means Kiro has access to the full clinical research context exactly when it needs it, without bloating every other conversation.
+
+The key insight: **research findings decay when they live only in a conversation.** By encoding them into a steering file, every future implementation task — whether done by us, by Kiro, or by a new team member — automatically inherits the same evidence-based constraints. The research outlives the session that produced it.
+
+---
+
+## Conductor/Librarian Pattern in Action
+
+### Hackathon idea generation
+
+We used the conductor/librarian workflow to cross-reference our existing research file (`social_good_project_ideas.txt`, 40+ social good project ideas) against four hackathon competition tracks. The conductor delegated the research task with the 4-section prompt format (TASK / CONTEXT / MUST DO / MUST NOT), and the subagent returned 7 project ideas across all tracks with Kiro feature mapping, tech stacks, and feasibility ratings.
+
+A second pass amplified 8 existing ideas from the research file — not new ideas, but creative extensions of what was already there. The conductor's role was synthesis: taking the subagent's raw output and presenting it as a decision matrix the team could act on.
+
+### Sensory trigger research
+
+The same pattern was used to research clinical sensory profiles. The conductor identified the research question ("what sensory triggers matter most for each diagnosis, and how should we capture them in a user profile?"), delegated to a subagent with explicit constraints (no clinical advice, preference-based framing, cite sources), and synthesized the findings into three schemas and a priority matrix.
+
+The output was then split: research findings went into the steering file, schemas went into `design.md`, and privacy rules went into both. The conductor pattern made this separation natural — the orchestrator decides where each piece of output belongs.
+
+---
+
+## Backend Implementation via Kiro
+
+### What was built
+
+The entire Supabase backend was implemented through Kiro in a single session:
+
+- **Database schema** — 10 tables with constraints, foreign keys, GDPR-compliant diagnosis storage, and a Postgres trigger that auto-recalculates venue aggregate scores on every rating insert
+- **Row-level security** — 15 RLS policies ensuring profiles are private to owners, ratings are anonymous, and diagnosis data is never exposed
+- **4 Edge Functions** deployed to production:
+  - `moderate-comment` — spam filtering before comment insertion
+  - `detect-patterns` — SQL-based learning engine that warns users about venues/categories that have affected them before (no LLM, pure pattern detection)
+  - `generate-insights` — weekly journal insights via Groq with template string fallback
+  - `notify-followers` — push notifications when a followed venue gets a new rating
+- **Seed data** — 15 real venues in San Luis Obispo with realistic sensory ratings and individual rating rows for time heatmap data
+- **TypeScript types** — auto-generated from the live schema for type-safe frontend development
+- **Weekly insights hook** (`useWeeklyInsights.ts`) — checks for cached insights on app foreground, generates if stale, fires a local notification
+
+### How Kiro was used
+
+The conductor pattern applied directly to implementation. Rather than writing code in a conversation and copy-pasting it, Kiro:
+1. Read the detailed design doc to understand the schema requirements
+2. Generated the full SQL migration with inline comments explaining research-backed defaults (e.g., `noise_threshold default 65` with a citation for why)
+3. Wrote Edge Functions that match the contracts defined in the design doc
+4. Deployed all functions via the Supabase CLI
+5. Tested the connection and verified seed data via API calls
+6. Generated TypeScript types from the live schema
+
+The 2-strike circuit breaker from the steering file was relevant here — when the first migration patch failed (duplicate RLS policy), Kiro diagnosed the root cause (policy already existed from an earlier run) and fixed it in one pass rather than retrying blindly.
+
+---
+
+## Team Coordination via Kiro
+
+### The handoff doc pattern
+
+With two people working on the same codebase simultaneously, we needed a coordination layer. Kiro generated `PERSON_A_HANDOFF.md` — a complete backend handoff document that includes:
+
+- Edge Function contracts (exact URLs, request/response shapes, code examples)
+- Auth patterns (sign up, sign in, session management)
+- Push notification token registration instructions
+- Realtime companion mode channel setup
+- Venue query patterns (nearby, comfort zone filter, familiar places)
+- Privacy rules (diagnosis consent, never expose user_id)
+- File ownership boundaries (which files Person B owns, don't modify directly)
+
+This document was generated by Kiro after reading Person A's existing code to understand what they'd already set up (Supabase client with expo-sqlite polyfill, connection test screen, validation utilities). The handoff doc references their actual code patterns rather than generic examples.
+
+### Why this matters
+
+In a hackathon, the coordination cost between team members is often higher than the implementation cost. The handoff doc eliminated the "hey, how do I call your API?" back-and-forth. Person A could read one file and immediately start wiring up frontend components against the live backend — no Slack messages, no screen shares, no waiting.
+
+---
+
+## Updated Summary
+
+| Artifact | What it is | Where it was used |
+|---|---|---|
+| `.kiro/steering/workflow.md` | Conductor ruleset | Every interaction in the project |
+| `.kiro/steering/sensory-research.md` | Clinical research + implementation guidelines | Recommendation logic, onboarding, AI content, privacy |
+| `AGENTS.md` | Agent directory | Agent onboarding, delegation decisions |
+| `.kiro/agents/conductor.json` | Conductor agent config + agentSpawn hook | Orchestrates all tasks |
+| `.kiro/agents/librarian.json` | Librarian agent config | All external research |
+| `.kiro/agents/context/system-prompts/librarian-prompt.md` | Librarian system prompt | Structures research delegations |
+| `.kiro/agents/context/includes/source-registry.json` | Trusted source registry | Research quality |
+| `.kiro/prompts/pdd.md` | PDD process definition | Requirements, design, implementation plan |
+| `sensly/supabase/migrations/` | Database schema + seed data | Live Supabase backend |
+| `sensly/supabase/functions/` | 4 Edge Functions | Comment moderation, learning engine, journal insights, push notifications |
+| `sensly/src/hooks/useWeeklyInsights.ts` | Weekly insights check + notification | Journal feature |
+| `sensly/src/types/supabase.ts` | Auto-generated TypeScript types | Type-safe frontend development |
+| `sensly/PERSON_A_HANDOFF.md` | Backend handoff doc | Team coordination |

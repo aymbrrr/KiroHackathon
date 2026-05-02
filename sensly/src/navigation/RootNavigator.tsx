@@ -11,6 +11,7 @@ import { ActivityIndicator, View, Text } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
+import { useProfileStore } from '../stores/profileStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { colors } from '../constants/theme';
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
@@ -104,6 +105,7 @@ function AppNavigator() {
 
 export function RootNavigator() {
   const { session, setSession } = useAuthStore();
+  const { fetchProfile, clear: clearProfile } = useProfileStore();
   const { hasCompletedOnboarding } = useSettingsStore();
   const [isInitializing, setIsInitializing] = React.useState(true);
 
@@ -111,15 +113,23 @@ export function RootNavigator() {
     // Restore session on app launch
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session) fetchProfile();
       setIsInitializing(false);
     });
 
     // Listen for auth state changes (sign in, sign out, token refresh).
     // IMPORTANT: Never call supabase.auth.* inside this callback — it causes
     // deadlocks. Only update local state (setSession is a Zustand setter, safe).
+    // fetchProfile calls supabase.from('profiles') which is safe — not an auth call.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
+        if (session) {
+          // Profile loads on sign in — auto-creates default if none exists
+          fetchProfile();
+        } else {
+          clearProfile();
+        }
       }
     );
 
