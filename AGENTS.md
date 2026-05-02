@@ -131,6 +131,7 @@ A git-aware implementation agent. Handles code changes with full access to git o
 |------|---------|
 | `AGENTS.md` | This file — agent directory and coordination guide |
 | `.kiro/steering/workflow.md` | Conductor's operating rules (read budget, delegation format, review gate) |
+| `.kiro/steering/sensory-research.md` | Clinical research, recommendation logic, privacy rules, onboarding UX — load when implementing profiles, recommendations, or AI content |
 | `.kiro/prompts/pdd.md` | Prompt-Driven Development process for new features |
 | `.kiro/agents/context/CONTEXT.md` | Guide to the context directory structure |
 | `.kiro/agents/context/includes/source-registry.json` | Trusted external sources for the librarian |
