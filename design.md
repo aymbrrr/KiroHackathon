@@ -1,4 +1,4 @@
-# SensoryScout — Full Build Plan
+# Sensly — Full Build Plan
 
 ## The Concept
 
@@ -276,7 +276,7 @@ src/
 ## 13-Hour Build Timeline
 
 ### Hour 0-1: Foundation (60 min)
-- [ ] `npx create-react-app sensoryscout` or Vite + React
+- [ ] `npx create-expo-app sensly` or Vite + React
 - [ ] Install: `leaflet react-leaflet recharts @supabase/supabase-js`
 - [ ] Create Supabase project (free tier) — run SQL for venues, ratings, profiles tables
 - [ ] Set up Leaflet map with OpenStreetMap tiles, center on user location
@@ -341,7 +341,7 @@ src/
   1. Open app → "I'm autistic and I want to find a quiet place for lunch"
   2. Map shows nearby venues color-coded by sensory score
   3. Filter: "Under 60 dB only" → map updates
-  4. Open SensoryScout at current location → live dB gauge measures the room
+  4. Open Sensly at current location → live dB gauge measures the room
   5. Auto-detects venue → pre-fills rating → quick-rate remaining dimensions
   6. Show radar chart comparison: "This cafe vs. that one"
   7. Show time heatmap: "Come here Tuesday afternoon, not Saturday"
@@ -366,7 +366,7 @@ src/
 
 ## What Makes This Win
 
-1. **The phone listens for you.** No other sensory mapping app auto-measures noise. NeuroHub requires manual ratings for everything. SensoryScout turns the phone into a sensory instrument.
+1. **The phone listens for you.** No other sensory mapping app auto-measures noise. NeuroHub requires manual ratings for everything. Sensly turns the phone into a sensory instrument.
 
 2. **The demo is visceral.** Open the app, the gauge starts moving, the room's noise level appears in real-time. Judges don't need to imagine the problem — they experience the solution.
 

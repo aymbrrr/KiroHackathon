@@ -1,4 +1,4 @@
-# SensoryScout — Detailed Design
+# Sensly — Detailed Design
 
 > Generated via PDD workflow. Based on design.md + requirements Q&A (idea-honing.md).
 > Last updated: 2026-05-02
@@ -493,7 +493,7 @@ export function useAudioMeter() {
 // lib/offlineQueue.ts
 import * as SQLite from 'expo-sqlite';
 
-const db = SQLite.openDatabase('sensoryscout.db');
+const db = SQLite.openDatabase('sensly.db');
 
 export function initQueue() {
   db.transaction(tx => {
@@ -950,8 +950,8 @@ Share via: "Going With Me" button in Profile → generates join code → compani
 ```typescript
 // Generate a read-only shareable link
 // POST /profile-shares → creates profile_shares row with random token
-// Shareable URL: sensoryscout://profile/share/{token}
-// Or web fallback: https://sensoryscout.app/profile/{token}
+// Shareable URL: sensly://profile/share/{token}
+// Or web fallback: https://sensly.app/profile/{token}
 
 // The shared view shows:
 //   - Display name (e.g. "Jamie's profile")

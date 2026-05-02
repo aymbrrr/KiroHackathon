@@ -1,4 +1,4 @@
-# SensoryScout — Raw Idea Capture
+# Sensly — Raw Idea Capture
 
 > Verbatim from design.md — captured before any refinement.
 

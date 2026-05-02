@@ -1,4 +1,4 @@
-# SensoryScout — Requirements Q&A
+# Sensly — Requirements Q&A
 
 Running record of questions and answers during the requirements phase.
 
@@ -50,7 +50,7 @@ Running record of questions and answers during the requirements phase.
 - `user_id` is stored internally on ratings/measurements for moderation and abuse prevention, but is **never exposed** to other users
 - No usernames, no public profiles, no social graph — the app is a tool, not a social network
 - Caregiver mode: one account can hold multiple sensory profiles (e.g., "My profile", "Jamie's profile") — profiles are private to the account
-- Ratings display as "A SensoryScout user" or just aggregate scores — no attribution
+- Ratings display as "A Sensly user" or just aggregate scores — no attribution
 - This also simplifies GDPR/COPPA compliance: no PII is ever public-facing
 - Supabase Row Level Security (RLS) enforces this at the DB layer — users can only read/write their own profile rows, but can read all venue/rating aggregates
 

@@ -1,4 +1,4 @@
-# SensoryScout — PDD Checkpoint
+# Sensly — PDD Checkpoint
 
 > Pre-design checkpoint. Confirmed requirements + key decisions before moving to detailed design.
 
