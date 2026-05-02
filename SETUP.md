@@ -63,16 +63,26 @@ Install **Expo Go** on your phone → scan the QR code.
 - Auth tokens are stored via `expo-sqlite` localStorage (handled by Supabase client) — never use AsyncStorage for tokens.
 - `react-native-worklets` is pinned to `0.5.1` — do not upgrade it. It must match what Expo Go SDK 54 ships with.
 
-### Current build state (Steps 1–5 complete)
+### Current build state (Steps 1–7 complete — Person A scope done)
 - ✅ Step 1: Scaffold, Supabase schema, utility libs (`sensoryUtils`, `validation`, `secureStorage`)
 - ✅ Step 2: Auth flow — Welcome, Sign In, Sign Up, session restore via `onAuthStateChange`
 - ✅ Step 3: Map screen — GPS, venue pins (colorblind-safe), bottom sheet, offline banner
 - ✅ Step 4: Audio measurement — `useAudioMeter`, `DbGauge`, `VenueDetector`
 - ✅ Step 5: Rating flow — AutoSense → manual sliders → Supabase insert
+- ✅ Step 6: Venue detail — `VenueDetailScreen`, custom SVG radar chart, time heatmap
+- ✅ Step 7: Sensory profile — `ProfileScreen`, `ProfileEditScreen`, `SensoryBudgetBanner`, bottom tab bar
 
-### Next steps (Person A)
-- Step 6: Venue detail screen (radar chart, time heatmap)
-- Step 7: Sensory profile + Self/Support mode
+### Next steps (Person A — stretch if time allows)
+- Step 8: Offline queue + sync
+- Step 11C: Accessibility modes (color blindness filters, dyslexia font)
+
+### Critical notes
+- `expo-sqlite/localStorage/install` must be the **first import** in `App.tsx`
+- `react-native-worklets` pinned to `0.5.1` — do not upgrade
+- `@gorhom/bottom-sheet` must be v5+ (Reanimated v4 compatibility)
+- `victory-native` v41 uses Skia — do NOT use `VictoryChart`/`VictoryTheme`. Use custom SVG via `react-native-svg`
+- All imports must be at the top of files — mid-file imports cause duplicate declaration errors
+- Restart with `npx expo start --clear` after any `.env` changes
 
 ---
 

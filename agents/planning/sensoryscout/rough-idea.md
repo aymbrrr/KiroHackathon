@@ -155,9 +155,9 @@ The app learns your patterns over time and warns you proactively.
 | 3 | ✅ Done | Map screen — GPS, colorblind-safe venue pins, bottom sheet, offline banner, `venueStore`, `overpass.ts` |
 | 4 | ✅ Done | Audio engine — `useAudioMeter`, `DbGauge`, `VenueDetector` |
 | 5 | ✅ Done | Rating flow — `AutoSenseScreen`, `ManualRatingScreen`, `SensorySlider`, wired into map bottom sheet |
-| 6 | 🔲 Next | Venue detail — radar chart, time heatmap |
-| 7 | 🔲 | Sensory profile + Self/Support mode |
-| 8–12 | 🔲 | Stretch features (offline queue, social, accessibility modes, health, journal) |
+| 6 | ✅ Done | Venue detail — `VenueDetailScreen`, `SensoryRadar` (custom SVG), `TimeHeatmap`, "Full details" + "Rate" buttons |
+| 7 | ✅ Done | Sensory profile — `ProfileScreen`, `ProfileEditScreen` (noise slider, lighting, triggers), `SensoryBudgetBanner`, bottom tab bar |
+| 8–12 | 🔲 | Stretch features (offline queue, social, accessibility modes, health, journal) — Person B scope |
 
 ## Known Issues / Gotchas
 - `expo-sqlite/localStorage/install` must be the **first import** in `App.tsx` — fixes Supabase + Hermes URL protocol error
@@ -165,6 +165,8 @@ The app learns your patterns over time and warns you proactively.
 - `@gorhom/bottom-sheet` must be v5+ for Reanimated v4 compatibility
 - Email confirmation must be disabled in Supabase for development (Auth → Providers → Email → uncheck "Confirm email")
 - Always restart with `npx expo start --clear` after `.env` changes
+- `victory-native` v41 uses Skia API — do NOT use `VictoryChart`/`VictoryTheme` (web API). Use custom SVG via `react-native-svg` instead
+- All imports must be at the top of the file — mid-file imports after function declarations cause duplicate declaration errors
 
 ---
 

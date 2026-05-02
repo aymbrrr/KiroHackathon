@@ -6,16 +6,24 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ActivityIndicator, View } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { ActivityIndicator, View, Text } from 'react-native';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { colors } from '../constants/theme';
-
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
 import { SignInScreen } from '../screens/auth/SignInScreen';
 import { SignUpScreen } from '../screens/auth/SignUpScreen';
-import { AuthStackParamList } from './types';
+import { MapScreen } from '../screens/map/MapScreen';
+import { AutoSenseScreen } from '../screens/rating/AutoSenseScreen';
+import { ManualRatingScreen } from '../screens/rating/ManualRatingScreen';
+import { VenueDetailScreen } from '../screens/venue/VenueDetailScreen';
+import { ProfileScreen } from '../screens/profile/ProfileScreen';
+import { ProfileEditScreen } from '../screens/profile/ProfileEditScreen';
+import { AuthStackParamList, AppRootParamList, AppTabParamList } from './types';
+import { RatingStackParamList } from '../screens/rating/AutoSenseScreen';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -29,13 +37,36 @@ function AuthNavigator() {
   );
 }
 
-import { MapScreen } from '../screens/map/MapScreen';
-import { AutoSenseScreen } from '../screens/rating/AutoSenseScreen';
-import { ManualRatingScreen } from '../screens/rating/ManualRatingScreen';
-import { VenueDetailScreen } from '../screens/venue/VenueDetailScreen';
-import { RatingStackParamList } from '../screens/rating/AutoSenseScreen';
-import { AppRootParamList } from './types';
-import { RouteProp, useRoute } from '@react-navigation/native';
+const Tab = createBottomTabNavigator<AppTabParamList>();
+
+function TabNavigator() {
+  const { uiMode } = useSettingsStore();
+  const selfMode = uiMode === 'self';
+
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarShowLabel: !selfMode,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.borderMuted,
+        },
+        tabBarIcon: ({ color, size }) => {
+          const icons: Record<string, string> = {
+            Map: '🗺️', Search: '🔍', Followed: '⭐', Profile: '👤',
+          };
+          return <Text style={{ fontSize: selfMode ? 26 : 22 }}>{icons[route.name]}</Text>;
+        },
+      })}
+    >
+      <Tab.Screen name="Map" component={MapScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
 
 const RatingStack = createNativeStackNavigator<RatingStackParamList>();
 const AppRootStack = createNativeStackNavigator<AppRootParamList>();
@@ -59,16 +90,14 @@ function RatingNavigator() {
 function AppNavigator() {
   return (
     <AppRootStack.Navigator screenOptions={{ headerShown: false }}>
-      <AppRootStack.Screen name="MainMap" component={MapScreen} />
+      <AppRootStack.Screen name="MainTabs" component={TabNavigator} />
       <AppRootStack.Screen
         name="Rating"
         component={RatingNavigator}
         options={{ presentation: 'modal' }}
       />
-      <AppRootStack.Screen
-        name="VenueDetail"
-        component={VenueDetailScreen}
-      />
+      <AppRootStack.Screen name="VenueDetail" component={VenueDetailScreen} />
+      <AppRootStack.Screen name="ProfileEdit" component={ProfileEditScreen} />
     </AppRootStack.Navigator>
   );
 }

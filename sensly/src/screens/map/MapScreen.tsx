@@ -164,6 +164,7 @@ export function MapScreen() {
 }
 
 function VenueCard({ venue, onRate }: { venue: Venue; onRate: () => void }) {
+  const navigation = useNavigation<NativeStackNavigationProp<AppRootParamList>>();
   const pin = scoreToPinStyle(venue.overall_score);
   const noiseLabel = venue.avg_noise_db != null
     ? `${Math.round(venue.avg_noise_db)} dB — ${dbToLabel(venue.avg_noise_db)}`
@@ -199,14 +200,24 @@ function VenueCard({ venue, onRate }: { venue: Venue; onRate: () => void }) {
         </View>
       )}
 
-      <TouchableOpacity
-        style={cardStyles.rateButton}
-        onPress={onRate}
-        accessibilityRole="button"
-        accessibilityLabel={`Rate ${venue.name}`}
-      >
-        <Text style={cardStyles.rateButtonText}>🎙️ Rate this place</Text>
-      </TouchableOpacity>
+      <View style={cardStyles.buttonRow}>
+        <TouchableOpacity
+          style={cardStyles.secondaryButton}
+          onPress={() => navigation.navigate('VenueDetail', { venueId: venue.id })}
+          accessibilityRole="button"
+          accessibilityLabel={`See full details for ${venue.name}`}
+        >
+          <Text style={cardStyles.secondaryButtonText}>Full details</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={cardStyles.rateButton}
+          onPress={onRate}
+          accessibilityRole="button"
+          accessibilityLabel={`Rate ${venue.name}`}
+        >
+          <Text style={cardStyles.rateButtonText}>🎙️ Rate</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -308,14 +319,25 @@ const cardStyles = StyleSheet.create({
     paddingVertical: 3,
   },
   featureText: { ...typography.bodySm, color: colors.primary },
-  rateButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: spacing.md,
+  buttonRow: { flexDirection: 'row', gap: spacing.sm },
+  secondaryButton: {
+    flex: 1,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: 10,
+    paddingVertical: spacing.sm + 2,
     alignItems: 'center',
-    minHeight: 48,
     justifyContent: 'center',
-    marginTop: spacing.xs,
+    minHeight: 44,
   },
-  rateButtonText: { ...typography.label, color: colors.textInverse, fontSize: 16 },
+  secondaryButtonText: { ...typography.label, color: colors.textPrimary, fontSize: 14 },
+  rateButton: {
+    flex: 2,
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingVertical: spacing.sm + 2,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  rateButtonText: { ...typography.label, color: colors.textInverse, fontSize: 14 },
 });

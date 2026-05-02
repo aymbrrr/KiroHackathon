@@ -19,7 +19,9 @@ export type AppTabParamList = {
 };
 
 export type AppRootParamList = {
+  MainTabs: undefined;
   MainMap: undefined;
   Rating: { venueId: string; venueName: string };
   VenueDetail: { venueId: string };
+  ProfileEdit: undefined;
 };

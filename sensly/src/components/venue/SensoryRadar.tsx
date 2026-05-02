@@ -1,14 +1,14 @@
 /**
- * 5-axis sensory radar chart using victory-native.
- * Axes: Noise, Lighting, Crowding, Smell, Predictability
- * All scores on 1–5 scale. Higher = more stimulating.
+ * 5-axis sensory radar chart — custom SVG implementation.
+ * Does not use victory-native (v41 uses Skia API, incompatible with old VictoryChart).
  *
- * Colorblind-safe: uses the primary blue fill, not red/green.
+ * Axes: Noise, Lighting, Crowding, Smell, Predictability (all 1–5 scale).
+ * Higher score = more stimulating = larger polygon.
  * Self mode: shows only 3 axes (noise, lighting, crowding).
  */
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { VictoryChart, VictoryPolarAxis, VictoryArea, VictoryTheme } from 'victory-native';
+import Svg, { Polygon, Circle, Line, Text as SvgText } from 'react-native-svg';
 import { colors, typography, spacing } from '../../constants/theme';
 import { Venue } from '../../stores/venueStore';
 import { dbToScore } from '../../lib/sensoryUtils';
@@ -33,81 +33,135 @@ const SELF_AXES = [
   { key: 'crowding', label: 'Crowding' },
 ];
 
-export function SensoryRadar({ venue, selfMode = false, size = 260 }: SensoryRadarProps) {
+function polarPoint(cx: number, cy: number, r: number, angleRad: number) {
+  return {
+    x: cx + r * Math.cos(angleRad),
+    y: cy + r * Math.sin(angleRad),
+  };
+}
+
+export function SensoryRadar({ venue, selfMode = false, size = 240 }: SensoryRadarProps) {
   const axes = selfMode ? SELF_AXES : ALL_AXES;
+  const n = axes.length;
+  // Add padding around the SVG so labels don't clip
+  const padding = 36;
+  const svgSize = size + padding * 2;
+  const cx = svgSize / 2;
+  const cy = svgSize / 2;
+  const maxR = size * 0.35;
+  const labelR = size * 0.46;
 
   const noiseScore = venue.avg_noise_db != null ? dbToScore(venue.avg_noise_db) : null;
 
   const scores: Record<string, number> = {
-    noise:          noiseScore ?? 3,
-    lighting:       venue.avg_lighting ?? 3,
-    crowding:       venue.avg_crowding ?? 3,
-    smell:          venue.avg_smell ?? 3,
-    predictability: venue.avg_predictability ?? 3,
+    noise:          noiseScore ?? 0,
+    lighting:       venue.avg_lighting ?? 0,
+    crowding:       venue.avg_crowding ?? 0,
+    smell:          venue.avg_smell ?? 0,
+    predictability: venue.avg_predictability ?? 0,
   };
 
   const hasData = venue.total_ratings > 0;
 
-  const data = axes.map((axis) => ({
-    x: axis.label,
-    y: scores[axis.key],
-  }));
+  // Angle for each axis (start from top, go clockwise)
+  const angleStep = (2 * Math.PI) / n;
+  const startAngle = -Math.PI / 2;
+
+  // Grid rings at 1, 2, 3, 4, 5
+  const rings = [1, 2, 3, 4, 5];
+
+  // Data polygon points
+  const dataPoints = axes.map((axis, i) => {
+    const angle = startAngle + i * angleStep;
+    const score = scores[axis.key] ?? 0;
+    const r = (score / 5) * maxR;
+    return polarPoint(cx, cy, r, angle);
+  });
+
+  const dataPolygon = dataPoints.map((p) => `${p.x},${p.y}`).join(' ');
+
+  // Grid ring polygons
+  const ringPolygons = rings.map((ring) => {
+    const pts = axes.map((_, i) => {
+      const angle = startAngle + i * angleStep;
+      const r = (ring / 5) * maxR;
+      return polarPoint(cx, cy, r, angle);
+    });
+    return pts.map((p) => `${p.x},${p.y}`).join(' ');
+  });
 
   if (!hasData) {
     return (
-      <View style={[styles.placeholder, { width: size, height: size / 2 }]}>
+      <View style={[styles.placeholder, { height: size * 0.4 }]}>
         <Text style={styles.placeholderText}>No ratings yet — be the first!</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ width: size, alignSelf: 'center' }}>
-      <VictoryChart
-        polar
-        width={size}
-        height={size}
-        theme={VictoryTheme.clean}
-        domain={{ y: [0, 5] }}
-      >
-        {axes.map((axis) => (
-          <VictoryPolarAxis
-            key={axis.key}
-            dependentAxis={false}
-            axisValue={axis.label}
-            label={axis.label}
-            labelPlacement="perpendicular"
-            style={{
-              axisLabel: {
-                fill: colors.textSecondary,
-                fontSize: 11,
-                fontWeight: '500',
-              },
-              axis: { stroke: colors.borderMuted },
-              grid: { stroke: colors.borderMuted, strokeDasharray: '4,4' },
-            }}
+    <View style={{ alignItems: 'center' }}>
+      <Svg width={svgSize} height={svgSize}>
+        {/* Grid rings */}
+        {ringPolygons.map((pts, i) => (
+          <Polygon
+            key={i}
+            points={pts}
+            fill="none"
+            stroke={colors.borderMuted}
+            strokeWidth={1}
           />
         ))}
-        <VictoryPolarAxis
-          dependentAxis
-          tickValues={[1, 2, 3, 4, 5]}
-          style={{
-            axis: { stroke: 'none' },
-            tickLabels: { fill: 'none' },
-            grid: { stroke: colors.borderMuted, strokeDasharray: '2,4' },
-          }}
+
+        {/* Axis lines */}
+        {axes.map((_, i) => {
+          const angle = startAngle + i * angleStep;
+          const end = polarPoint(cx, cy, maxR, angle);
+          return (
+            <Line
+              key={i}
+              x1={cx} y1={cy}
+              x2={end.x} y2={end.y}
+              stroke={colors.borderMuted}
+              strokeWidth={1}
+            />
+          );
+        })}
+
+        {/* Data polygon */}
+        <Polygon
+          points={dataPolygon}
+          fill={colors.primary + '33'}
+          stroke={colors.primary}
+          strokeWidth={2}
         />
-        <VictoryArea
-          data={data}
-          style={{
-            data: {
-              fill: colors.primary + '33',
-              stroke: colors.primary,
-              strokeWidth: 2,
-            },
-          }}
-        />
-      </VictoryChart>
+
+        {/* Data points */}
+        {dataPoints.map((p, i) => (
+          <Circle key={i} cx={p.x} cy={p.y} r={4} fill={colors.primary} />
+        ))}
+
+        {/* Axis labels */}
+        {axes.map((axis, i) => {
+          const angle = startAngle + i * angleStep;
+          const lp = polarPoint(cx, cy, labelR, angle);
+          const textAnchor =
+            Math.abs(lp.x - cx) < 5 ? 'middle' :
+            lp.x < cx ? 'end' : 'start';
+          return (
+            <SvgText
+              key={i}
+              x={lp.x}
+              y={lp.y + 4}
+              textAnchor={textAnchor}
+              fontSize={11}
+              fill={colors.textSecondary}
+              fontWeight="500"
+            >
+              {axis.label}
+            </SvgText>
+          );
+        })}
+      </Svg>
     </View>
   );
 }
@@ -118,6 +172,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.surfaceMuted,
     borderRadius: 12,
+    width: '100%',
   },
   placeholderText: {
     ...typography.bodySm,
