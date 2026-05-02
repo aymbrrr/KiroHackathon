@@ -60,7 +60,9 @@
 - Venue aggregates recalculated by Postgres trigger on each new rating insert
 - Comment moderation runs in a Supabase Edge Function before insert
 - Push notifications delivered via Expo Push Notification Service → expo-notifications
-- Learning engine runs as Supabase Edge Function, queries user's rating history to detect patterns
+- Learning engine runs as Supabase Edge Function, queries user's rating history to detect patterns via SQL — no LLM
+- Morning briefing is fully deterministic: calendar lookup + Nominatim geocode + venue score comparison + template string — no LLM
+- Journal insights Edge Function uses Groq free tier (llama-3) once per week per user to convert structured query results into empathetic prose — the only LLM call in the app
 - Companion mode uses Supabase Realtime — live dB readings broadcast to companion's device
 - Morning briefing scheduled via expo-notifications + expo-calendar for calendar-aware alerts
 - Voice logging transcribed on-device via expo-speech (no external API needed)
@@ -916,17 +918,24 @@ UX: "Say something about this place" → user speaks → transcription appears i
 
 ### 9.6 Learning Engine — Proactive Warnings
 
+**No LLM needed.** This is pure SQL pattern detection — deterministic queries, template-string output.
+
 A Supabase Edge Function that runs on demand (called when app foregrounds near a venue):
 
 ```typescript
 // supabase/functions/detect-patterns/index.ts
 // Input: { user_id, venue_id, venue_category }
 // Queries: last 90 days of ratings by this user
-// Detects:
+// Detects patterns via SQL aggregates — no AI/ML required:
 //   - Category pattern: "user has left [cafe] venues within 20 min 3+ times"
 //   - Time pattern: "user rates [crowding >= 4] on Friday evenings consistently"
 //   - Trigger match: venue's sensory_features overlap with user's known triggers
 // Returns: { warning: string | null, confidence: 'high'|'medium'|'low' }
+//
+// Warning strings are assembled from a small set of templates, e.g.:
+//   "You've left cafes quickly 4 times before"
+//   "Crowded Friday evenings tend to be hard for you"
+// No LLM call — template strings are sufficient and more reliable.
 
 // Client-side (lib/learningEngine.ts):
 export async function checkProactiveWarning(venueId: string, category: string) {
@@ -943,19 +952,32 @@ Warning shown as a non-intrusive banner on VenueDetail: "⚠️ Heads up — pla
 
 ### 9.7 Sensory Journal — Weekly Insights
 
+**LLM used here — the only place in the app where one is justified.**
+
+The structured query results (worst day, best venue category, pattern counts) need to be expressed as short, empathetic, readable sentences for a neurodivergent audience. A template string approach produces robotic output; a single LLM call converts the structured data into natural prose that feels supportive rather than clinical.
+
 ```typescript
 // supabase/functions/generate-insights/index.ts
 // Runs weekly (Supabase cron or triggered on Journal tab open if stale)
-// Queries user's ratings + daily_checkins for the past 7 days
-// Builds structured summary:
-//   { worst_day, best_venue_category, pattern_text, streak_count }
-// Calls Groq free tier (llama-3) to generate 2-3 natural language insight strings
-// Stores result in journal_insights table
+// Step 1: Query user's ratings + daily_checkins for the past 7 days — pure SQL
+//   Produces structured summary: { worst_day, best_venue_category, hard_day_count,
+//                                   avg_noise_on_hard_days, streak_count }
+// Step 2: Single Groq free tier call (llama-3) to convert structured data → 2-3 insight strings
+//   Input to LLM: the structured summary above
+//   Output: ["You tend to struggle on Fridays in crowded spaces",
+//            "Libraries and bookshops consistently feel safe for you"]
+// Step 3: Store result in journal_insights table — no LLM call on subsequent reads
+//
+// Why LLM here and nowhere else:
+//   - Output needs to feel warm and human, not like a dashboard metric
+//   - The audience (neurodivergent users) benefits from plain, empathetic language
+//   - The structured data is already computed — LLM only handles the final phrasing step
+//   - Groq free tier is sufficient (one call per user per week, ~200 tokens)
+//   - Cached in journal_insights — no repeated calls
 
-// Example insights generated:
-// "You tend to struggle on Fridays in crowded spaces"
-// "Libraries and bookshops consistently feel safe for you"
-// "Your sensitive days correlate with poor sleep the night before (from Health data)"
+// Fallback if Groq unavailable:
+//   Use pre-written template strings from the structured summary
+//   e.g. "Your hardest day this week was {worst_day}. {best_venue_category} venues felt best."
 ```
 
 Journal screen displays these as `InsightCard` chips — short, scannable, not overwhelming.
@@ -963,6 +985,8 @@ Journal screen displays these as `InsightCard` chips — short, scannable, not o
 ---
 
 ### 9.8 Morning Sensory Briefing
+
+**No LLM needed.** This is fully deterministic — calendar lookup + venue score comparison + template string output.
 
 ```typescript
 // hooks/useCalendarBriefing.ts
@@ -975,21 +999,28 @@ export async function getTodaysBriefing(profiles: SensoryProfile[]) {
     endOfDay(new Date())
   );
 
-  // For each event with a location:
-  //   1. Geocode location via Nominatim
-  //   2. Find nearest venue in Supabase within 100m
-  //   3. Compare venue score against active profile thresholds
-  //   4. Flag if likely overwhelming
+  // For each event with a location — no AI required, just data lookups:
+  //   1. Geocode location via Nominatim (free, deterministic)
+  //   2. Find nearest venue in Supabase within 100m (SQL query)
+  //   3. Compare venue's avg_noise_db against effectiveNoiseThreshold (arithmetic)
+  //   4. Flag if score > threshold
 
   return events.map(event => ({
     event,
     venue: matchedVenue,
-    warning: venueScore > effectiveThreshold ? 'May be overwhelming' : null
+    // Output is a template string — no LLM needed:
+    // "Blue Bottle Coffee (10am) — avg 72 dB, above your 65 dB comfort level"
+    warning: venueScore > effectiveThreshold
+      ? `${venueName} — avg ${venueDb} dB, above your ${threshold} dB comfort level`
+      : null
   }));
 }
 ```
 
-Delivered as a push notification at 8am: "You have 3 stops today. The coffee meeting at 10am may be loud (avg 72 dB). Tap to see alternatives."
+Delivered as a local push notification at 8am (scheduled via expo-notifications — no server needed):
+`"3 stops today. Blue Bottle Coffee at 10am may be loud (72 dB). Tap to see alternatives."`
+
+The "see alternatives" action opens the map filtered to quiet venues near that location — again, no LLM, just a map filter preset.
 
 Also accessible as a screen in the Journal tab for manual review.
 
@@ -1198,7 +1229,10 @@ RTL layout enabled automatically via `I18nManager.forceRTL` for Arabic/Hebrew if
 | Initial language count | English only vs English + Spanish | English + Spanish — 500M Spanish speakers, strong demo signal |
 | overall_score weights | Fixed weights vs user-configurable | Fixed for v1 — configurable weights add complexity without clear user benefit yet |
 | Voice transcription | @react-native-voice/voice (on-device) vs Whisper API | On-device — no API cost, works offline, no audio data leaves device |
-| Journal insights LLM | Groq free tier vs on-device LLM | Groq free tier — sufficient for weekly batch, no cost, better quality than on-device |
+| Journal insights LLM | Groq free tier vs on-device LLM | Groq free tier — one call/user/week, ~200 tokens, cached. On-device models insufficient quality for empathetic prose |
+| Journal insights fallback | LLM unavailable → template strings | Pre-written templates from structured summary — always ship a fallback |
+| Learning engine output | LLM vs template strings | Template strings — deterministic patterns don't need generation; more reliable, zero cost |
+| Morning briefing output | LLM vs template strings | Template strings — purely arithmetic comparison, no natural language generation needed |
 | Companion mode transport | Supabase Realtime vs WebSockets | Supabase Realtime — already in stack, no extra infrastructure |
 | Morning briefing scheduling | Local expo-notifications vs server-side push | Local notification — no server needed, works without internet |
 | Streak reset behavior | Silent reset vs notification | Silent reset — no punishment messaging, aligns with low-pressure design philosophy |
