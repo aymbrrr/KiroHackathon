@@ -1562,22 +1562,63 @@ Before splitting, run the full SQL schema from Section 4 in Supabase together. T
 
 **Owns:** Everything that makes the app personal, smart, and social. All of these depend on Person A's tables existing but don't touch Person A's files.
 
-| Area | Files / artifacts |
-|---|---|
-| `stores/profileStore.ts` | Profiles CRUD, activeProfileId, dailyThresholdOverride, effectiveNoiseThreshold |
-| `stores/settingsStore.ts` | uiMode, language, colorBlindMode, dyslexiaMode |
-| `stores/companionStore.ts` | Companion session state, Supabase Realtime channel |
-| `hooks/useHealthData.ts` | HealthKit (iOS) / Health Connect (Android) heart rate read |
-| `hooks/useVoiceLog.ts` | expo-av record + on-device speech transcription |
-| `hooks/useCompanion.ts` | Supabase Realtime channel for companion mode |
-| `hooks/useCalendarBriefing.ts` | expo-calendar → Nominatim → venue score lookup |
-| `lib/learningEngine.ts` | Client call to `detect-patterns` Edge Function |
-| `lib/notifications.ts` | expo-notifications registration, handlers, morning briefing scheduling |
-| Supabase Edge Function | `detect-patterns` (SQL pattern detection, template string output — no LLM) |
-| Supabase Edge Function | `generate-insights` (weekly journal — Groq free tier call) |
-| Push notification webhook | Supabase webhook on ratings insert → Expo Push API for venue follows |
+**Start condition:** Wait until Person A completes Steps 1–3 (scaffold, auth, map). After that, fully parallel — no blocking dependencies.
 
-**Delivers:** Sensory profiles, daily check-in, companion mode, learning engine warnings, weekly journal insights, morning briefing, health data integration, push notifications.
+#### Build order (do these in sequence to avoid building on missing foundations)
+
+**Phase 1 — Profile foundation** *(start here, everything else depends on this)*
+
+| File | What to build |
+|---|---|
+| `stores/settingsStore.ts` | `uiMode` ('self'\|'support'), `language`, `colorBlindMode`, `dyslexiaMode` — persisted via Zustand + AsyncStorage |
+| `stores/profileStore.ts` | Profiles CRUD against Supabase `profiles` table, `activeProfileId`, `dailyThresholdOverride`, `effectiveNoiseThreshold` (derived: override ?? profile.noise_threshold) |
+| `hooks/useHealthData.ts` | Request HealthKit (iOS) / Health Connect (Android) permission, read most recent heart rate sample — returns `{ heartRate: number \| null }` |
+
+**Verification:** A profile can be created, read, and switched. `effectiveNoiseThreshold` returns the right value with and without a daily override.
+
+---
+
+**Phase 2 — Daily use features** *(depends on Phase 1)*
+
+| File | What to build |
+|---|---|
+| `hooks/useVoiceLog.ts` | expo-av record + `@react-native-voice/voice` on-device transcription → returns transcribed string for rating notes field |
+| `hooks/useCalendarBriefing.ts` | expo-calendar read → Nominatim geocode each event location → Supabase venue lookup within 100m → compare `avg_noise_db` against `effectiveNoiseThreshold` → return flagged events array |
+| `lib/notifications.ts` | expo-notifications push token registration, schedule morning briefing local notification at 8am, handle notification tap → open SensoryBriefingScreen |
+
+**Verification:** Morning briefing notification fires at scheduled time. Tapping it opens the briefing screen with today's flagged events.
+
+---
+
+**Phase 3 — Intelligence layer** *(depends on Phase 1 + ratings data from Person A)*
+
+| File | What to build |
+|---|---|
+| `lib/learningEngine.ts` | Call `detect-patterns` Edge Function with `{ venue_id, venue_category }` → return `{ warning: string \| null, confidence: 'high'\|'medium'\|'low' }` |
+| `supabase/functions/detect-patterns/index.ts` | SQL queries on `ratings` + `user_activity` tables: category pattern (left quickly 3+ times), time pattern (crowding ≥ 4 on Friday evenings), trigger match (venue features overlap profile triggers). Returns template string warning — **no LLM** |
+| `supabase/functions/generate-insights/index.ts` | Weekly cron: query last 7 days of ratings + daily_checkins → build structured summary → single Groq free tier call → store in `journal_insights` table. Include template string fallback if Groq unavailable |
+
+**Verification:** `detect-patterns` returns a warning for a user with 3+ quick exits from a venue category. `generate-insights` stores a row in `journal_insights`.
+
+---
+
+**Phase 4 — Social + companion** *(independent, can be done any time after Phase 1)*
+
+| File | What to build |
+|---|---|
+| `stores/companionStore.ts` | `startSession(profileId)` → insert `companion_sessions` → return join code. `joinSession(joinCode)` → subscribe to Supabase Realtime channel. `broadcastDb(db)` → channel.send. `liveDb` state for companion view |
+| `hooks/useCompanion.ts` | Supabase Realtime channel subscription, broadcast dB readings, receive and update `companionStore.liveDb` |
+| Push notification webhook | Supabase webhook on `ratings` insert → filter against `venue_follows` → call Expo Push API for followers |
+
+**Verification:** Host starts session, companion joins with code, host's live dB appears on companion's screen in real time.
+
+---
+
+**Delivers (in order of completion):**
+1. After Phase 1: sensory profiles work, map filters by threshold, Self/Support mode switches
+2. After Phase 2: daily check-in, morning briefing, voice logging in rating flow
+3. After Phase 3: proactive venue warnings, weekly journal insights
+4. After Phase 4: companion mode, push notifications for venue follows
 
 ---
 
@@ -1591,13 +1632,13 @@ Before splitting, run the full SQL schema from Section 4 in Supabase together. T
 | Both write to `hooks/` | Different files: A owns `useGeolocation`, `useNearbyVenues`, `useOfflineSync`, `useAudioMeter`; B owns `useHealthData`, `useVoiceLog`, `useCompanion`, `useCalendarBriefing` |
 | Edge Functions | Different function names in `supabase/functions/` — no conflict |
 
-The only shared file is `lib/supabase.ts` (the client init) — Person A creates it, Person B imports it read-only. No edits needed from Person B.
+The only shared file is `lib/supabase.ts` — Person A creates it, Person B imports it read-only. No edits needed from Person B.
 
 ---
 
 ### Handoff contract
 
-Person A exposes these to Person B before B starts:
+Person A exposes these before Person B starts Phase 2+:
 
 ```typescript
 // From stores/authStore.ts — Person B needs the user id for all profile queries
@@ -1611,7 +1652,8 @@ venueStore.venueCache
 import { supabase } from '@/lib/supabase';
 
 // From lib/sensoryUtils.ts — Person B's briefing hook needs score comparison
-import { scoreToColor, dbToLabel } from '@/lib/sensoryUtils';
+import { dbToLabel, scoreToPinStyle } from '@/lib/sensoryUtils';
+// Note: function was renamed from scoreToColor → scoreToPinStyle in the actual implementation
 ```
 
-Person A should complete Steps 1–3 of the implementation plan (scaffold, auth, map) before Person B starts on profile and intelligence features. After that, both can work in parallel with no blocking dependencies.
+Person A should complete Steps 1–3 (scaffold, auth, map) before Person B starts Phase 2. Person B can start Phase 1 (profileStore, settingsStore) as soon as the shared schema migration is run.
