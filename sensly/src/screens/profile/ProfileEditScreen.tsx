@@ -11,6 +11,7 @@ import Slider from '@react-native-community/slider';
 import { useNavigation } from '@react-navigation/native';
 import { colors, typography, spacing } from '../../constants/theme';
 import { useAuthStore } from '../../stores/authStore';
+import { useProfileStore } from '../../stores/profileStore';
 import { supabase } from '../../lib/supabase';
 import { TRIGGER_OPTIONS, NOISE_THRESHOLD_DEFAULTS } from '../../constants/sensoryScales';
 
@@ -23,6 +24,7 @@ const LIGHTING_OPTIONS = [
 export function ProfileEditScreen() {
   const navigation = useNavigation();
   const { user } = useAuthStore();
+  const { profile, saveProfile, fetchProfile } = useProfileStore();
 
   const [noiseThreshold, setNoiseThreshold] = useState(65);
   const [lightingPref, setLightingPref] = useState<'dim' | 'moderate' | 'bright'>('moderate');
@@ -31,24 +33,21 @@ export function ProfileEditScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [saved, setSaved] = useState(false);
 
-  // Load existing profile
+  // Load existing profile from store
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from('profiles')
-      .select('noise_threshold, lighting_preference, triggers')
-      .eq('user_id', user.id)
-      .eq('is_default', true)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          setNoiseThreshold(data.noise_threshold ?? 65);
-          setLightingPref(data.lighting_preference ?? 'moderate');
-          setSelectedTriggers((data.triggers as string[]) ?? []);
-        }
-        setIsLoading(false);
-      });
+    fetchProfile().then(() => setIsLoading(false));
   }, [user]);
+
+  // Sync local state when profile loads
+  useEffect(() => {
+    if (profile) {
+      setNoiseThreshold(profile.noise_threshold ?? 65);
+      setLightingPref(profile.lighting_preference ?? 'moderate');
+      setSelectedTriggers(profile.triggers ?? []);
+      setIsLoading(false);
+    }
+  }, [profile]);
 
   const toggleTrigger = (trigger: string) => {
     setSelectedTriggers((prev) =>
@@ -61,18 +60,11 @@ export function ProfileEditScreen() {
     setIsSaving(true);
     setSaved(false);
 
-    const payload = {
-      user_id: user.id,
-      display_name: 'My profile',
+    await saveProfile({
       noise_threshold: noiseThreshold,
       lighting_preference: lightingPref,
       triggers: selectedTriggers,
-      is_default: true,
-    };
-
-    await supabase
-      .from('profiles')
-      .upsert(payload, { onConflict: 'user_id,is_default' });
+    });
 
     setIsSaving(false);
     setSaved(true);
