@@ -1516,3 +1516,102 @@ The following rules govern every UI interaction with diagnosis data:
 6. **Not shown in shared profile link** — the read-only shareable profile (Section 9.10) explicitly excludes diagnosis tags
 7. **Not used in public aggregates** — diagnosis data never influences venue scores or any data visible to other users
 8. **Deletion is immediate and complete** — deleting a profile cascades to all associated data including diagnosis tags; no soft-delete retention
+
+---
+
+## 18. Backend Team Split
+
+Two-person backend split designed to minimize merge conflicts. The key principle: **all tables are created in one shared migration by Person A first**, then both work independently against that schema with no overlapping files.
+
+### Shared first step (both do this together, ~15 min)
+
+Before splitting, run the full SQL schema from Section 4 in Supabase together. This means both people are working against the same live database from the start — no "waiting for the other person's tables" and no schema conflicts.
+
+---
+
+### Person A — Core Data Layer
+
+**Owns:** Everything the map and rating flow needs to function. This is the critical path.
+
+| Area | Files / artifacts |
+|---|---|
+| Supabase project setup | Create project, copy URL + anon key to `.env` |
+| Full schema migration | Run all SQL from Section 4 (all tables, trigger, RLS, indexes) |
+| `lib/supabase.ts` | Supabase client init |
+| `lib/secureStorage.ts` | expo-secure-store wrapper |
+| `lib/validation.ts` | Input sanitization, rating bounds, diagnosis tag whitelist |
+| `lib/nominatim.ts` | Reverse geocode with debounce + cache |
+| `lib/overpass.ts` | Nearby POI query, 200m radius, bounding box cache |
+| `lib/sensoryUtils.ts` | dB → label, score → color, weighted aggregate math |
+| `stores/authStore.ts` | Session, sign in/out, token storage via secureStorage |
+| `stores/venueStore.ts` | Nearby venues, followed, familiar places, venue cache |
+| `stores/queueStore.ts` | Offline rating queue, sync status |
+| `lib/offlineQueue.ts` | expo-sqlite queue: init, enqueue, flushQueue |
+| `hooks/useGeolocation.ts` | expo-location watchPosition |
+| `hooks/useNearbyVenues.ts` | Overpass query + venueStore cache |
+| `hooks/useOfflineSync.ts` | NetInfo → flush queue on reconnect |
+| `hooks/useAudioMeter.ts` | expo-av mic → dBFS → dB SPL |
+| Postgres trigger | `recalculate_venue_aggregates` on ratings insert |
+| Supabase Edge Function | `moderate-comment` (comment moderation) |
+
+**Delivers:** A working map that shows venues, a rating flow that submits to Supabase, offline queue that syncs, and audio measurement. The app is demoable when Person A is done.
+
+---
+
+### Person B — User Intelligence Layer
+
+**Owns:** Everything that makes the app personal, smart, and social. All of these depend on Person A's tables existing but don't touch Person A's files.
+
+| Area | Files / artifacts |
+|---|---|
+| `stores/profileStore.ts` | Profiles CRUD, activeProfileId, dailyThresholdOverride, effectiveNoiseThreshold |
+| `stores/settingsStore.ts` | uiMode, language, colorBlindMode, dyslexiaMode |
+| `stores/companionStore.ts` | Companion session state, Supabase Realtime channel |
+| `hooks/useHealthData.ts` | HealthKit (iOS) / Health Connect (Android) heart rate read |
+| `hooks/useVoiceLog.ts` | expo-av record + on-device speech transcription |
+| `hooks/useCompanion.ts` | Supabase Realtime channel for companion mode |
+| `hooks/useCalendarBriefing.ts` | expo-calendar → Nominatim → venue score lookup |
+| `lib/learningEngine.ts` | Client call to `detect-patterns` Edge Function |
+| `lib/notifications.ts` | expo-notifications registration, handlers, morning briefing scheduling |
+| Supabase Edge Function | `detect-patterns` (SQL pattern detection, template string output — no LLM) |
+| Supabase Edge Function | `generate-insights` (weekly journal — Groq free tier call) |
+| Push notification webhook | Supabase webhook on ratings insert → Expo Push API for venue follows |
+
+**Delivers:** Sensory profiles, daily check-in, companion mode, learning engine warnings, weekly journal insights, morning briefing, health data integration, push notifications.
+
+---
+
+### Conflict surface: near zero
+
+| Potential conflict | Resolution |
+|---|---|
+| Both need `venues` + `ratings` tables | Person A creates all tables in the shared first step — no conflict |
+| Both write to `stores/` | Different files: A owns `authStore`, `venueStore`, `queueStore`; B owns `profileStore`, `settingsStore`, `companionStore` |
+| Both write to `lib/` | Different files: A owns `supabase`, `nominatim`, `overpass`, `sensoryUtils`, `validation`, `secureStorage`, `offlineQueue`; B owns `learningEngine`, `notifications` |
+| Both write to `hooks/` | Different files: A owns `useGeolocation`, `useNearbyVenues`, `useOfflineSync`, `useAudioMeter`; B owns `useHealthData`, `useVoiceLog`, `useCompanion`, `useCalendarBriefing` |
+| Edge Functions | Different function names in `supabase/functions/` — no conflict |
+
+The only shared file is `lib/supabase.ts` (the client init) — Person A creates it, Person B imports it read-only. No edits needed from Person B.
+
+---
+
+### Handoff contract
+
+Person A exposes these to Person B before B starts:
+
+```typescript
+// From stores/authStore.ts — Person B needs the user id for all profile queries
+authStore.user.id
+
+// From stores/venueStore.ts — Person B's learningEngine needs nearby venue data
+venueStore.nearbyVenues
+venueStore.venueCache
+
+// From lib/supabase.ts — Person B imports this directly, no changes needed
+import { supabase } from '@/lib/supabase';
+
+// From lib/sensoryUtils.ts — Person B's briefing hook needs score comparison
+import { scoreToColor, dbToLabel } from '@/lib/sensoryUtils';
+```
+
+Person A should complete Steps 1–3 of the implementation plan (scaffold, auth, map) before Person B starts on profile and intelligence features. After that, both can work in parallel with no blocking dependencies.
