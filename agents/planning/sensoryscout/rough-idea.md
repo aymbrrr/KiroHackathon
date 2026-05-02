@@ -99,16 +99,18 @@ The app learns your patterns over time and warns you proactively.
 | Decision | Choice |
 |---|---|
 | Framework | React Native (Expo managed workflow) |
-| Navigation | React Navigation v6 — bottom tab bar (4 tabs: Map, Search, Followed, Journal/Profile) |
+| Navigation | React Navigation v6 — root stack (map + rating modal) → tabs in Step 6+ |
 | State management | Zustand (one store per domain) |
 | Backend | Pure Supabase — Auth, Postgres, RLS, Edge Functions, Realtime |
 | Map | react-native-maps (Apple Maps iOS / Google Maps Android) |
 | Microphone | expo-av with isMeteringEnabled |
 | Offline queue | expo-sqlite |
-| Token storage | expo-secure-store (iOS Keychain / Android Keystore) — never AsyncStorage |
+| Token storage | expo-sqlite localStorage (via Supabase client) — polyfill applied via `expo-sqlite/localStorage/install` |
 | Localization | react-i18next + expo-localization |
 | Charts | victory-native |
 | Offline maps | Not in scope — map requires connectivity |
+| Supabase polyfill | `expo-sqlite/localStorage/install` — must be first import in App.tsx (fixes Hermes URL protocol error) |
+| Worklets version | `react-native-worklets@0.5.1` pinned — must match Expo Go SDK 54 bundled version |
 
 ---
 
@@ -144,9 +146,31 @@ The app learns your patterns over time and warns you proactively.
 
 ---
 
+## Build Status
+
+| Step | Status | What was built |
+|---|---|---|
+| 1 | ✅ Done | Scaffold, Supabase schema (2 migrations), `sensoryUtils`, `validation`, `secureStorage`, `theme`, `sensoryScales` |
+| 2 | ✅ Done | Auth flow — Welcome, Sign In, Sign Up, `authStore`, `settingsStore`, `RootNavigator` with session restore |
+| 3 | ✅ Done | Map screen — GPS, colorblind-safe venue pins, bottom sheet, offline banner, `venueStore`, `overpass.ts` |
+| 4 | ✅ Done | Audio engine — `useAudioMeter`, `DbGauge`, `VenueDetector` |
+| 5 | ✅ Done | Rating flow — `AutoSenseScreen`, `ManualRatingScreen`, `SensorySlider`, wired into map bottom sheet |
+| 6 | 🔲 Next | Venue detail — radar chart, time heatmap |
+| 7 | 🔲 | Sensory profile + Self/Support mode |
+| 8–12 | 🔲 | Stretch features (offline queue, social, accessibility modes, health, journal) |
+
+## Known Issues / Gotchas
+- `expo-sqlite/localStorage/install` must be the **first import** in `App.tsx` — fixes Supabase + Hermes URL protocol error
+- `react-native-worklets` pinned to `0.5.1` — do not upgrade without checking Expo Go SDK 54 compatibility
+- `@gorhom/bottom-sheet` must be v5+ for Reanimated v4 compatibility
+- Email confirmation must be disabled in Supabase for development (Auth → Providers → Email → uncheck "Confirm email")
+- Always restart with `npx expo start --clear` after `.env` changes
+
+---
+
 ## Source Documents
 - `design.md` — original build plan
 - `idea-honing.md` — full Q&A and decision log
 - `checkpoint.md` — pre-design requirements checkpoint
 - `design/detailed-design.md` — full architecture, schema, components, security
-- `implementation/plan.md` — 12-hour build timeline
+- `SETUP.md` — setup guide for both team members with current build state

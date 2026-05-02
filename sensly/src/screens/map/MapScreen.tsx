@@ -10,6 +10,8 @@ import {
 import MapView, { Region, PROVIDER_DEFAULT } from 'react-native-maps';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useVenueStore, Venue } from '../../stores/venueStore';
@@ -17,6 +19,7 @@ import { VenuePin } from '../../components/map/VenuePin';
 import { OfflineBanner } from '../../components/shared/OfflineBanner';
 import { colors, spacing, typography } from '../../constants/theme';
 import { dbToLabel, scoreToPinStyle } from '../../lib/sensoryUtils';
+import { AppRootParamList } from '../../navigation/types';
 
 const DEFAULT_REGION: Region = {
   latitude: 37.7749,
@@ -30,6 +33,7 @@ export function MapScreen() {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [region, setRegion] = useState<Region>(DEFAULT_REGION);
+  const navigation = useNavigation<NativeStackNavigationProp<AppRootParamList>>();
 
   const { position, permissionGranted, error: geoError, requestPermission } = useGeolocation();
   const { nearbyVenues, fetchNearbyFromDB, isLoading } = useVenueStore();
@@ -134,21 +138,32 @@ export function MapScreen() {
       <BottomSheet
         ref={bottomSheetRef}
         index={-1}
-        snapPoints={['35%', '60%']}
+        snapPoints={['40%', '65%']}
         enablePanDownToClose
         backgroundStyle={styles.sheetBackground}
         handleIndicatorStyle={styles.sheetHandle}
         onClose={() => setSelectedVenue(null)}
       >
         <BottomSheetView style={styles.sheetContent}>
-          {selectedVenue && <VenueCard venue={selectedVenue} />}
+          {selectedVenue && (
+            <VenueCard
+              venue={selectedVenue}
+              onRate={() => {
+                bottomSheetRef.current?.close();
+                navigation.navigate('Rating', {
+                  venueId: selectedVenue.id,
+                  venueName: selectedVenue.name,
+                });
+              }}
+            />
+          )}
         </BottomSheetView>
       </BottomSheet>
     </View>
   );
 }
 
-function VenueCard({ venue }: { venue: Venue }) {
+function VenueCard({ venue, onRate }: { venue: Venue; onRate: () => void }) {
   const pin = scoreToPinStyle(venue.overall_score);
   const noiseLabel = venue.avg_noise_db != null
     ? `${Math.round(venue.avg_noise_db)} dB — ${dbToLabel(venue.avg_noise_db)}`
@@ -183,6 +198,15 @@ function VenueCard({ venue }: { venue: Venue }) {
           ))}
         </View>
       )}
+
+      <TouchableOpacity
+        style={cardStyles.rateButton}
+        onPress={onRate}
+        accessibilityRole="button"
+        accessibilityLabel={`Rate ${venue.name}`}
+      >
+        <Text style={cardStyles.rateButtonText}>🎙️ Rate this place</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -284,4 +308,14 @@ const cardStyles = StyleSheet.create({
     paddingVertical: 3,
   },
   featureText: { ...typography.bodySm, color: colors.primary },
+  rateButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
+    marginTop: spacing.xs,
+  },
+  rateButtonText: { ...typography.label, color: colors.textInverse, fontSize: 16 },
 });

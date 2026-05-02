@@ -30,10 +30,42 @@ function AuthNavigator() {
 }
 
 import { MapScreen } from '../screens/map/MapScreen';
+import { AutoSenseScreen } from '../screens/rating/AutoSenseScreen';
+import { ManualRatingScreen } from '../screens/rating/ManualRatingScreen';
+import { RatingStackParamList } from '../screens/rating/AutoSenseScreen';
+import { AppRootParamList } from './types';
+import { RouteProp, useRoute } from '@react-navigation/native';
 
-// Placeholder for the main app tabs — built in Step 3+
+const RatingStack = createNativeStackNavigator<RatingStackParamList>();
+const AppRootStack = createNativeStackNavigator<AppRootParamList>();
+
+function RatingNavigator() {
+  const route = useRoute<RouteProp<AppRootParamList, 'Rating'>>();
+  const { venueId, venueName } = route.params;
+
+  return (
+    <RatingStack.Navigator screenOptions={{ headerShown: false }}>
+      <RatingStack.Screen
+        name="AutoSense"
+        component={AutoSenseScreen}
+        initialParams={{ venueId, venueName }}
+      />
+      <RatingStack.Screen name="ManualRating" component={ManualRatingScreen} />
+    </RatingStack.Navigator>
+  );
+}
+
 function AppNavigator() {
-  return <MapScreen />;
+  return (
+    <AppRootStack.Navigator screenOptions={{ headerShown: false }}>
+      <AppRootStack.Screen name="MainMap" component={MapScreen} />
+      <AppRootStack.Screen
+        name="Rating"
+        component={RatingNavigator}
+        options={{ presentation: 'modal' }}
+      />
+    </AppRootStack.Navigator>
+  );
 }
 
 export function RootNavigator() {

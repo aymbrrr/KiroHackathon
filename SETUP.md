@@ -1,131 +1,138 @@
 # Sensly — Setup Guide
 
-Two people can work in parallel after completing their respective setup steps.
+> Last updated: Steps 1–5 complete (scaffold, auth, map, audio, rating flow)
+
+Two people can work in parallel after completing the shared setup steps below.
 
 ---
 
-## Person B (Backend) — Do this first
+## Shared First Step — Both do this together (~15 min)
 
 ### 1. Create Supabase project
 1. Go to [supabase.com](https://supabase.com) → New project
-2. Name: `sensly` | Region: pick closest to you | Generate a strong password
+2. Name: `sensly` | Region: pick closest to you
 3. Wait ~2 minutes for provisioning
 
-### 2. Run the schema
-1. In Supabase dashboard → **SQL Editor** → New query
-2. Open `supabase/schema.sql` from this repo
-3. Paste the entire file → **Run**
-4. You should see all tables created with no errors
+### 2. Run the migrations in order
+In Supabase dashboard → **SQL Editor** → New query — run each file in sequence:
 
-### 3. Get your project credentials
-In Supabase dashboard → **Project Settings** → **API**:
-- `Project URL` → this is your `SUPABASE_URL`
-- `anon public` key → this is your `SUPABASE_ANON_KEY`
-- `service_role` key → keep this secret, only used in Edge Functions
+1. `sensly/supabase/migrations/001_initial_schema.sql` — all tables, trigger, RLS, indexes
+2. `sensly/supabase/migrations/002_patches.sql` — `cube` extension, `is_home` column, improved `overall_score` trigger, 15 seeded demo venues (SF coords)
 
-### 4. Create the `.env` file
+You should see "Success. No rows returned" for each. Verify in **Table Editor** — you should see 10 tables and 15 rows in `venues`.
+
+### 3. Disable email confirmation (for development)
+Supabase dashboard → **Authentication → Providers → Email** → turn off **"Confirm email"** → Save.
+This lets sign-up immediately create a session without waiting for email confirmation.
+
+### 4. Get credentials
+Supabase dashboard → **Project Settings → API**:
+- `Project URL` → `EXPO_PUBLIC_SUPABASE_URL`
+- `anon public` key → `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` (Person B only, never in client code)
+
+### 5. Create `.env`
+In `sensly/` directory:
 ```
 EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 GROQ_API_KEY=your-groq-key-here
 ```
-Get a free Groq API key at [console.groq.com](https://console.groq.com)
-
-### 5. Share credentials with Person A
-Send them:
-- `EXPO_PUBLIC_SUPABASE_URL`
-- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-
-They do NOT need the service role key or Groq key.
-
-### 6. Generate TypeScript types (optional but recommended)
-```bash
-npx supabase gen types typescript --project-id your-project-id > src/types/supabase.ts
-```
-Share the generated `src/types/supabase.ts` with Person A so their stores are typed correctly.
+Get a free Groq API key at [console.groq.com](https://console.groq.com) (used for weekly journal insights only).
 
 ---
 
-## Person A (Frontend) — Do this in parallel
+## Person A (Core Data Layer) — Start after shared setup
 
-### 1. Scaffold the Expo project
+### What you own
+Auth, map, audio measurement, rating flow, offline queue, venue store.
+See `agents/planning/sensoryscout/design/detailed-design.md` Section 18 for the full split.
+
+### Install and run
 ```bash
-npx create-expo-app sensly --template blank-typescript
 cd sensly
-```
-
-### 2. Install all dependencies
-Copy `package.json` from this repo into the project root, then:
-```bash
 npm install
+npx expo start --clear
 ```
 
-### 3. Add environment variables
-Create `.env` in the project root (get values from Person B):
-```
-EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
-```
-
-### 4. Test on your phone
-```bash
-npx expo start
-```
 Install **Expo Go** on your phone → scan the QR code.
 
-### 5. Set up folder structure
-```
-src/
-  components/
-  stores/
-  hooks/
-  lib/
-  types/
-  constants/
-  locales/
-supabase/
-  functions/
-```
+### Critical notes
+- The `expo-sqlite/localStorage/install` polyfill in `App.tsx` **must be the first import** — do not reorder it. It fixes a Supabase + Hermes compatibility issue.
+- Auth tokens are stored via `expo-sqlite` localStorage (handled by Supabase client) — never use AsyncStorage for tokens.
+- `react-native-worklets` is pinned to `0.5.1` — do not upgrade it. It must match what Expo Go SDK 54 ships with.
+
+### Current build state (Steps 1–5 complete)
+- ✅ Step 1: Scaffold, Supabase schema, utility libs (`sensoryUtils`, `validation`, `secureStorage`)
+- ✅ Step 2: Auth flow — Welcome, Sign In, Sign Up, session restore via `onAuthStateChange`
+- ✅ Step 3: Map screen — GPS, venue pins (colorblind-safe), bottom sheet, offline banner
+- ✅ Step 4: Audio measurement — `useAudioMeter`, `DbGauge`, `VenueDetector`
+- ✅ Step 5: Rating flow — AutoSense → manual sliders → Supabase insert
+
+### Next steps (Person A)
+- Step 6: Venue detail screen (radar chart, time heatmap)
+- Step 7: Sensory profile + Self/Support mode
 
 ---
 
-## Supabase Auth Setup (Person B)
+## Person B (User Intelligence Layer) — Start after shared setup
 
-In Supabase dashboard → **Authentication** → **Providers**:
-- Email: enabled (default)
-- Google: enable if time allows (requires Google Cloud Console OAuth credentials)
-- Apple: enable if time allows (requires Apple Developer account)
+### What you own
+Sensory profiles, daily check-in, learning engine, journal insights, companion mode, push notifications, health integration.
+See `agents/planning/sensoryscout/design/detailed-design.md` Section 18 for the full split and build order.
 
-For hackathon: email auth is sufficient.
+### Start condition
+Wait until Person A completes Steps 1–3 (scaffold, auth, map). You can start Phase 1 (profileStore, settingsStore) as soon as the schema migration is run.
 
----
+### Handoff contract — what Person A exposes
+```typescript
+// Import these from Person A's files — do not modify them
+import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/authStore';     // authStore.user.id
+import { useVenueStore } from '@/stores/venueStore';   // nearbyVenues, venueCache
+import { dbToLabel, scoreToPinStyle } from '@/lib/sensoryUtils';
+```
 
-## Edge Functions Setup (Person B)
-
+### Edge Functions setup
 ```bash
 # Install Supabase CLI
 npm install -g supabase
 
-# Login
+# Login and link
 supabase login
-
-# Link to your project
 supabase link --project-ref your-project-id
 
-# Deploy a function
+# Deploy functions (files in sensly/supabase/functions/)
 supabase functions deploy detect-patterns
 supabase functions deploy generate-insights
 supabase functions deploy moderate-comment
 ```
 
-Edge Function files go in `supabase/functions/<function-name>/index.ts`
+Set environment variables in Supabase dashboard → **Edge Functions → Secrets**:
+- `GROQ_API_KEY` — for `generate-insights` only
 
 ---
 
-## Coordination Contract
+## Coordination Rules
 
-Once Supabase is running, Person A can start writing stores and hooks immediately.
-The key shared contract is the table schema — both people should treat `supabase/schema.sql` as the source of truth.
+1. **Schema changes** — Person B must tell Person A before running any new migration. Both need to update `src/types/supabase.ts`.
+2. **Shared files** — `lib/supabase.ts`, `lib/sensoryUtils.ts`, `lib/validation.ts` are owned by Person A. Person B imports them read-only.
+3. **No `--legacy-peer-deps`** — dependency conflicts should be resolved properly. If you hit a peer dep error, check the compatibility table in `detailed-design.md` Section 15.
+4. **`react-native-worklets` is pinned** — do not run `npx expo install --fix` without checking the worklets version first.
+5. **Restart with `--clear` after `.env` changes** — Metro caches env vars at startup.
 
-If Person B needs to change the schema, communicate it to Person A before running migrations.
+---
+
+## Key Files Reference
+
+| File | Purpose |
+|---|---|
+| `sensly/App.tsx` | Entry point — polyfill must be first import |
+| `sensly/src/lib/supabase.ts` | Supabase client — import this everywhere, never create a second instance |
+| `sensly/src/lib/sensoryUtils.ts` | dB scoring, pin colors, weighted score |
+| `sensly/src/lib/validation.ts` | Input sanitization, diagnosis tag whitelist |
+| `sensly/src/constants/theme.ts` | Color tokens, typography, spacing — source of truth for UI |
+| `sensly/src/navigation/RootNavigator.tsx` | Auth vs app routing, session listener |
+| `sensly/supabase/migrations/` | Run in order: 001 then 002 |
+| `agents/planning/sensoryscout/design/detailed-design.md` | Full architecture, schema, security, neurodivergent design guidelines |
