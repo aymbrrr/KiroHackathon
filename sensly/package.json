@@ -9,7 +9,7 @@
     "test": "jest --watchAll=false"
   },
   "dependencies": {
-    "@gorhom/bottom-sheet": "^4.6.4",
+    "@gorhom/bottom-sheet": "^5.2.8",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/netinfo": "11.4.1",
     "@react-navigation/bottom-tabs": "^6.6.1",
