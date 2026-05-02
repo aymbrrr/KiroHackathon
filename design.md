@@ -375,3 +375,281 @@ src/
 4. **Zero-cost stack.** OpenStreetMap (free), Nominatim (free), Overpass (free), Supabase free tier, Web Audio API (built into every browser). No paid APIs, no billing setup, no API key stress during demo.
 
 5. **Self-improving system.** Every rating makes the map better. Every auto-sense measurement enriches the noise data. The more people use it, the more useful it becomes — classic network effect story for judges.
+
+---
+
+## Sensory Profile Schemas
+
+> Full research, trigger findings by diagnosis, and onboarding UX guidelines are in `.kiro/steering/sensory-research.md`. Load that file when implementing recommendation logic, onboarding flows, or AI-generated user-facing content.
+
+---
+
+#### Schema 1: `user_sensory_profile`
+
+Fields capture personal sensory preferences without requiring diagnosis disclosure. All fields are optional — users set only what's relevant to them.
+
+```json
+{
+  "id": "uuid",
+  "created_at": "timestamp",
+
+  "noise": {
+    "max_comfortable_db": 65,
+    "dislikes_sudden_sounds": true,
+    "prefers_consistent_background": false
+  },
+
+  "lighting": {
+    "sensitivity": "high",
+    "dislikes_fluorescent": true,
+    "dislikes_flicker": true,
+    "preferred_level": "dim"
+  },
+
+  "crowding": {
+    "max_comfortable_density": "moderate",
+    "needs_personal_space": true,
+    "dislikes_queues": false
+  },
+
+  "smell": {
+    "sensitivity": "moderate",
+    "triggers": ["strong_food", "cleaning_products", "perfume"]
+  },
+
+  "predictability": {
+    "importance": "high",
+    "needs_layout_preview": true,
+    "distressed_by_changes": true
+  },
+
+  "exit_visibility": {
+    "important": true
+  },
+
+  "recovery_space": {
+    "needed": true
+  },
+
+  "sensory_seeking": {
+    "noise": false,
+    "movement": false
+  },
+
+  "comfort_tools": ["noise_canceling_headphones", "sunglasses", "fidget_tool"],
+
+  "self_reported_diagnoses": {
+    "disclosed": ["autism", "ptsd"],
+    "other": null
+  },
+
+  "onboarding_complete": true,
+  "profile_version": 1
+}
+```
+
+**Field notes:**
+- `noise.max_comfortable_db` — maps directly to the auto-measured dB value from the venue rating. The primary filter signal.
+- `noise.dislikes_sudden_sounds` — distinguishes consistent background noise (tolerable for many) from unpredictable spikes (universally more distressing). Relevant for PTSD and autism.
+- `lighting.dislikes_fluorescent` / `dislikes_flicker` — fluorescent lighting is a top trigger for autism and migraine. Separate from overall brightness preference.
+- `predictability.importance` — high-weight field for autism and PTSD users. Maps to venue's `predictability` score and `layout_available` flag.
+- `exit_visibility.important` — PTSD-specific need. Maps to venue's `has_visible_exits` flag.
+- `self_reported_diagnoses` — entirely optional, never shown to other users, never used for filtering (preferences drive recommendations, not labels). `disclosed` is a multi-select array from a predefined list (`autism`, `adhd`, `ptsd`, `spd`, `anxiety`, `migraine`, `other`). `other` is a free-text field for anything not on the list. If present, the app can use it to surface relevant tips ("Many people with PTSD find venues with visible exits helpful — we've added that to your filters") but it never gates features or changes the core recommendation logic.
+- `recovery_space.needed` — maps to venue's `has_quiet_zone` flag.
+- `sensory_seeking` — captures ADHD sensory-seeking subtype. A user who seeks noise should not be filtered away from louder venues.
+- All sensitivity fields use `"low" | "moderate" | "high"` rather than numeric scales — more intuitive for onboarding.
+
+---
+
+#### Schema 2: `place_sensory_rating`
+
+Aggregated from crowdsourced ratings and auto-measured data. Designed to map directly to user profile fields.
+
+```json
+{
+  "id": "uuid",
+  "venue_id": "uuid",
+  "updated_at": "timestamp",
+  "rating_count": 47,
+
+  "noise": {
+    "avg_db": 62,
+    "peak_db": 78,
+    "consistency": "moderate",
+    "has_background_music": true,
+    "music_volume": "low",
+    "sudden_sound_risk": "low"
+  },
+
+  "lighting": {
+    "avg_level": 3,
+    "has_fluorescent": true,
+    "has_natural_light": true,
+    "dimmable_available": false,
+    "glare_risk": "low"
+  },
+
+  "crowding": {
+    "avg_density": 3,
+    "has_queues": false,
+    "personal_space_rating": 3,
+    "peak_hours": ["sat_afternoon", "sun_afternoon"]
+  },
+
+  "smell": {
+    "avg_intensity": 2,
+    "smell_types": ["coffee", "food"]
+  },
+
+  "predictability": {
+    "avg_score": 4,
+    "layout_available": true,
+    "layout_url": "https://...",
+    "routine_changes": "rare"
+  },
+
+  "accessibility": {
+    "has_quiet_zone": true,
+    "quiet_zone_description": "Back corner seating area",
+    "has_visible_exits": true,
+    "exit_count": 3,
+    "outdoor_seating": true,
+    "sensory_bag_available": false,
+    "kulturecity_certified": false,
+    "nas_autism_friendly": false
+  },
+
+  "time_patterns": {
+    "quietest_period": "tue_morning",
+    "loudest_period": "sat_afternoon",
+    "noise_by_slot": {
+      "mon_morning": 52,
+      "mon_afternoon": 61,
+      "sat_afternoon": 74
+    }
+  },
+
+  "tags": ["outdoor_seating", "no_background_music", "dim_lighting_option", "predictable_layout"]
+}
+```
+
+**Field notes:**
+- `noise.sudden_sound_risk` — derived from rating variance and user notes. High variance = unpredictable noise spikes. Critical for PTSD and autism.
+- `noise.consistency` — `"consistent" | "moderate" | "unpredictable"`. Separate from volume level.
+- `lighting.has_fluorescent` — boolean flag because fluorescent is a specific trigger, not just a brightness level.
+- `predictability.layout_available` + `layout_url` — allows users who need to preview a space to do so before visiting.
+- `accessibility.has_quiet_zone` — maps to `recovery_space.needed` in user profile.
+- `accessibility.has_visible_exits` — maps to `exit_visibility.important` in user profile.
+- `time_patterns.noise_by_slot` — enables "best time to visit" recommendations. Sparse object — only populated slots are stored.
+- `tags` — free-text searchable features. Populated from user notes and structured ratings.
+
+---
+
+#### Schema 3: Recommendation Score Logic
+
+The match score between a user profile and a place rating is computed as a weighted penalty system. A perfect match starts at 100 and loses points for each mismatch between user needs and venue conditions.
+
+```
+recommendation_score(user, place) → 0–100
+
+HARD FILTERS (disqualify venue entirely if failed):
+  - user.noise.max_comfortable_db < place.noise.avg_db  →  exclude
+  - user.lighting.sensitivity == "high" AND place.lighting.has_fluorescent == true  →  exclude (unless user has override)
+  - user.smell.sensitivity == "high" AND place.smell.avg_intensity >= 4  →  exclude
+
+WEIGHTED PENALTY SCORING (applied after hard filters pass):
+  Start at 100.
+
+  Noise penalties:
+    - place.noise.avg_db within 5 dB of user.noise.max_comfortable_db  →  -10
+    - user.noise.dislikes_sudden_sounds AND place.noise.sudden_sound_risk == "high"  →  -20
+    - user.noise.dislikes_sudden_sounds AND place.noise.sudden_sound_risk == "moderate"  →  -10
+
+  Lighting penalties:
+    - user.lighting.dislikes_fluorescent AND place.lighting.has_fluorescent  →  -15
+    - user.lighting.sensitivity == "high" AND place.lighting.avg_level >= 4  →  -10
+
+  Crowding penalties:
+    - user.crowding.max_comfortable_density == "low" AND place.crowding.avg_density >= 4  →  -15
+    - user.crowding.needs_personal_space AND place.crowding.personal_space_rating <= 2  →  -10
+
+  Smell penalties:
+    - user.smell.sensitivity == "high" AND place.smell.avg_intensity >= 3  →  -10
+    - user.smell.triggers contains any of place.smell.smell_types  →  -10
+
+  Predictability penalties:
+    - user.predictability.importance == "high" AND place.predictability.avg_score <= 2  →  -20
+    - user.predictability.needs_layout_preview AND place.predictability.layout_available == false  →  -5
+
+  Exit/safety penalties:
+    - user.exit_visibility.important AND place.accessibility.has_visible_exits == false  →  -15
+
+  BONUSES (add back points for positive features):
+    - user.recovery_space.needed AND place.accessibility.has_quiet_zone  →  +10
+    - user.predictability.needs_layout_preview AND place.predictability.layout_available  →  +5
+    - place.accessibility.outdoor_seating AND user.crowding.needs_personal_space  →  +5
+    - place.accessibility.kulturecity_certified  →  +5
+
+  TIME ADJUSTMENT:
+    - If user requests a specific time slot, replace place.noise.avg_db with
+      place.time_patterns.noise_by_slot[requested_slot] for noise calculations.
+
+  Final score = max(0, 100 - total_penalties + total_bonuses)
+  Scores >= 80: "Good match" (green)
+  Scores 60–79: "Moderate match" (yellow)
+  Scores < 60: "Poor match" (red)
+```
+
+**Design rationale:**
+- Hard filters prevent recommending venues that will definitely cause distress — no amount of bonuses should override a fluorescent-light allergy or a noise threshold breach.
+- Penalty weights are intentionally asymmetric: predictability and sudden sounds carry higher penalties because research shows these are more distressing than consistent-but-loud environments.
+- Bonuses are capped and modest — they reward genuinely helpful features without inflating scores for venues that are merely "not bad."
+- Time adjustment is the key differentiator: a venue that's 74 dB on Saturday afternoon might be 52 dB on Tuesday morning. The score should reflect when the user is actually going.
+
+---
+
+---
+
+### Privacy & Data Handling
+
+Sensory profiles and diagnosis disclosures are among the most sensitive data a user can share. These rules must be implemented, not just documented.
+
+#### What is private (never leaves the user's account)
+- `self_reported_diagnoses` — never exposed via API to other users, never included in aggregated venue data, never used for analytics or targeting
+- Full `user_sensory_profile` — other users never see your thresholds, triggers, or comfort tools
+- Individual ratings are associated with an anonymous user ID by default — not a name or email
+
+#### What is public (by design)
+- Aggregated venue scores (avg_db, avg_lighting, etc.) — these are the crowdsourced map data, always anonymized
+- Tags and sensory features on venues — contributed anonymously
+- No individual rating is attributable to a specific person in the public-facing UI
+
+#### Implementation rules
+- `self_reported_diagnoses` must be stored in a separate table or encrypted column — not bundled with general profile data that might be queried broadly
+- Row-level security (RLS) in Supabase: a user can only read and write their own profile row — no admin query should return all profiles in bulk without explicit justification
+- Diagnosis data must never be sent to the AI/LLM layer as part of a prompt — only preference fields (noise thresholds, lighting sensitivity, etc.) are passed to recommendation logic
+- If the app ever adds social features (sharing profiles with a companion — stretch goal, cut for hackathon), diagnosis fields must be explicitly excluded from the shared payload — share preferences only, never labels
+- On account deletion, `self_reported_diagnoses` must be hard-deleted immediately, not soft-deleted or retained in backups beyond 30 days
+
+#### Onboarding disclosure
+When the optional diagnosis field is presented in onboarding, show this copy (or equivalent):
+
+> "This is completely optional and only used to surface relevant tips for you. It's never shared with other users, never used to filter your results, and you can remove it any time."
+
+The diagnosis field should appear on its own screen, after the preference questions, clearly framed as optional and separate from the core profile.
+
+#### What the diagnosis field is used for (and only this)
+- Surfacing contextual tips: "Many people with PTSD find venues with visible exits helpful — want to add that to your filters?"
+- Pre-populating relevant preference toggles during onboarding if the user wants a shortcut
+- Nothing else. It does not change recommendation scores, does not gate features, and is not used in any analytics.
+
+#### Location privacy
+Location is the most sensitive data this app handles — a history of where someone goes can reveal their medical providers, mental health support, religious practice, and daily routine.
+
+- **Never store raw location history** — the app uses GPS to detect nearby venues and measure the current environment, but precise coordinates must never be logged to the database against a user ID
+- **Venue check-ins are anonymous** — when a user rates a venue, store the venue ID and timestamp, not the GPS coordinates of where they were standing
+- **No movement tracking** — the app must not record a trail of locations over time. GPS is used in-session only (to center the map and detect nearby venues) and discarded immediately after use
+- **"Going with me" location sharing** *(stretch goal — cut for hackathon, implement only if time allows)* — if built, location must be shared peer-to-peer for the duration of the session only, never stored server-side. Session ends when either party closes it. No replay, no history.
+- **Geofencing / dwell time detection** (used for auto-report prompts) — dwell time is calculated on-device only. The server receives "user left a venue quickly" as a boolean event, not the coordinates or duration
+- **On-device processing first** — any feature that can be computed on-device (nearby venue detection, threshold breach alerts) should be, to minimize what gets transmitted
+- **Location permission prompt** — request "while using the app" permission only, never "always on." Explain why in the permission prompt: "To show nearby venues and measure your current environment."
