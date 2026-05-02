@@ -72,6 +72,13 @@ If you're working with a system you don't understand (guessing which config cont
 
 ## Section 4: Review Gate
 
+### Pre-Implementation: Always Pull First
+Before any code change, the development-workflow-agent MUST run:
+```
+git pull
+```
+This is non-negotiable. If there are merge conflicts, stop and report them to the conductor before proceeding. Never write code on a stale branch.
+
 ### Post-Implementation Review
 After a subagent completes code changes, BEFORE declaring done:
 
@@ -81,6 +88,20 @@ After a subagent completes code changes, BEFORE declaring done:
 4. Max 2 review cycles, then present to user with remaining concerns noted
 
 The "max 2 review cycles" prevents infinite review loops where the reviewer and implementer disagree on style.
+
+### Post-Implementation: Update Documentation
+After code changes pass review, BEFORE closing the task:
+
+1. Identify what changed (new feature, bug fix, API change, config change, etc.)
+2. Update or create the relevant documentation:
+   - **New feature or behavior** → update or create a `docs/` markdown file describing it
+   - **API or interface change** → update any existing API docs or README sections that reference it
+   - **Config change** → update the relevant config documentation or README
+   - **Agent/workflow change** → update `AGENTS.md` and/or `.kiro/steering/workflow.md`
+3. Stage and commit the docs in the same commit as the code, or as a follow-up commit on the same branch
+4. Push to GitHub so documentation stays in sync with the codebase
+
+If no documentation is relevant (e.g., internal refactor with no behavior change), explicitly state why docs were skipped.
 
 ---
 
