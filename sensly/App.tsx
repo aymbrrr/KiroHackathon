@@ -1,14 +1,20 @@
+/**
+ * Supabase connection test screen.
+ * Imports from src/lib/supabase.ts which applies the expo-sqlite polyfill first.
+ * The polyfill import MUST happen before createClient — never call createClient
+ * directly in App.tsx or any other file.
+ */
+import { supabase } from './src/lib/supabase';
+
+import { registerRootComponent } from 'expo';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
-import { createClient } from '@supabase/supabase-js';
-
-// Inline client for connection test — will be replaced by src/lib/supabase.ts
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 type Status = 'loading' | 'success' | 'error' | 'no-env';
+
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 export default function App() {
   const [status, setStatus] = useState<Status>('loading');
@@ -24,8 +30,7 @@ export default function App() {
 
     async function testConnection() {
       try {
-        // Test 1: basic connection — query venues table
-        const { data, error, count } = await supabase
+        const { count, error } = await supabase
           .from('venues')
           .select('*', { count: 'exact', head: true });
 
@@ -35,7 +40,6 @@ export default function App() {
           return;
         }
 
-        // Test 2: verify profiles table exists
         const { error: profilesError } = await supabase
           .from('profiles')
           .select('id', { count: 'exact', head: true });
@@ -58,17 +62,17 @@ export default function App() {
     testConnection();
   }, []);
 
-  const colors = {
-    loading: '#F8F6F2',
-    success: '#E8F4FB',
-    error:   '#FDECEA',
+  const colors: Record<Status, string> = {
+    loading:  '#F8F6F2',
+    success:  '#E8F4FB',
+    error:    '#FDECEA',
     'no-env': '#FFF8E1',
   };
 
-  const icons = {
-    loading: null,
-    success: '✅',
-    error:   '❌',
+  const icons: Record<Status, string | null> = {
+    loading:  null,
+    success:  '✅',
+    error:    '❌',
     'no-env': '⚠️',
   };
 
@@ -89,9 +93,7 @@ export default function App() {
           </Text>
           <Text style={styles.message}>{message}</Text>
           {status === 'success' && (
-            <Text style={styles.detail}>
-              venues table: {tableCount} rows
-            </Text>
+            <Text style={styles.detail}>venues table: {tableCount} rows</Text>
           )}
           <Text style={styles.hint}>
             {status === 'success'
@@ -108,44 +110,13 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-  },
-  icon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  heading: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1A1814',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  message: {
-    fontSize: 15,
-    color: '#5C5750',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 16,
-  },
-  detail: {
-    fontSize: 13,
-    color: '#8C8680',
-    marginBottom: 8,
-  },
-  hint: {
-    fontSize: 13,
-    color: '#0077BB',
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  label: {
-    marginTop: 16,
-    fontSize: 15,
-    color: '#5C5750',
-  },
+  container:  { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  icon:       { fontSize: 48, marginBottom: 16 },
+  heading:    { fontSize: 22, fontWeight: '700', color: '#1A1814', marginBottom: 12, textAlign: 'center' },
+  message:    { fontSize: 15, color: '#5C5750', textAlign: 'center', lineHeight: 22, marginBottom: 16 },
+  detail:     { fontSize: 13, color: '#8C8680', marginBottom: 8 },
+  hint:       { fontSize: 13, color: '#0077BB', textAlign: 'center', marginTop: 8 },
+  label:      { marginTop: 16, fontSize: 15, color: '#5C5750' },
 });
+
+registerRootComponent(App);
