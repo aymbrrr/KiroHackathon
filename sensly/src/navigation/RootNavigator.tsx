@@ -32,6 +32,7 @@ function AuthNavigator() {
 import { MapScreen } from '../screens/map/MapScreen';
 import { AutoSenseScreen } from '../screens/rating/AutoSenseScreen';
 import { ManualRatingScreen } from '../screens/rating/ManualRatingScreen';
+import { VenueDetailScreen } from '../screens/venue/VenueDetailScreen';
 import { RatingStackParamList } from '../screens/rating/AutoSenseScreen';
 import { AppRootParamList } from './types';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -63,6 +64,10 @@ function AppNavigator() {
         name="Rating"
         component={RatingNavigator}
         options={{ presentation: 'modal' }}
+      />
+      <AppRootStack.Screen
+        name="VenueDetail"
+        component={VenueDetailScreen}
       />
     </AppRootStack.Navigator>
   );
