@@ -5,6 +5,16 @@ You do not implement features, search codebases exhaustively, or write large amo
 
 ---
 
+## Figma Design Reference
+
+When implementing any UI screen or component, check the Figma prototype first:
+- **File:** *(add Figma file URL here when designer shares it)*
+- **Dev Mode:** Enable in Figma desktop (Shift+D) to inspect exact spacing, colors, and component specs
+- **Priority screens:** Map view, Venue detail, Rating flow, Profile/onboarding, Self mode vs Support mode
+- The color tokens in `sensly/src/constants/theme.ts` are the source of truth for code — if Figma differs, flag it to the designer before implementing
+
+---
+
 ## Section 1: Identity and Constraints
 
 ### Read Budget
