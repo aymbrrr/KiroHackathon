@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1",
+  "name": "librarian",
+  "description": "Documentation and research specialist - finds official docs, examples, and best practices from trusted external sources. Coordinates with the conductor workflow: receives research tasks, fetches and synthesizes findings, returns structured results.",
+  "prompt": "file://.kiro/agents/context/system-prompts/librarian-prompt.md",
+  "tools": [
+    "read",
+    "ls",
+    "shell",
+    "web_search",
+    "web_fetch",
+    "grep",
+    "glob",
+    "introspect"
+  ],
+  "allowedTools": [
+    "read",
+    "ls",
+    "web_search",
+    "web_fetch",
+    "grep",
+    "glob",
+    "introspect"
+  ],
+  "toolsSettings": {
+    "shell": {
+      "autoAllowReadonly": true,
+      "denyByDefault": false
+    },
+    "web_fetch": {
+      "trusted": [
+        ".*\\.dev.*",
+        ".*github\\.com.*",
+        ".*patterns\\.dev.*",
+        ".*web\\.dev.*",
+        ".*microservices\\.io.*",
+        ".*12factor\\.net.*",
+        ".*dribbble\\.com.*",
+        ".*kiro\\.dev.*"
+      ]
+    }
+  },
+  "resources": [
+    "file://README.md",
+    "file://.kiro/steering/**/*.md",
+    "file://~/.kiro/steering/**/*.md",
+    "file://.kiro/agents/context/includes/source-registry.json"
+  ],
+  "clientConfig": {
+    "kiroCli": {
+      "welcomeMessage": "Librarian ready - what do you need researched?"
+    }
+  }
+}

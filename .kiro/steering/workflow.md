@@ -19,6 +19,20 @@ Why this matters: The 3-file budget forces delegation, which keeps the orchestra
 
 ## Section 2: Delegation Format
 
+### Research Tasks → librarian
+Any task requiring external documentation, library references, best practices, or code examples from outside the repo goes to the **librarian** agent. Do not fetch docs yourself.
+
+The librarian returns structured JSON: `sources`, `findings`, `examples`, `recommendations`.
+See `.kiro/agents/context/system-prompts/librarian-prompt.md` for its full contract.
+
+### Implementation Tasks → development-workflow-agent
+Code changes that require git awareness (branching, staging, committing) go to the **development-workflow-agent**.
+
+See `AGENTS.md` for the full agent directory and coordination patterns.
+
+---
+
+### Subagent Prompt Format
 When spawning a subagent, your prompt MUST include these 4 sections:
 
 ### 1. TASK

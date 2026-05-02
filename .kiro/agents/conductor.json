@@ -22,6 +22,12 @@
     "file://.kiro/steering/**/*.md",
     "file://~/.kiro/steering/**/*.md"
   ],
+  "subagents": {
+    "librarian": {
+      "description": "Delegate all external research, documentation lookup, and best-practice queries here. Receives a research prompt, returns structured JSON with sources, findings, examples, and recommendations.",
+      "agent": "librarian"
+    }
+  },
   "hooks": {
     "agentSpawn": [
       {
