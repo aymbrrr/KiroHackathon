@@ -18,7 +18,10 @@ import {
   ScrollView, Animated,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useNavigation } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { colors, spacing, typography } from '../../constants/theme';
+import { AppTabParamList } from '../../navigation/types';
 
 // ─── Placeholder: AxolotlSvg ─────────────────────────────────────────────────
 function AxolotlPlaceholder({ mood, size }: { mood: string; size: number }) {
@@ -193,7 +196,7 @@ function InterventionPhase({
       <Text style={[styles.phaseSubtitle, { marginBottom: 2 }]}>
         Step {stepIdx + 1} of {tools.length}
       </Text>
-      <Text style={styles.phaseTitle}>Intervention</Text>
+      <Text style={styles.phaseTitle}>Sensory Reset</Text>
       <Text style={styles.phaseSubtitle}>You're in a safe space.</Text>
 
       {/* Progress bar */}
@@ -218,7 +221,7 @@ function InterventionPhase({
         onPress={() => isLast ? onFinish() : setStepIdx((i) => i + 1)}
       >
         <Text style={styles.primaryButtonText}>
-          {isLast ? 'I feel better ✦' : 'I feel better · Next step →'}
+          {isLast ? 'Continue ✦' : 'Continue →'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -226,24 +229,26 @@ function InterventionPhase({
 }
 
 // ─── Phase 3: Crisis averted ──────────────────────────────────────────────────
-function CrisisAverted({ onEnd }: { onEnd: () => void }) {
+function CrisisAverted() {
+  const navigation = useNavigation<BottomTabNavigationProp<AppTabParamList>>();
+
   return (
     <View style={[styles.phaseContainer, { justifyContent: 'center' }]}>
       {/* Axolotl placeholder */}
       <AxolotlPlaceholder mood="relieved" size={150} />
 
       <Text style={[styles.phaseTitle, { color: '#1D9A78', fontSize: 28, marginTop: spacing.lg }]}>
-        Crisis averted ✦
+        You did it ✦
       </Text>
       <Text style={styles.phaseSubtitle}>
-        Great job! You took action and prevented a meltdown.
+        Great job taking a moment for yourself.
       </Text>
 
       {/* Risk badge */}
       <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: spacing.xl }]}>
         <View style={{ alignItems: 'center' }}>
-          <Text style={[styles.phaseSubtitle, { fontSize: 10 }]}>Risk was</Text>
-          <Text style={[styles.phaseTitle, { color: '#FF8A8A', fontSize: 20 }]}>High</Text>
+          <Text style={[styles.phaseSubtitle, { fontSize: 10 }]}>Before</Text>
+          <Text style={[styles.phaseTitle, { color: '#FF8A8A', fontSize: 20 }]}>Stressed</Text>
         </View>
         <Text style={{ fontSize: 22, color: colors.primary }}>→</Text>
         <View style={{ alignItems: 'center' }}>
@@ -254,7 +259,12 @@ function CrisisAverted({ onEnd }: { onEnd: () => void }) {
 
       <Text style={[styles.phaseSubtitle, { fontSize: 12 }]}>Sensly logged this moment ✦</Text>
 
-      <TouchableOpacity style={styles.primaryButton} onPress={onEnd}>
+      <TouchableOpacity
+        style={styles.primaryButton}
+        onPress={() => navigation.navigate('Home')}
+        accessibilityRole="button"
+        accessibilityLabel="Go back to home"
+      >
         <Text style={styles.primaryButtonText}>Back to home</Text>
       </TouchableOpacity>
     </View>
@@ -277,7 +287,7 @@ export function CalmScreen() {
       {phase === 0 && <BreathingPhase onNext={() => setPhase(1)} />}
       {phase === 1 && <ToolPickerPhase onNext={handleToolsSelected} />}
       {phase === 2 && <InterventionPhase tools={selectedTools} onFinish={() => setPhase(3)} />}
-      {phase === 3 && <CrisisAverted onEnd={() => setPhase(0)} />}
+      {phase === 3 && <CrisisAverted />}
     </SafeAreaView>
   );
 }
