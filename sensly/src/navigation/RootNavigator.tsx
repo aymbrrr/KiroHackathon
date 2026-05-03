@@ -155,7 +155,7 @@ function AppNavigator() {
 export function RootNavigator() {
   const { session, setSession } = useAuthStore();
   const { fetchProfile, clear: clearProfile } = useProfileStore();
-  const { hasCompletedOnboarding } = useSettingsStore();
+  const { hasCompletedOnboarding, _hasHydrated, resetOnboarding } = useSettingsStore();
   const [isInitializing, setIsInitializing] = React.useState(true);
   const [showCheckIn, setShowCheckIn] = React.useState(false);
   const checkInShownRef = React.useRef(false);
@@ -182,7 +182,9 @@ export function RootNavigator() {
         } else {
           clearProfile();
           setShowCheckIn(false);
-          checkInShownRef.current = false; // Reset on sign out so it shows again next sign in
+          checkInShownRef.current = false;
+          // Reset onboarding flag so a new account on the same device sees the wizard
+          resetOnboarding();
         }
       }
     );
@@ -190,7 +192,10 @@ export function RootNavigator() {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (isInitializing) {
+  // Wait for AsyncStorage to finish rehydrating the settings store.
+  // Without this, initialRouteName in AppNavigator reads the default (false)
+  // before the persisted value loads — causing returning users to see onboarding.
+  if (isInitializing || !_hasHydrated) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color={colors.primary} />

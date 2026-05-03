@@ -40,7 +40,6 @@ const LIGHTING_OPTIONS = [
 type LightingValue = 'dim' | 'moderate' | 'bright';
 
 // Steps: 0 = welcome, 1 = noise, 2 = lighting, 3 = triggers, 4 = tutorial
-const TOTAL_STEPS = 5;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
