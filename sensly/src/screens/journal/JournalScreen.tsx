@@ -257,7 +257,6 @@ export function JournalScreen() {
                 </View>
               );
             })()}
-            </View>
           </View>
         )}
 
