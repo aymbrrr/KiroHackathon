@@ -133,14 +133,18 @@ export function RootNavigator() {
   const { fetchProfile, clear: clearProfile } = useProfileStore();
   const [isInitializing, setIsInitializing] = React.useState(true);
   const [showCheckIn, setShowCheckIn] = React.useState(false);
+  const checkInShownRef = React.useRef(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
         fetchProfile();
-        // Show daily check-in after a brief delay so the app loads first
-        setTimeout(() => setShowCheckIn(true), 1000);
+        // Show daily check-in once per app launch, after a brief delay
+        if (!checkInShownRef.current) {
+          checkInShownRef.current = true;
+          setTimeout(() => setShowCheckIn(true), 1000);
+        }
       }
       setIsInitializing(false);
     });
@@ -153,6 +157,7 @@ export function RootNavigator() {
         } else {
           clearProfile();
           setShowCheckIn(false);
+          checkInShownRef.current = false; // Reset on sign out so it shows again next sign in
         }
       }
     );
