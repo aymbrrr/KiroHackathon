@@ -72,7 +72,10 @@ export function AutoSenseScreen({ navigation, route }: Props) {
   const handleStart = async () => {
     setPhase('measuring');
     setSecondsLeft(MEASUREMENT_SECONDS);
-    await start();
+    const success = await start();
+    if (!success) {
+      setPhase('idle'); // Fall back so user sees the error + can retry or skip
+    }
   };
 
   // Cleanup mic on unmount

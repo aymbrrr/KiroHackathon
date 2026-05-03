@@ -83,11 +83,21 @@ export function DashboardScreen() {
   const { db, isListening, start: startMic, stop: stopMic } = useAudioMeter();
   const { motionLevel, isAvailable: motionAvailable } = useMotionSensor();
 
-  // Passive mic monitoring — start on mount, stop on unmount
+  // Passive mic monitoring — start when screen is focused, stop when blurred
+  // This prevents "only one recording" error when navigating to AutoSense
   useEffect(() => {
-    startMic();
-    return () => { stopMic(); };
-  }, []);
+    const unsubFocus = navigation.addListener('focus', () => {
+      startMic();
+    });
+    const unsubBlur = navigation.addListener('blur', () => {
+      stopMic();
+    });
+    return () => {
+      unsubFocus();
+      unsubBlur();
+      stopMic();
+    };
+  }, [navigation]);
 
   // Rolling history for sparklines (last 12 readings)
   const soundHistory = useRef<number[]>(Array(12).fill(40));

@@ -51,16 +51,33 @@ export function useAudioMeter(): UseAudioMeterResult {
   const recordingRef = useRef<Audio.Recording | null>(null);
   const readingsRef = useRef<number[]>([]);
 
-  const start = useCallback(async () => {
+  const start = useCallback(async (): Promise<boolean> => {
     setError(null);
     readingsRef.current = [];
 
+    // Stop any existing recording first (prevents "only one recording" error)
+    if (recordingRef.current) {
+      try {
+        await recordingRef.current.stopAndUnloadAsync();
+      } catch {
+        // Already stopped — ignore
+      }
+      recordingRef.current = null;
+    }
+
     // Request mic permission
-    const { status } = await Audio.requestPermissionsAsync();
-    if (status !== 'granted') {
+    const { status: existingStatus } = await Audio.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+      const { status: newStatus } = await Audio.requestPermissionsAsync();
+      finalStatus = newStatus;
+    }
+
+    if (finalStatus !== 'granted') {
       setPermissionGranted(false);
-      setError('Microphone permission denied. Enable it in Settings to auto-measure noise.');
-      return;
+      setError('Microphone permission denied. Go to Settings → Expo Go → Microphone to enable.');
+      return false;
     }
     setPermissionGranted(true);
 
@@ -88,9 +105,11 @@ export function useAudioMeter(): UseAudioMeterResult {
 
       recordingRef.current = recording;
       setIsListening(true);
+      return true;
     } catch (e: any) {
       setError(`Mic error: ${e.message ?? 'unknown'}. Try closing other apps using the mic.`);
       setIsListening(false);
+      return false;
     }
   }, []);
 
