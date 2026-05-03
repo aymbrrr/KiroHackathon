@@ -44,12 +44,7 @@ function riskColor(risk: number): string {
 }
 
 function insightIcon(type: string): string {
-  switch (type) {
-    case 'pattern': return '🧠';
-    case 'wellbeing': return '💚';
-    case 'streak': return '🌱';
-    default: return '✨';
-  }
+  return '•';
 }
 
 export function JournalScreen() {
@@ -59,6 +54,7 @@ export function JournalScreen() {
   const [streak, setStreak] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -178,7 +174,7 @@ export function JournalScreen() {
         {/* AI Insights */}
         {insights.length > 0 && (
           <View style={styles.insightsCard}>
-            <ScaledText style={styles.insightsTitle}>✦ AI Insights</ScaledText>
+            <ScaledText style={styles.insightsTitle}>Insights</ScaledText>
             {insights.map((insight, i) => (
               <View key={i} style={styles.insightRow}>
                 <ScaledText style={styles.insightIcon}>{insightIcon(insight.type)}</ScaledText>
@@ -192,11 +188,11 @@ export function JournalScreen() {
         {logs.length > 0 && (
           <View style={styles.chartCard}>
             <ScaledText style={styles.chartTitle}>This week</ScaledText>
+            <ScaledText style={styles.chartHint}>Tap a day to see details</ScaledText>
             <View style={styles.chartBars}>
               {(() => {
                 const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                 const today = new Date().getDay();
-                // Compute average risk per day from logs
                 const dayRisks: Record<number, number[]> = {};
                 logs.forEach(log => {
                   const d = new Date(log.time);
@@ -212,14 +208,55 @@ export function JournalScreen() {
                   const barH = Math.max(4, (avg / 100) * 80);
                   const color = avg > 75 ? '#EC7D6E' : avg > 55 ? '#F2B85B' : avg > 0 ? '#46B7AE' : 'rgba(79,179,191,0.15)';
                   const isToday = i === today;
+                  const isSelected = selectedDay === i;
                   return (
-                    <View key={i} style={styles.chartBarCol}>
-                      <View style={[styles.chartBar, { height: barH, backgroundColor: color, opacity: isToday ? 1 : 0.6 }]} />
-                      <ScaledText style={[styles.chartDayLabel, isToday && { color: colors.primary, fontWeight: '700' }]}>{name}</ScaledText>
-                    </View>
+                    <TouchableOpacity
+                      key={i}
+                      style={styles.chartBarCol}
+                      onPress={() => setSelectedDay(isSelected ? null : i)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.chartBar, {
+                        height: barH,
+                        backgroundColor: color,
+                        opacity: isSelected ? 1 : isToday ? 0.85 : 0.5,
+                        borderWidth: isSelected ? 2 : 0,
+                        borderColor: colors.primary,
+                      }]} />
+                      <ScaledText style={[styles.chartDayLabel, (isToday || isSelected) && { color: colors.primary, fontWeight: '700' }]}>{name}</ScaledText>
+                    </TouchableOpacity>
                   );
                 });
               })()}
+            </View>
+
+            {/* Daily detail — shows logs for selected day */}
+            {selectedDay !== null && (() => {
+              const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+              const dayLogs = logs.filter(log => {
+                const d = new Date(log.time);
+                return d.getDay?.() === selectedDay;
+              });
+              return (
+                <View style={styles.dayDetail}>
+                  <ScaledText style={styles.dayDetailTitle}>{dayNames[selectedDay]}</ScaledText>
+                  {dayLogs.length === 0 ? (
+                    <ScaledText style={styles.dayDetailEmpty}>No logs this day</ScaledText>
+                  ) : (
+                    dayLogs.map((log, i) => (
+                      <View key={i} style={styles.dayDetailRow}>
+                        <View style={[styles.dayDetailDot, { backgroundColor: riskColor(log.risk) }]} />
+                        <View style={{ flex: 1 }}>
+                          <ScaledText style={styles.dayDetailTime}>{log.time.split(' ').slice(1).join(' ')}</ScaledText>
+                          <ScaledText style={styles.dayDetailVenue}>{log.title}</ScaledText>
+                          <ScaledText style={styles.dayDetailInfo}>{log.detail} — {log.risk}% risk</ScaledText>
+                        </View>
+                      </View>
+                    ))
+                  )}
+                </View>
+              );
+            })()}
             </View>
           </View>
         )}
@@ -329,7 +366,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 8,
   },
-  insightIcon: { fontSize: 16, marginTop: 1 },
+  insightIcon: { fontSize: 18, marginTop: -1, color: '#426773' },
   insightText: {
     flex: 1,
     fontSize: 14,
@@ -347,6 +384,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#183844',
+  },
+  chartHint: {
+    fontSize: 11,
+    color: '#5d7b86',
+    marginTop: -6,
   },
   chartBars: {
     flexDirection: 'row',
@@ -370,6 +412,47 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#5d7b86',
     fontWeight: '500',
+  },
+  dayDetail: {
+    marginTop: 12,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(79,179,191,0.15)',
+    paddingTop: 12,
+  },
+  dayDetailTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#183844',
+  },
+  dayDetailEmpty: {
+    fontSize: 13,
+    color: '#7AABB5',
+    fontStyle: 'italic',
+  },
+  dayDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  dayDetailDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 5,
+  },
+  dayDetailTime: {
+    fontSize: 11,
+    color: '#5d7b86',
+  },
+  dayDetailVenue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#183844',
+  },
+  dayDetailInfo: {
+    fontSize: 12,
+    color: '#426773',
   },
 
   // Log entries
