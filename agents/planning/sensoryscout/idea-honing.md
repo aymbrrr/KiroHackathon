@@ -6,15 +6,14 @@ Running record of questions and answers during the requirements phase.
 
 ## Q1: Who is the primary user operating the app?
 
-**Question:** Who is the primary user operating the app in the moment — the person with sensory needs themselves, or a caregiver/support person?
+**Question:** Who is the primary user operating the app in the moment — the person with sensory needs themselves?
 
-**Answer:** Both. The app should support both modes.
+**Answer:** The person with sensory needs themselves. The app serves the user directly with an accessibility-focused UI (large targets, low-stimulation design, operable during sensory overload).
 
 **Implications:**
-- Need two distinct UI modes: a "Self" mode (low-stimulation, large targets, minimal text, operable during sensory overload) and a "Support" mode (more information-dense, detailed rating flow, caregiver can manage profiles for multiple people)
-- Onboarding should ask "Who are you using this for?" and set the mode accordingly
-- Sensory budget warnings need to be configurable — the person themselves may want a subtle haptic, a caregiver may want a visible banner
-- Profile system needs to support multiple profiles under one account (caregiver managing profiles for a child + themselves)
+- Single UI mode optimized for the person with sensory needs — large text, high contrast, minimal cognitive load
+- Onboarding focuses on the user's own sensory profile and preferences
+- Sensory budget warnings default to subtle haptic alerts, configurable in settings
 
 ---
 
@@ -49,7 +48,7 @@ Running record of questions and answers during the requirements phase.
 - Supabase Auth for account management (email/password + social login via Google/Apple — both supported natively in Expo)
 - `user_id` is stored internally on ratings/measurements for moderation and abuse prevention, but is **never exposed** to other users
 - No usernames, no public profiles, no social graph — the app is a tool, not a social network
-- Caregiver mode: one account can hold multiple sensory profiles (e.g., "My profile", "Jamie's profile") — profiles are private to the account
+- One account holds the user's sensory profile — profile is private to the account
 - Ratings display as "A Sensly user" or just aggregate scores — no attribution
 - This also simplifies GDPR/COPPA compliance: no PII is ever public-facing
 - Supabase Row Level Security (RLS) enforces this at the DB layer — users can only read/write their own profile rows, but can read all venue/rating aggregates
@@ -127,7 +126,6 @@ Running record of questions and answers during the requirements phase.
 ### A1: Navigation
 **Answer:** Tab-based navigation (bottom tab bar)
 - 4 tabs: Map, Search, Followed, Profile
-- Self mode simplifies each tab's content, does not change navigation structure
 - Built with React Navigation v6 (expo-router or @react-navigation/bottom-tabs)
 
 ### A2: State Management

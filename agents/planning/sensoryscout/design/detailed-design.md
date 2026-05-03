@@ -21,7 +21,7 @@
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │                    Zustand Stores                         │   │
 │  │  authStore  profileStore  venueStore  queueStore          │   │
-│  │  settingsStore (accessibility, language, UI mode)         │   │
+│  │  settingsStore (accessibility, language)                   │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │                                                                  │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────────┐   │
@@ -77,8 +77,7 @@ RootNavigator
 │   ├── WelcomeScreen
 │   ├── SignInScreen
 │   ├── SignUpScreen
-│   └── OnboardingScreen (first launch: mode select, profile setup)
-│       ├── OnboardingModeScreen       — Self / Support toggle
+│   └── OnboardingScreen (first launch: profile setup)
 │       ├── OnboardingTriggersScreen   — chip-based trigger selector (sounds, smells, lighting types)
 │       ├── OnboardingThresholdScreen  — noise comfort slider (40–90 dB)
 │       ├── OnboardingHealthScreen     — opt-in HealthKit / Health Connect
@@ -119,15 +118,8 @@ RootNavigator
         └── AccountScreen (auth, sign out, delete account)
 ```
 
-### Self mode vs Support mode
-Both modes use the same tab structure. The `settingsStore.uiMode` value (`'self' | 'support'`) controls:
-- Font sizes (Self: larger base size, minimum 18sp)
-- Information density (Self: one key stat prominent, Support: full radar chart)
-- Rating flow steps (Self: 3 steps max, Support: full 5-dimension flow)
-- Tab labels (Self: icon-only tabs, Support: icon + label)
-- Sensory budget alert style (Self: haptic only, Support: haptic + banner)
-- Daily check-in (Self: always shown on open, Support: optional)
-- Journal tab (Self: simplified "how was today?" view, Support: full analytics)
+### Navigation notes
+The app uses a single tab structure. The UI is optimized for accessibility with large text, high contrast, and minimal cognitive load.
 
 ---
 
@@ -189,7 +181,7 @@ src/
 │   ├── venueStore.ts             # venue cache, nearby venues, followed, familiar places
 │   ├── queueStore.ts             # offline rating queue, sync status
 │   ├── companionStore.ts         # companion session state, Realtime channel
-│   └── settingsStore.ts          # uiMode, language, accessibility prefs
+│   └── settingsStore.ts          # language, accessibility prefs
 ├── hooks/
 │   ├── useAudioMeter.ts          # expo-av mic → dBFS → dB SPL
 │   ├── useGeolocation.ts         # expo-location watchPosition
@@ -666,11 +658,9 @@ interface AuthStore {
   // Restored on app launch via secureStorage.get('supabase_session')
 }
 interface SettingsStore {
-  uiMode: 'self' | 'support';
   language: string;                          // BCP 47 tag e.g. 'en', 'es'
   colorBlindMode: 'none' | 'deuteranopia' | 'protanopia' | 'tritanopia';
   dyslexiaMode: boolean;
-  setUiMode: (mode: 'self' | 'support') => void;
   setLanguage: (lang: string) => void;
   setColorBlindMode: (mode: string) => void;
   setDyslexiaMode: (enabled: boolean) => void;
@@ -747,26 +737,6 @@ interface CompanionStore {
 
 ---
 
-## 7. Self Mode vs Support Mode — UI Differences
-
-| Element | Self Mode | Support Mode |
-|---|---|---|
-| Base font size | 20sp | 16sp |
-| Tab bar | Icons only | Icons + labels |
-| Map pin tap | Full-screen venue card, 1 key stat | Bottom sheet with radar chart |
-| Rating flow | 3 steps (noise → lighting → done) | 5 steps (all dimensions) |
-| Venue detail | Large score, simple label | Full radar, time heatmap, comments |
-| Sensory budget alert | Haptic pulse only | Haptic + top banner |
-| Onboarding | Minimal (3 screens) | Full (5 screens with profile setup) |
-| Color scheme | Higher contrast, muted palette | Standard palette |
-| Daily check-in | Always shown on app open | Optional, can be dismissed |
-| Journal tab | "How was today?" simple entry | Full weekly insights + analytics |
-| Familiar places | Prominent at top of Followed tab | Section within Followed tab |
-
-Mode is toggled in Profile → Settings → "Who is using this app?" and persists via settingsStore.
-
----
-
 ## 8. Sensory Score System
 
 ### Noise → Score mapping
@@ -803,11 +773,10 @@ See Section 16.2 for the full colorblind-safe rationale and hex values.
 
 ### 9.1 Richer Onboarding — Trigger Preference Builder
 
-Onboarding expands from a single noise slider to a 6-screen flow:
+Onboarding expands from a single noise slider to a 5-screen flow:
 
 ```
-Screen 1: Mode select (Self / Support)
-Screen 2: Diagnosis tags — OPTIONAL, clearly marked as such
+Screen 1: Diagnosis tags — OPTIONAL, clearly marked as such
   Header: "Do you have any diagnoses you'd like to share? (completely optional)"
   Subtext: "This helps us set better starting defaults. It's private, never shared,
             and you can remove it any time."
@@ -818,7 +787,7 @@ Screen 2: Diagnosis tags — OPTIONAL, clearly marked as such
   If any chip selected → show explicit consent checkbox:
     "I understand this is optional health information stored privately on my account"
     → sets diagnosis_consent = true before any tags are saved
-Screen 3: Trigger chips — user taps any that apply
+Screen 2: Trigger chips — user taps any that apply
   Categories: Sound | Lighting | Smell | Texture | Unpredictability
   Examples per category (from constants/triggerOptions.ts):
     Sound:           "Loud music", "Crowds talking", "Sirens", "High-pitched sounds", "Sudden noises"
@@ -827,10 +796,10 @@ Screen 3: Trigger chips — user taps any that apply
     Texture:         "Certain fabrics", "Sticky surfaces"
     Unpredictability:"Unexpected changes", "Loud announcements", "Busy visual environments"
   If diagnosis tags were selected, relevant triggers are pre-checked (e.g. autism → fluorescent lights)
-Screen 4: Noise comfort threshold slider (40–90 dB) with live label
+Screen 3: Noise comfort threshold slider (40–90 dB) with live label
   If diagnosis tags selected, slider pre-fills to research-backed default (see Section 16.8)
-Screen 5: Health integration opt-in
-Screen 6: Ready — "Your profile is set up"
+Screen 4: Health integration opt-in
+Screen 5: Ready — "Your profile is set up"
 ```
 
 Diagnosis tags are used only to:
@@ -849,7 +818,7 @@ A modal shown on app open (configurable frequency in settings):
 ```typescript
 // components/profile/DailyCheckIn.tsx
 // Shows: "How are you feeling today?"
-// Three quick options (large tap targets for Self mode):
+// Three quick options (large tap targets):
 //   🟢 Good day — use my normal settings
 //   🟡 Sensitive day — lower my thresholds by 10 dB
 //   🔴 Hard day — lower my thresholds by 20 dB + show Familiar Places first
@@ -1251,7 +1220,7 @@ These are small, specific design constraints applied throughout the app — not 
 - **No auto-playing anything** — no sounds, no videos, no carousels that advance without user input
 
 ### 16.2 Color & Contrast
-- **Minimum contrast ratio: 4.5:1** for all body text (WCAG AA); 7:1 target for Self mode (WCAG AAA)
+- **Minimum contrast ratio: 4.5:1** for all body text (WCAG AA); 7:1 target (WCAG AAA)
 - **Never use color as the only signal** — every status indicator (venue pin, score chip, alert) must also use shape, icon, or text label. Covers deuteranopia (~6% of men) and protanopia (~1% of men)
 - **Avoid red/green as the primary signal pair** — the most common color blindness type (deuteranopia) makes these indistinguishable. Use blue/orange as the safe alternative
 - **Venue pin color system (colorblind-safe)**:
@@ -1263,7 +1232,7 @@ These are small, specific design constraints applied throughout the app — not 
 - **No pure white backgrounds** — use off-white `#F8F6F2` (warm neutral) to reduce glare-induced eye strain for photosensitive users
 
 ### 16.3 Typography
-- **Minimum body font size: 16sp** (Support mode), **20sp** (Self mode)
+- **Minimum body font size: 18sp** — optimized for accessibility
 - **Line height: 1.5×** font size minimum — tight line spacing is a primary dyslexia barrier
 - **Left-aligned text only** — never justified. Justified text creates uneven word spacing that disrupts reading flow for dyslexic users
 - **No all-caps text** — reduces readability for dyslexic users and reads as shouting
@@ -1292,7 +1261,7 @@ Research basis: Trauma-informed design ([UXPA Magazine](https://uxpamagazine.org
 - **Progress always visible** — step indicators show "Step 2 of 3" in the rating wizard
 - **Auto-save everything** — partial ratings saved to local state immediately; user returns to where they left off
 - **Forgiving UI** — 10-second "Undo" snackbar after rating submission. No irreversible actions without confirmation
-- **Chunked information** — Self mode shows one stat prominently with "See more" to expand. Never a wall of data
+- **Chunked information** — show one stat prominently with "See more" to expand. Never a wall of data
 
 ### 16.7 Lighting Scale — Research-Backed Descriptions
 
@@ -1582,7 +1551,7 @@ Before splitting, run the full SQL schema from Section 4 in Supabase together. T
 
 | File | What to build |
 |---|---|
-| `stores/settingsStore.ts` | `uiMode` ('self'\|'support'), `language`, `colorBlindMode`, `dyslexiaMode` — persisted via Zustand + AsyncStorage |
+| `stores/settingsStore.ts` | `language`, `colorBlindMode`, `dyslexiaMode` — persisted via Zustand + AsyncStorage |
 | `stores/profileStore.ts` | Profiles CRUD against Supabase `profiles` table, `activeProfileId`, `dailyThresholdOverride`, `effectiveNoiseThreshold` (derived: override ?? profile.noise_threshold) |
 | `hooks/useHealthData.ts` | Request HealthKit (iOS) / Health Connect (Android) permission, read most recent heart rate sample — returns `{ heartRate: number \| null }` |
 
@@ -1627,7 +1596,7 @@ Before splitting, run the full SQL schema from Section 4 in Supabase together. T
 ---
 
 **Delivers (in order of completion):**
-1. After Phase 1: sensory profiles work, map filters by threshold, Self/Support mode switches
+1. After Phase 1: sensory profiles work, map filters by threshold
 2. After Phase 2: daily check-in, morning briefing, voice logging in rating flow
 3. After Phase 3: proactive venue warnings, weekly journal insights
 4. After Phase 4: companion mode, push notifications for venue follows

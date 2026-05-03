@@ -7,9 +7,9 @@
 
 ## What the Designer Built
 
-A full 14-screen React web prototype (Vite + React + Tailwind + shadcn) simulating a mobile phone frame.
+A full 13-screen React web prototype (Vite + React + Tailwind + shadcn) simulating a mobile phone frame.
 
-### Pages (14 screens)
+### Pages (13 screens)
 | Page | File | What it shows |
 |---|---|---|
 | Welcome | `Welcome.tsx` | Splash with axolotl |
@@ -23,7 +23,6 @@ A full 14-screen React web prototype (Vite + React + Tailwind + shadcn) simulati
 | Reports | `Reports.tsx` | Summary reports |
 | Interventions | `Interventions.tsx` | Intervention library |
 | Learn | `Learn.tsx` | Educational content |
-| Care Team | `CareTeam.tsx` | Caregiver sharing |
 | Settings | `Settings.tsx` | App settings |
 | More | `More.tsx` | Navigation overflow |
 

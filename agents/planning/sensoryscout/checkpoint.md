@@ -8,16 +8,14 @@
 
 1. **Crowdsourced sensory venue map** — users contribute ratings on noise, lighting, crowding, smell, and predictability for real-world venues
 2. **Auto-noise measurement** — phone microphone measures ambient dB automatically during a rating session; manual override available
-3. **Dual user modes** — "Self" mode (low-stimulation UI, large targets, minimal text for use during sensory overload) and "Support" mode (information-dense, caregiver managing profiles for others)
-4. **Multiple sensory profiles per account** — one account can hold profiles for multiple people (e.g., caregiver + child)
-5. **Account required, contributions anonymous** — users must sign in, but all ratings/measurements/comments are anonymous to other users; `user_id` stored internally for moderation only
-6. **Native iOS + Android app** — built with React Native (Expo); desktop is read-only/not a priority
-7. **Offline-first** — ratings and measurements queue locally when offline, sync when connectivity returns
-8. **Multi-language + localization** — expo-localization + react-i18next; RTL support; English + at least one additional language at launch
-9. **In-app accessibility modes** — color blindness filters (4 types), dyslexia-friendly mode (OpenDyslexic font, spacing), all UI meets WCAG 2.1 AA
-10. **Health app integration (opt-in)** — read heart rate / stress level from Apple HealthKit (iOS) or Google Health Connect (Android) to optionally attach as context to a rating
-11. **Social features** — anonymous comments on venues, follow a venue for push notifications on new ratings, share venue via deep link / native share sheet
-12. **Zero-cost API stack** — OpenStreetMap, Nominatim, Overpass API, Supabase free tier; no paid APIs required
+3. **Account required, contributions anonymous** — users must sign in, but all ratings/measurements/comments are anonymous to other users; `user_id` stored internally for moderation only
+4. **Native iOS + Android app** — built with React Native (Expo); desktop is read-only/not a priority
+5. **Offline-first** — ratings and measurements queue locally when offline, sync when connectivity returns
+6. **Multi-language + localization** — expo-localization + react-i18next; RTL support; English + at least one additional language at launch
+7. **In-app accessibility modes** — color blindness filters (4 types), dyslexia-friendly mode (OpenDyslexic font, spacing), all UI meets WCAG 2.1 AA
+8. **Health app integration (opt-in)** — read heart rate / stress level from Apple HealthKit (iOS) or Google Health Connect (Android) to optionally attach as context to a rating
+9. **Social features** — anonymous comments on venues, follow a venue for push notifications on new ratings, share venue via deep link / native share sheet
+10. **Zero-cost API stack** — OpenStreetMap, Nominatim, Overpass API, Supabase free tier; no paid APIs required
 
 ---
 

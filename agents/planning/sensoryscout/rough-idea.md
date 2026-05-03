@@ -15,7 +15,6 @@ A crowdsourced sensory environment map that uses your phone's microphone to auto
 
 ## Target Users
 - Autistic individuals, people with ADHD, PTSD, sensory processing disorder, anxiety, migraine
-- Caregivers and support persons managing sensory needs for others
 - Estimated 300M+ people worldwide who are neurodivergent
 
 ---
@@ -49,21 +48,16 @@ The app learns your patterns over time and warns you proactively.
 ### Rating Flow
 - Step wizard: auto-sense noise → lighting → crowding → smell → predictability → notes
 - Voice logging: speak notes while walking, transcribed on-device
-- Self mode: 3 steps only (noise, lighting, crowding)
 - Offline-first: ratings queue in SQLite when no connection, sync on reconnect
 
 ### Sensory Profile
-- Multiple profiles per account (e.g. "My profile", "Jamie's profile")
+- Personal sensory profile per account
 - Optional self-reported diagnosis tags (autism, ADHD, PTSD, migraine, SPD, anxiety, OCD, dyslexia)
   - GDPR Article 9 special category data — explicit consent required, never shared
   - Pre-fills research-backed noise thresholds: autism/migraine = 55 dB, PTSD/anxiety = 60 dB, ADHD/general = 65 dB
 - Trigger preferences: sound, lighting, smell, texture, unpredictability chips
 - Daily check-in: "How are you today?" temporarily adjusts thresholds for the day
 - Familiar places: mark safe venues, pinned for hard days
-
-### Two UI Modes
-- **Self mode**: large text (20sp), icon-only tabs, 3-step rating, haptic-only alerts, high contrast
-- **Support mode**: full information density, radar charts, 5-step rating, haptic + banner alerts
 
 ### Social & Sharing
 - Anonymous comments on venues (moderated via Edge Function)
@@ -81,7 +75,7 @@ The app learns your patterns over time and warns you proactively.
 ### Accessibility (in-app)
 - Color blindness filters: deuteranopia, protanopia, tritanopia (CSS color matrix)
 - Dyslexia mode: OpenDyslexic font, 1.5× line height, left-aligned, +0.5px letter spacing
-- All UI meets WCAG 2.1 AA (4.5:1 contrast minimum); Self mode targets AAA (7:1)
+- All UI meets WCAG 2.1 AA (4.5:1 contrast minimum); targets AAA (7:1)
 - Reduce motion support, no looping animations, 200ms animation cap
 
 ### Health Integration (opt-in)
@@ -159,7 +153,7 @@ The app learns your patterns over time and warns you proactively.
 | 7 | ✅ Done | Sensory profile — `ProfileScreen`, `ProfileEditScreen`, `SensoryBudgetBanner`, 4-tab nav |
 | UI-A | ✅ Done | Dashboard (Home tab, live sensors + risk score + axolotl), Calm screen (4-phase), `useMotionSensor`, navigation restructured |
 | UI-C | ✅ Done | Full visual pass — `AxolotlSvg` (5 moods, react-native-svg), teal palette, frosted glass, pill buttons, kelp bg, Figma design system on all screens |
-| Accessibility | ✅ Done | `AccessibilitySettingsScreen` (color blindness filters, dyslexia mode, high contrast, reduce motion, text size), `AccessibilityWrapper` (native ColorMatrix), caregiver mode removed |
+| Accessibility | ✅ Done | `AccessibilitySettingsScreen` (color blindness filters, dyslexia mode, high contrast, reduce motion, text size), `AccessibilityWrapper` (native ColorMatrix) |
 
 ## What's currently in the app (full feature list)
 
@@ -169,7 +163,7 @@ The app learns your patterns over time and warns you proactively.
 - **Dashboard (Home)** — live dB + motion sparkline cards, risk score, axolotl reacts to risk, kelp scene, "Reset" → Calm
 - **Map** — GPS venue pins (blue circle / orange square / red triangle), frosted glass bottom sheet, "Full details" + "Rate"
 - **Calm** — breathing circle → tool picker → sensory reset with 2-min timer → "You did it" success
-- **Profile** — Self/Support mode toggle, sensory preferences, sign out
+- **Profile** — sensory preferences, sign out
 - **Profile Edit** — noise threshold slider (30–90 dB), lighting preference, trigger chips, saves to Supabase
 - **AutoSense** — 30s mic measurement, live dB gauge, countdown, "Done early"
 - **Manual Rating** — 6 sliders (lighting, crowding, smell, predictability, temperature, texture), notes
@@ -179,7 +173,7 @@ The app learns your patterns over time and warns you proactively.
 ### Components
 - `AxolotlSvg` — real Figma mascot, 5 moods, idle bob animation, scales to any size
 - `DbGauge` — animated SVG arc, teal/amber/coral colors
-- `SensoryRadar` — custom SVG 5-axis radar (3-axis in Self mode)
+- `SensoryRadar` — custom SVG 5-axis radar
 - `TimeHeatmap` — day × time noise grid
 - `SensorySlider` — frosted glass option cards
 - `VenuePin` — colorblind-safe markers with shape redundancy

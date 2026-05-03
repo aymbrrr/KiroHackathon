@@ -320,10 +320,6 @@ Child sees visual timer counting down to favorite activity. No meltdown during t
    - Sorted by what's worked before
    - Quick access during crisis
 
-4. **Caregiver Sharing**
-   - Send pattern insights to teacher/therapist
-   - "Heads up: rough night, needs extra support today"
-
 **The Magic Moment**:
 App alerts parent: "Meltdown risk: high noise + late snack". Parent gives sensory break. Meltdown prevented. Data shows it working.
 
