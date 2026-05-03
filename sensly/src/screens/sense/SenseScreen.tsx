@@ -8,7 +8,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  View, StyleSheet, TouchableOpacity, SafeAreaView, Animated,
+  View, StyleSheet, TouchableOpacity, SafeAreaView, Animated, Image,
 } from 'react-native';
 import { colors, typography, spacing } from '../../constants/theme';
 import { useAudioMeter, MeasurementResult } from '../../hooks/useAudioMeter';
@@ -16,6 +16,9 @@ import { dbToLabel, dbToLevel } from '../../lib/sensoryUtils';
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import { ScaledText } from '../../components/shared/ScaledText';
 import { KelpBackground } from '../../components/shared/KelpBackground';
+
+// @ts-ignore
+const micIcon = require('../../../assets/micIcon.png');
 
 const CAPTURE_DURATION_MS = 5_000;
 
@@ -130,8 +133,17 @@ export function SenseScreen() {
           >
             <AxolotlSvg mood={db > 70 ? 'stressed' : db > 55 ? 'thinking' : 'happy'} size={200} animate={false} />
           </Animated.View>
-          <ScaledText style={styles.liveDb}>{db} dB</ScaledText>
-          <ScaledText style={styles.liveLabel}>{dbToLabel(db)}</ScaledText>
+          {/* Mic image behind the dB number — takes up middle 1/3 of screen */}
+          <View style={styles.dbContainer}>
+            <Image
+              source={micIcon}
+              style={styles.micBg}
+              resizeMode="contain"
+              pointerEvents="none"
+            />
+            <ScaledText style={styles.liveDb}>{db} dB</ScaledText>
+            <ScaledText style={styles.liveLabel}>{dbToLabel(db)}</ScaledText>
+          </View>
           <ScaledText style={styles.listeningText}>Listening...</ScaledText>
         </View>
       )}
@@ -225,6 +237,19 @@ const styles = StyleSheet.create({
   liveDb: { ...typography.heading1, color: colors.textPrimary, fontSize: 48 },
   liveLabel: { ...typography.body, color: colors.textSecondary, fontSize: 18 },
   listeningText: { ...typography.bodySm, color: colors.textMuted },
+  // Mic background container
+  dbContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: 200,
+  },
+  micBg: {
+    position: 'absolute',
+    width: 93,   // 200 * (1170/2532) — maintains aspect ratio at 200px height
+    height: 200,
+    opacity: 0.18,
+  },
 
   // Result
   resultBadge: {
