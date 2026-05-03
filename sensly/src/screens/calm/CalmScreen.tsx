@@ -19,6 +19,7 @@ import { colors, spacing, typography } from '../../constants/theme';
 import { AppTabParamList } from '../../navigation/types';
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import { ScaledText } from '../../components/shared/ScaledText';
+import { useProfileStore } from '../../stores/profileStore';
 
 // ─── Breathing phases ─────────────────────────────────────────────────────────
 const BREATH_PHASES = [
@@ -27,13 +28,48 @@ const BREATH_PHASES = [
   { label: 'Breathe out…', durationS: 6,  scale: 1.0  },
 ];
 
-// ─── Calming tools ────────────────────────────────────────────────────────────
-const TOOLS = [
-  { id: 'quiet',      emoji: '🏠', title: 'Quiet space',   sub: 'Move to a calm environment' },
-  { id: 'headphones', emoji: '🎧', title: 'Headphones',    sub: 'Reduce overwhelming sounds' },
-  { id: 'breathe',   emoji: '🌬️', title: 'Deep breathing', sub: 'Slow, calm breaths to reset' },
-  { id: 'snack',     emoji: '🧸', title: 'Comfort item',   sub: 'Proprioceptive input' },
-  { id: 'eyes',      emoji: '👁️', title: 'Close eyes',     sub: 'Take a visual break' },
+// ─── Calming tools — organized by sensory modality ────────────────────────────
+// Research basis: somatic regulation strategies for neurodivergent adults
+// Sources: simplypsychology.org, neurosparkhealth.com, floaatcenter.com, myndset-therapeutics.com
+interface CalmTool {
+  id: string;
+  emoji: string;
+  title: string;
+  sub: string;
+  categories: string[];  // which trigger_categories this helps with
+  diagnoses: string[];   // which diagnoses this is especially good for (empty = universal)
+}
+
+const ALL_TOOLS: CalmTool[] = [
+  // Auditory
+  { id: 'quiet',       emoji: '🏠', title: 'Quiet space',        sub: 'Move to a calm environment',           categories: ['sound', 'unpredictability'], diagnoses: [] },
+  { id: 'headphones',  emoji: '🎧', title: 'Headphones',         sub: 'Block overwhelming sounds',            categories: ['sound'],                     diagnoses: ['autism', 'spd', 'migraine'] },
+  { id: 'whitenoise',  emoji: '🌊', title: 'White noise',        sub: 'Mask unpredictable sounds',            categories: ['sound', 'unpredictability'], diagnoses: ['adhd'] },
+
+  // Visual
+  { id: 'eyes',        emoji: '👁️', title: 'Close eyes',         sub: 'Take a visual break',                 categories: ['lighting'],                  diagnoses: [] },
+  { id: 'sunglasses',  emoji: '🕶️', title: 'Sunglasses',         sub: 'Reduce harsh light',                  categories: ['lighting'],                  diagnoses: ['autism', 'migraine'] },
+  { id: 'dimlight',    emoji: '🌙', title: 'Find dim lighting',  sub: 'Move away from fluorescent lights',    categories: ['lighting'],                  diagnoses: ['autism', 'spd'] },
+
+  // Breathing / regulation
+  { id: 'breathe',     emoji: '🌬️', title: 'Deep breathing',     sub: 'Slow, calm breaths to reset',         categories: [],                            diagnoses: [] },
+  { id: 'boxbreath',   emoji: '⬜', title: 'Box breathing',      sub: '4 in, 4 hold, 4 out, 4 hold',         categories: [],                            diagnoses: ['anxiety', 'ptsd'] },
+
+  // Proprioceptive / tactile
+  { id: 'pressure',    emoji: '🤗', title: 'Deep pressure',      sub: 'Firm hug, weighted item, or wall push', categories: ['texture'],                 diagnoses: ['autism', 'spd'] },
+  { id: 'fidget',      emoji: '🧸', title: 'Fidget / comfort item', sub: 'Tactile grounding',                categories: ['texture'],                   diagnoses: ['adhd', 'anxiety'] },
+  { id: 'chewy',       emoji: '🍬', title: 'Chewy snack',        sub: 'Oral proprioceptive input',            categories: [],                            diagnoses: ['autism', 'spd'] },
+
+  // Movement (ADHD-specific)
+  { id: 'movement',    emoji: '🚶', title: 'Walk or stretch',    sub: 'Gentle movement to discharge energy',  categories: [],                            diagnoses: ['adhd'] },
+  { id: 'wallpush',    emoji: '🧱', title: 'Wall push-ups',      sub: 'Heavy work to regulate',               categories: [],                            diagnoses: ['adhd', 'spd'] },
+
+  // Grounding (PTSD-specific)
+  { id: 'grounding',   emoji: '🖐️', title: '5-4-3-2-1 grounding', sub: '5 things you see, 4 hear, 3 touch...', categories: ['unpredictability'],        diagnoses: ['ptsd', 'anxiety'] },
+  { id: 'coldwater',   emoji: '💧', title: 'Cold water on wrists', sub: 'Vagal nerve reset',                  categories: [],                            diagnoses: ['ptsd', 'anxiety'] },
+
+  // Olfactory
+  { id: 'freshair',    emoji: '🌿', title: 'Fresh air',          sub: 'Step outside or open a window',        categories: ['smell'],                     diagnoses: [] },
 ];
 
 // ─── Phase 0: Breathing ───────────────────────────────────────────────────────
@@ -94,6 +130,34 @@ function BreathingPhase({ onNext }: { onNext: () => void }) {
 // ─── Phase 1: Tool picker ─────────────────────────────────────────────────────
 function ToolPickerPhase({ onNext }: { onNext: (ids: string[]) => void }) {
   const [selected, setSelected] = useState<string[]>([]);
+  const { profile } = useProfileStore();
+
+  // Personalize tools based on user's trigger categories and diagnosis
+  const userCategories = (profile?.trigger_categories as string[]) ?? [];
+  const userDiagnoses = (profile?.diagnosis_tags as string[]) ?? [];
+
+  // Score each tool: higher = more relevant to this user
+  const scoredTools = ALL_TOOLS.map(tool => {
+    let score = 0;
+    // Universal tools (no specific category/diagnosis) get base score
+    if (tool.categories.length === 0 && tool.diagnoses.length === 0) score = 1;
+    // Match trigger categories
+    for (const cat of tool.categories) {
+      if (userCategories.includes(cat)) score += 3;
+    }
+    // Match diagnoses
+    for (const diag of tool.diagnoses) {
+      if (userDiagnoses.includes(diag)) score += 2;
+    }
+    // Universal tools that match nothing still show but lower
+    if (tool.diagnoses.length === 0) score += 1;
+    return { ...tool, score };
+  });
+
+  // Sort by relevance, take top 8
+  const TOOLS = scoredTools
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8);
 
   const toggle = (id: string) =>
     setSelected((prev) =>
