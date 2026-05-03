@@ -14,6 +14,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAudioMeter } from '../../hooks/useAudioMeter';
 import { useMotionSensor } from '../../hooks/useMotionSensor';
+import { useVenueStore } from '../../stores/venueStore';
+import { useGeolocation } from '../../hooks/useGeolocation';
 import { computeRiskScore, riskToMood, riskToLevel, dbToLabel } from '../../lib/sensoryUtils';
 import { colors, spacing, typography, frostedCard } from '../../constants/theme';
 import { AppRootParamList } from '../../navigation/types';
@@ -120,13 +122,39 @@ export function DashboardScreen() {
   const soundLabel = db > 75 ? 'loud' : db > 55 ? 'moderate' : 'quiet';
   const motionLabel = motionLevel > 55 ? 'active' : 'steady';
 
-  // Light estimate — approximate lux from time of day (AmbientLightSensor has poor support)
+  // Light — use crowdsourced avg_lighting from nearest venue if available,
+  // otherwise estimate from time of day (outdoor ambient)
+  const { nearbyVenues } = useVenueStore();
+  const { position } = useGeolocation();
+
+  const getNearestVenueLight = (): number | null => {
+    if (!position || nearbyVenues.length === 0) return null;
+    // Find closest venue with lighting data
+    let closest: { dist: number; lighting: number } | null = null;
+    for (const v of nearbyVenues) {
+      if (v.avg_lighting == null) continue;
+      const dLat = position.lat - v.lat;
+      const dLng = position.lng - v.lng;
+      const dist = Math.sqrt(dLat * dLat + dLng * dLng) * 111; // rough km
+      if (dist < 0.2 && (!closest || dist < closest.dist)) {
+        // Convert 1-5 scale to approximate lux: 1=30, 2=100, 3=250, 4=400, 5=600
+        const luxMap = [0, 30, 100, 250, 400, 600];
+        closest = { dist, lighting: luxMap[Math.round(v.avg_lighting)] ?? 250 };
+      }
+    }
+    return closest?.lighting ?? null;
+  };
+
+  const venueLight = getNearestVenueLight();
   const hour = new Date().getHours();
-  const lightEstimate = hour >= 6 && hour < 9 ? 200
+  const outdoorEstimate = hour >= 6 && hour < 9 ? 200
     : hour >= 9 && hour < 17 ? 450
     : hour >= 17 && hour < 20 ? 150
     : 30;
-  const lightLabel = lightEstimate > 300 ? 'bright' : lightEstimate > 100 ? 'ambient' : 'dim';
+  const lightEstimate = venueLight ?? outdoorEstimate;
+  const lightLabel = venueLight
+    ? (lightEstimate > 300 ? 'bright (reported)' : lightEstimate > 100 ? 'ambient (reported)' : 'dim (reported)')
+    : (lightEstimate > 300 ? 'bright' : lightEstimate > 100 ? 'ambient' : 'dim');
   const lightHistory = useRef<number[]>(Array(12).fill(lightEstimate));
 
   const navigateToSense = () => {
