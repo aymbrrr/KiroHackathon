@@ -11,12 +11,17 @@ import { registerRootComponent } from 'expo';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { AccessibilityProvider } from './src/contexts/AccessibilityContext';
 
 function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <RootNavigator />
+        {/* AccessibilityProvider re-renders the tree when text size or
+            dyslexia mode changes, ensuring all ScaledText components update */}
+        <AccessibilityProvider>
+          <RootNavigator />
+        </AccessibilityProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

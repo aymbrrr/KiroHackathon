@@ -1,59 +1,39 @@
 /**
- * Profile screen — shows active profile, allows switching,
- * links to settings and profile edit.
+ * Profile screen — sensory preferences, accessibility settings, account.
+ * Accessibility settings are embedded inline (text size + dyslexia mode).
  */
 import React from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView,
+  View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
+  ScrollView, Switch,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, frostedCard } from '../../constants/theme';
 import { useAuthStore } from '../../stores/authStore';
-import { useSettingsStore } from '../../stores/settingsStore';
+import { useSettingsStore, TextSizeMode } from '../../stores/settingsStore';
 import { AppRootParamList } from '../../navigation/types';
+
+const TEXT_SIZE_OPTIONS: Array<{ value: TextSizeMode; label: string; preview: number }> = [
+  { value: 'normal', label: 'Normal',  preview: 16 },
+  { value: 'large',  label: 'Large',   preview: 20 },
+  { value: 'xlarge', label: 'X-Large', preview: 24 },
+];
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
 
 export function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppRootParamList>>();
   const { user, signOut } = useAuthStore();
-  const { uiMode, setUiMode } = useSettingsStore();
+  const {
+    dyslexiaMode, setDyslexiaMode,
+    textSizeMode, setTextSizeMode,
+  } = useSettingsStore();
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>Profile</Text>
-
-        {/* UI Mode toggle */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Who is using this app?</Text>
-          <View style={styles.modeRow}>
-            <TouchableOpacity
-              style={[styles.modeButton, uiMode === 'self' && styles.modeButtonActive]}
-              onPress={() => setUiMode('self')}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: uiMode === 'self' }}
-            >
-              <Text style={styles.modeIcon}>🧠</Text>
-              <Text style={[styles.modeLabel, uiMode === 'self' && styles.modeLabelActive]}>
-                Me
-              </Text>
-              <Text style={styles.modeDesc}>Large text, simple view</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.modeButton, uiMode === 'support' && styles.modeButtonActive]}
-              onPress={() => setUiMode('support')}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: uiMode === 'support' }}
-            >
-              <Text style={styles.modeIcon}>🤝</Text>
-              <Text style={[styles.modeLabel, uiMode === 'support' && styles.modeLabelActive]}>
-                Supporting someone
-              </Text>
-              <Text style={styles.modeDesc}>Full details, caregiver view</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
         {/* Sensory preferences */}
         <View style={styles.section}>
@@ -66,6 +46,56 @@ export function ProfileScreen() {
             <Text style={styles.menuRowText}>Edit noise threshold & triggers</Text>
             <Text style={styles.menuRowArrow}>›</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Accessibility — inline */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Accessibility</Text>
+
+          {/* Text size */}
+          <Text style={styles.subLabel}>Text size</Text>
+          <View style={styles.sizeRow}>
+            {TEXT_SIZE_OPTIONS.map((opt) => {
+              const selected = textSizeMode === opt.value;
+              return (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[frostedCard, styles.sizeOption, selected && styles.sizeOptionSelected]}
+                  onPress={() => setTextSizeMode(opt.value)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={opt.label}
+                >
+                  <Text style={[styles.sizeLabel, selected && styles.sizeLabelSelected]}>
+                    {opt.label}
+                  </Text>
+                  {/* Live preview of the font size */}
+                  <Text style={[styles.sizePreview, { fontSize: opt.preview }, selected && styles.sizeLabelSelected]}>
+                    Aa
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Dyslexia mode */}
+          <View style={[frostedCard, styles.toggleRow]}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.toggleLabel}>Dyslexia-friendly text</Text>
+              <Text style={styles.toggleDesc}>
+                Easier-to-read font with more spacing between letters.
+              </Text>
+            </View>
+            <Switch
+              value={dyslexiaMode}
+              onValueChange={setDyslexiaMode}
+              trackColor={{ false: colors.borderMuted, true: colors.primary }}
+              thumbColor="#fff"
+              accessibilityRole="switch"
+              accessibilityLabel="Dyslexia-friendly text"
+              accessibilityState={{ checked: dyslexiaMode }}
+            />
+          </View>
         </View>
 
         {/* Account */}
@@ -89,7 +119,7 @@ export function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, gap: spacing.xl },
+  content: { padding: spacing.lg, gap: spacing.xl, paddingBottom: spacing.xxl },
   heading: { ...typography.heading1, color: colors.textPrimary },
   section: { gap: spacing.sm },
   sectionTitle: {
@@ -99,22 +129,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.textSecondary,
   },
-  modeRow: { flexDirection: 'row', gap: spacing.sm },
-  modeButton: {
-    flex: 1,
-    ...frostedCard,
-    padding: spacing.md,
-    gap: 4,
-    alignItems: 'center',
+  subLabel: {
+    ...typography.bodySm,
+    color: colors.textSecondary,
+    fontWeight: '600',
+    marginBottom: 2,
   },
-  modeButtonActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryMuted,
-  },
-  modeIcon: { fontSize: 28 },
-  modeLabel: { ...typography.label, color: colors.textPrimary, textAlign: 'center' },
-  modeLabelActive: { color: colors.primary },
-  modeDesc: { ...typography.bodySm, color: colors.textMuted, textAlign: 'center', fontSize: 11 },
   menuRow: {
     ...frostedCard,
     padding: spacing.md,
@@ -127,4 +147,28 @@ const styles = StyleSheet.create({
   menuRowArrow: { ...typography.body, color: colors.textMuted, fontSize: 20 },
   signOutRow: { backgroundColor: '#FDECEA' },
   signOutText: { ...typography.body, color: colors.error, fontWeight: '600' },
+  // Text size
+  sizeRow: { flexDirection: 'row', gap: spacing.sm },
+  sizeOption: {
+    flex: 1,
+    padding: spacing.md,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  sizeOptionSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryMuted,
+  },
+  sizeLabel: { ...typography.label, color: colors.textPrimary, fontSize: 12 },
+  sizeLabelSelected: { color: colors.primary },
+  sizePreview: { color: colors.textMuted, fontWeight: '700' },
+  // Dyslexia toggle
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  toggleLabel: { ...typography.label, color: colors.textPrimary },
+  toggleDesc: { ...typography.bodySm, color: colors.textMuted, marginTop: 2, lineHeight: 18 },
 });
