@@ -198,6 +198,7 @@ export function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <KelpBackground>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -274,17 +275,18 @@ export function DashboardScreen() {
           <ScaledText style={styles.tapHint}>Tap for details →</ScaledText>
         </TouchableOpacity>
 
-        {/* Kelp scene */}
-        <View style={styles.kelpContainer}>
-          <Image source={kelpBg} style={styles.kelpImage} resizeMode="cover" />
-          <View style={styles.kelpOverlay}>
-            <View style={styles.kelpBadge}>
-              <ScaledText style={styles.kelpBadgeText}>Sensly is monitoring ✦</ScaledText>
-              <ScaledText style={styles.kelpBadgeSub}>Stay calm, we've got you</ScaledText>
-            </View>
-          </View>
-        </View>
+        {/* Reset / Calm button — always visible */}
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={() => navigation.navigate('Calm')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Open calm reset tools"
+        >
+          <ScaledText style={styles.resetButtonText}>🌊  Reset</ScaledText>
+        </TouchableOpacity>
       </ScrollView>
+      </KelpBackground>
     </SafeAreaView>
   );
 }
@@ -365,6 +367,24 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: spacing.sm,
   },
+  resetButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 30,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  resetButtonText: {
+    ...typography.label,
+    color: colors.textInverse,
+    fontSize: 17,
+  },
   // Kelp background image container
   kelpContainer: {
     height: 90,
@@ -378,20 +398,4 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  kelpOverlay: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    backgroundColor: 'rgba(216,240,250,0.5)',
-  },
-  kelpBadge: {
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 12,
-    padding: spacing.sm,
-    borderWidth: 1.5,
-    borderColor: 'rgba(35,88,105,0.2)',
-  },
-  kelpBadgeText: { ...typography.bodySm, color: colors.textPrimary, fontWeight: '600' },
-  kelpBadgeSub: { ...typography.bodySm, color: colors.textSecondary, fontSize: 10 },
 });

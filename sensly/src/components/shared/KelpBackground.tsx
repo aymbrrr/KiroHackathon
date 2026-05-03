@@ -15,7 +15,7 @@ interface KelpBackgroundProps {
   opacity?: number;
 }
 
-export function KelpBackground({ children, opacity = 0.18 }: KelpBackgroundProps) {
+export function KelpBackground({ children, opacity = 0.35 }: KelpBackgroundProps) {
   return (
     <View style={styles.container}>
       {/* Full-screen kelp background image */}
