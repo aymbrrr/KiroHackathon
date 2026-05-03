@@ -155,17 +155,32 @@ export function DashboardScreen() {
     : (lightEstimate > 300 ? 'bright' : lightEstimate > 100 ? 'ambient' : 'dim');
   const lightHistory = useRef<number[]>(Array(12).fill(lightEstimate));
 
-  // Temperature — use venue's reported temperature if nearby, otherwise outdoor estimate
+  // Temperature — real weather data from Open-Meteo (free, no API key)
+  // Falls back to indoor estimate if near an indoor venue
+  const [weatherTemp, setWeatherTemp] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!position) return;
+    // Open-Meteo free API — no key needed
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${position.lat}&longitude=${position.lng}&current=temperature_2m&temperature_unit=fahrenheit`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.current?.temperature_2m != null) {
+          setWeatherTemp(Math.round(data.current.temperature_2m));
+        }
+      })
+      .catch(() => {}); // Silently fail — use fallback
+  }, [position?.lat, position?.lng]);
+
   const getNearestVenueTemp = (): number | null => {
     if (!position || nearbyVenues.length === 0) return null;
     for (const v of nearbyVenues) {
-      // Check ratings table for temperature — for now use a heuristic from category
       const dLat = position.lat - v.lat;
       const dLng = position.lng - v.lng;
       const dist = Math.sqrt(dLat * dLat + dLng * dLng) * 111;
       if (dist < 0.2) {
-        // Indoor venues tend to be ~70°F, outdoor varies
-        if (v.category === 'park' || v.category === 'street') return null; // outdoor, use weather
+        if (v.category === 'park' || v.category === 'street') return null;
         return 70; // indoor default
       }
     }
@@ -173,14 +188,9 @@ export function DashboardScreen() {
   };
 
   const venueTemp = getNearestVenueTemp();
-  // Outdoor estimate based on time of day (SLO climate approximation)
-  const outdoorTemp = hour >= 6 && hour < 10 ? 58
-    : hour >= 10 && hour < 16 ? 72
-    : hour >= 16 && hour < 20 ? 65
-    : 55;
-  const tempEstimate = venueTemp ?? outdoorTemp;
+  const tempEstimate = venueTemp ?? weatherTemp ?? 65; // venue → weather API → fallback
   const isIndoor = venueTemp !== null;
-  const tempLabel = isIndoor ? 'indoor' : 'outside';
+  const tempLabel = isIndoor ? 'indoor' : (weatherTemp != null ? 'live' : 'outside');
   const tempHistory = useRef<number[]>(Array(12).fill(tempEstimate));
 
   const navigateToSense = () => {
