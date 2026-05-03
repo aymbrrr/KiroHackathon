@@ -97,12 +97,12 @@ export function DbGauge({ db, isListening, size = 200 }: DbGaugeProps) {
 
       {/* dB number overlay */}
       <View style={[styles.overlay, { width: size, height: size }]}>
-        <Text style={[styles.dbNumber, { color: isListening ? arcColor : colors.textMuted }]}>
-          {isListening ? db : '—'}
+        <Text style={[styles.dbNumber, { color: (isListening || db > 0) ? arcColor : colors.textMuted }]}>
+          {(isListening || db > 0) ? db : '—'}
         </Text>
         <Text style={styles.dbUnit}>dB</Text>
         <Text style={styles.dbLabel} numberOfLines={1}>
-          {isListening ? dbToLabel(db) : 'Tap to measure'}
+          {(isListening || db > 0) ? dbToLabel(db) : 'Tap to measure'}
         </Text>
       </View>
     </View>

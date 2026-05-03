@@ -70,23 +70,28 @@ export function useAudioMeter(): UseAudioMeterResult {
       playsInSilentModeIOS: true,
     });
 
-    const { recording } = await Audio.Recording.createAsync(
-      {
-        ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
-        isMeteringEnabled: true,
-      },
-      (status) => {
-        if (status.isRecording && status.metering !== undefined) {
-          const reading = clampDb(status.metering);
-          setDb(reading);
-          readingsRef.current.push(reading);
-        }
-      },
-      100 // update every 100ms
-    );
+    try {
+      const { recording } = await Audio.Recording.createAsync(
+        {
+          ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+          isMeteringEnabled: true,
+        },
+        (status) => {
+          if (status.isRecording && status.metering !== undefined) {
+            const reading = clampDb(status.metering);
+            setDb(reading);
+            readingsRef.current.push(reading);
+          }
+        },
+        100 // update every 100ms
+      );
 
-    recordingRef.current = recording;
-    setIsListening(true);
+      recordingRef.current = recording;
+      setIsListening(true);
+    } catch (e: any) {
+      setError(`Mic error: ${e.message ?? 'unknown'}. Try closing other apps using the mic.`);
+      setIsListening(false);
+    }
   }, []);
 
   const stop = useCallback(async (): Promise<MeasurementResult | null> => {
