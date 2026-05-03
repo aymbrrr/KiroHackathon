@@ -25,6 +25,7 @@ import { colors, spacing, typography, frostedCard } from '../../constants/theme'
 import { TRIGGER_OPTIONS } from '../../constants/sensoryScales';
 import { useProfileStore } from '../../stores/profileStore';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { useAuthStore } from '../../stores/authStore';
 import { ScaledText } from '../../components/shared/ScaledText';
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import { AppRootParamList } from '../../navigation/types';
@@ -49,6 +50,7 @@ export function OnboardingScreen() {
   const navigation = useNavigation<OnboardingNavProp>();
   const { saveProfile } = useProfileStore();
   const { setOnboardingComplete } = useSettingsStore();
+  const { user } = useAuthStore();
 
   const [step, setStep] = useState(0);
   const [noiseThreshold, setNoiseThreshold] = useState(65);
@@ -88,9 +90,9 @@ export function OnboardingScreen() {
     setStep(4);
   };
 
-  // Step 4 (tutorial) → mark complete and enter app
+  // Step 4 (tutorial) → mark complete for this user ID and enter app
   const handleFinish = () => {
-    setOnboardingComplete();
+    if (user?.id) setOnboardingComplete(user.id);
     navigation.replace('MainTabs');
   };
 

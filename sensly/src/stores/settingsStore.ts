@@ -5,6 +5,10 @@
  * _hasHydrated: tracks whether AsyncStorage rehydration is complete.
  * RootNavigator waits for this before mounting AppNavigator so that
  * initialRouteName is set from the correct persisted value, not the default.
+ *
+ * onboardingCompletedForUserId: stores the Supabase user ID that completed
+ * onboarding. On sign-in, RootNavigator compares the current user's ID to this
+ * value — if they differ (new account, different user), onboarding is shown again.
  */
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
@@ -19,14 +23,15 @@ interface SettingsState {
   language: string;
   colorBlindMode: ColorBlindMode;
   textSizeMode: TextSizeMode;
-  hasCompletedOnboarding: boolean;
+  // Which user ID has completed onboarding on this device (null = nobody has)
+  onboardingCompletedForUserId: string | null;
   _hasHydrated: boolean;
 
   setUiMode: (mode: UiMode) => void;
   setLanguage: (lang: string) => void;
   setColorBlindMode: (mode: ColorBlindMode) => void;
   setTextSizeMode: (mode: TextSizeMode) => void;
-  setOnboardingComplete: () => void;
+  setOnboardingComplete: (userId: string) => void;
   resetOnboarding: () => void;
   setHasHydrated: (v: boolean) => void;
 }
@@ -38,16 +43,15 @@ export const useSettingsStore = create<SettingsState>()(
       language: 'en',
       colorBlindMode: 'none',
       textSizeMode: 'normal',
-      hasCompletedOnboarding: false,
+      onboardingCompletedForUserId: null,
       _hasHydrated: false,
 
       setUiMode: (uiMode) => set({ uiMode }),
       setLanguage: (language) => set({ language }),
       setColorBlindMode: (colorBlindMode) => set({ colorBlindMode }),
       setTextSizeMode: (textSizeMode) => set({ textSizeMode }),
-      setOnboardingComplete: () => set({ hasCompletedOnboarding: true }),
-      // Called on sign-out so a new account on the same device sees onboarding
-      resetOnboarding: () => set({ hasCompletedOnboarding: false }),
+      setOnboardingComplete: (userId) => set({ onboardingCompletedForUserId: userId }),
+      resetOnboarding: () => set({ onboardingCompletedForUserId: null }),
       setHasHydrated: (v) => set({ _hasHydrated: v }),
     }),
     {
@@ -59,10 +63,9 @@ export const useSettingsStore = create<SettingsState>()(
         language: state.language,
         colorBlindMode: state.colorBlindMode,
         textSizeMode: state.textSizeMode,
-        hasCompletedOnboarding: state.hasCompletedOnboarding,
+        onboardingCompletedForUserId: state.onboardingCompletedForUserId,
       }),
       onRehydrateStorage: () => (state) => {
-        // Called once AsyncStorage has finished loading into the store
         state?.setHasHydrated(true);
       },
     }

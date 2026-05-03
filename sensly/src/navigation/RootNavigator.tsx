@@ -123,9 +123,7 @@ function RatingNavigator() {
 // ─── App root stack ───────────────────────────────────────────────────────────
 const AppRootStack = createNativeStackNavigator<AppRootParamList>();
 
-function AppNavigator() {
-  const { hasCompletedOnboarding } = useSettingsStore();
-
+function AppNavigator({ hasCompletedOnboarding }: { hasCompletedOnboarding: boolean }) {
   return (
     <AppRootStack.Navigator
       screenOptions={{ headerShown: false }}
@@ -155,18 +153,24 @@ function AppNavigator() {
 export function RootNavigator() {
   const { session, setSession } = useAuthStore();
   const { fetchProfile, clear: clearProfile } = useProfileStore();
-  const { hasCompletedOnboarding, _hasHydrated, resetOnboarding } = useSettingsStore();
+  const { onboardingCompletedForUserId, _hasHydrated, resetOnboarding } = useSettingsStore();
   const [isInitializing, setIsInitializing] = React.useState(true);
   const [showCheckIn, setShowCheckIn] = React.useState(false);
   const checkInShownRef = React.useRef(false);
+
+  // Onboarding is complete only if the stored user ID matches the current user.
+  // A new account (different user ID) always sees onboarding, even on the same device.
+  const hasCompletedOnboarding =
+    !!session?.user?.id && session.user.id === onboardingCompletedForUserId;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
         fetchProfile();
-        // Only show daily check-in once onboarding is complete
-        if (!checkInShownRef.current && hasCompletedOnboarding) {
+        // Only show daily check-in once onboarding is complete for this user
+        const alreadyDone = session.user.id === onboardingCompletedForUserId;
+        if (!checkInShownRef.current && alreadyDone) {
           checkInShownRef.current = true;
           setTimeout(() => setShowCheckIn(true), 1000);
         }
@@ -183,8 +187,6 @@ export function RootNavigator() {
           clearProfile();
           setShowCheckIn(false);
           checkInShownRef.current = false;
-          // Reset onboarding flag so a new account on the same device sees the wizard
-          resetOnboarding();
         }
       }
     );
@@ -192,9 +194,8 @@ export function RootNavigator() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Wait for AsyncStorage to finish rehydrating the settings store.
-  // Without this, initialRouteName in AppNavigator reads the default (false)
-  // before the persisted value loads — causing returning users to see onboarding.
+  // Wait for AsyncStorage rehydration before mounting AppNavigator.
+  // initialRouteName is only read once at mount — it must be correct on first render.
   if (isInitializing || !_hasHydrated) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
@@ -207,7 +208,7 @@ export function RootNavigator() {
     <NavigationContainer>
       {session ? (
         <>
-          <AppNavigator />
+          <AppNavigator hasCompletedOnboarding={hasCompletedOnboarding} />
           <DailyCheckIn
             visible={showCheckIn}
             onDismiss={() => setShowCheckIn(false)}
