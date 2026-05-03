@@ -65,7 +65,7 @@ export function AxolotlSvg({ mood = 'happy', size = 120, animate = true }: Axolo
     >
       <Image
         source={axolotlImage}
-        style={[styles.image, { width: size, height: size }]}
+        style={[styles.image, { width: size, height: size, marginLeft: size * 0.04 }]}
         resizeMode="contain"
       />
       {/* Mood tint overlay */}

@@ -15,14 +15,14 @@ interface KelpBackgroundProps {
   opacity?: number;
 }
 
-export function KelpBackground({ children, opacity = 0.3 }: KelpBackgroundProps) {
+export function KelpBackground({ children, opacity = 0.18 }: KelpBackgroundProps) {
   return (
     <View style={styles.container}>
       {/* Full-screen kelp background image */}
       <Image
         source={kelpBg}
         style={[styles.bgImage, { opacity }]}
-        resizeMode="cover"
+        resizeMode="contain"
         pointerEvents="none"
       />
 
@@ -39,10 +39,10 @@ const styles = StyleSheet.create({
   },
   bgImage: {
     position: 'absolute',
-    bottom: 0,
+    top: 0,
     left: 0,
     width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT * 0.45,
+    height: SCREEN_HEIGHT,
     zIndex: 0,
   },
 });

@@ -633,3 +633,148 @@ Person C: [A: Tokens 30m][B: Axolotl 45m][G: Kelp+Card 45m][G: Apply polish]─
 3. **`AxolotlSvg` is owned by C** — A and B use it read-only. If a new mood state is needed, ask C.
 4. **`App.tsx` is owned by C** — only for font loading. A and B don't touch it.
 5. **Restart with `npx expo start --clear`** after any `theme.ts` or font changes.
+
+---
+
+## Step J — Visual Polish: Tab Icons, Axolotl Centering, Background Image
+
+> Status: **planned, not yet implemented**
+> These are pure visual fixes — no logic changes, no new dependencies.
+
+---
+
+### Fix 1 — Bottom tab icons: make them bigger
+
+**Problem:** Tab bar icons are too small. Current size is `28px` (self mode) / `24px` (standard). They need to be larger and more prominent.
+
+**Location:** `sensly/src/navigation/RootNavigator.tsx` → `TabNavigator` function
+
+**Current code:**
+```typescript
+const iconSize = selfMode ? 32 : 28;
+// ...
+style={{ width: iconSize, height: iconSize, opacity: focused ? 1 : 0.5 }}
+```
+
+**Fix:** Increase both sizes. Also increase `tabBarStyle` height to give icons more breathing room.
+
+```typescript
+const iconSize = selfMode ? 38 : 32;  // was 32/28
+
+// In tabBarStyle:
+tabBarStyle: {
+  backgroundColor: 'rgba(255,255,255,0.92)',
+  borderTopColor: 'rgba(79,179,191,0.2)',
+  borderTopWidth: 1.5,
+  height: 72,           // add explicit height (default ~50)
+  paddingBottom: 10,    // push icons up from home indicator
+  paddingTop: 6,
+},
+```
+
+**Affected file:** `sensly/src/navigation/RootNavigator.tsx`
+
+---
+
+### Fix 2 — Axolotl image: center it properly
+
+**Problem:** The axolotl PNG has uneven transparent padding — more padding on the left than the right — making it appear shifted left when rendered with `resizeMode="contain"`.
+
+**Location:** `sensly/src/components/shared/AxolotlSvg.tsx`
+
+**Root cause:** `resizeMode="contain"` respects the image's bounding box including transparent padding. The PNG asset has asymmetric whitespace.
+
+**Fix options (in order of preference):**
+
+Option A — Crop the PNG asset to remove asymmetric padding (best, permanent fix):
+- Open `sensly/assets/axolotl_updated.png` in any image editor
+- Trim transparent pixels symmetrically
+- Re-export and replace the file
+
+Option B — Compensate in code with a `marginLeft` offset on the `Image`:
+```typescript
+// In AxolotlSvg.tsx, add to the Image style:
+<Image
+  source={axolotlImage}
+  style={[styles.image, { width: size, height: size, marginLeft: size * 0.04 }]}
+  resizeMode="contain"
+/>
+```
+The `0.04` multiplier (4% of size) is an approximation — test at sizes 80, 120, 140 and adjust.
+
+Option C — Use `resizeMode="center"` instead of `"contain"`:
+```typescript
+resizeMode="center"
+```
+This centers the image within its bounds but may clip at small sizes — test before committing.
+
+**Recommended:** Try Option B first (no asset editing needed), then Option A if the offset varies at different sizes.
+
+**Affected file:** `sensly/src/components/shared/AxolotlSvg.tsx`
+
+---
+
+### Fix 3 — Kelp background image: fix positioning and zoom
+
+**Problem:** The kelp background image (`kelp_2.png`) in `KelpBackground.tsx` is:
+- Positioned too low (anchored to `bottom: 0`, so it only covers the bottom 45% of the screen)
+- Too zoomed in (the image fills its container at full width, cropping the top of the kelp)
+
+**Location:** `sensly/src/components/shared/KelpBackground.tsx`
+
+**Current code:**
+```typescript
+bgImage: {
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  width: SCREEN_WIDTH,
+  height: SCREEN_HEIGHT * 0.45,
+  zIndex: 0,
+},
+```
+
+**Fix:** Cover more of the screen and position from the top so the full kelp scene is visible. Also reduce opacity slightly so it doesn't compete with content.
+
+```typescript
+bgImage: {
+  position: 'absolute',
+  top: 0,           // was: bottom: 0 — now anchors from top
+  left: 0,
+  width: SCREEN_WIDTH,
+  height: SCREEN_HEIGHT,  // was: SCREEN_HEIGHT * 0.45 — now full screen
+  zIndex: 0,
+},
+```
+
+And in the component, adjust the default opacity from `0.3` to `0.18` so the full-screen image doesn't overpower the content:
+
+```typescript
+export function KelpBackground({ children, opacity = 0.18 }: KelpBackgroundProps) {
+```
+
+**If the image still looks too zoomed in** after the above, switch `resizeMode` from `"cover"` to `"contain"` and add a background color so the letterbox areas match the app background:
+
+```typescript
+<Image
+  source={kelpBottom}
+  style={[styles.bgImage, { opacity }]}
+  resizeMode="contain"   // was "cover"
+/>
+```
+
+**Affected file:** `sensly/src/components/shared/KelpBackground.tsx`
+
+---
+
+### Implementation order
+
+All three fixes are independent. Suggested order:
+
+| # | Fix | File | Time | Risk |
+|---|---|---|---|---|
+| 1 | Tab icon size + tab bar height | `RootNavigator.tsx` | 5 min | None |
+| 2 | Axolotl centering (code offset) | `AxolotlSvg.tsx` | 5 min | Low — visual only |
+| 3 | Kelp background positioning | `KelpBackground.tsx` | 5 min | Low — visual only |
+
+Run `npx expo start --clear` after any of these changes to see them take effect.

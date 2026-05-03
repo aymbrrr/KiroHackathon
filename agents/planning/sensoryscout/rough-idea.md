@@ -156,14 +156,16 @@ The app learns your patterns over time and warns you proactively.
 | 7 | ✅ Done | Sensory profile — `ProfileScreen`, `ProfileEditScreen`, `SensoryBudgetBanner`, 4-tab nav |
 | UI-A | ✅ Done | Dashboard (Home tab, live sensors + risk score + axolotl), Calm screen (4-phase), `useMotionSensor`, navigation restructured |
 | UI-C | ✅ Done | Full visual pass — `AxolotlSvg` (5 moods, react-native-svg), teal palette, frosted glass, pill buttons, kelp bg, Figma design system on all screens |
-| Accessibility | ✅ Done | Text size (Normal/Large/X-Large) via `AccessibilityContext` + `ScaledText` across all screens. Dyslexia mode and color blindness filters removed as out of scope (native modules not available in Expo Go). Settings embedded inline in ProfileScreen. |
+| Accessibility | ✅ Done | Text size (Normal/Large/X-Large) via `AccessibilityContext` + `ScaledText` across all screens. Dyslexia mode and color blindness filters removed as out of scope. Settings embedded inline in ProfileScreen. |
+| Onboarding | ✅ Done | 5-step first-run wizard (Welcome+Privacy → Noise → Lighting → Triggers → Tutorial). Gated by `onboardingCompletedForUserId` (user-ID-scoped, not device-level boolean). Daily check-in blocked until onboarding complete. Settings button removed from Dashboard header. |
 
 ## What's currently in the app (full feature list)
 
 ### Screens
 - **Welcome** — 3-slide story (stressed → thinking → happy axolotl), auto-advances 2.8s, teal gradient
 - **Sign In / Sign Up** — teal bg, frosted glass form, "sensly" wordmark, pill buttons
-- **Dashboard (Home)** — live dB + motion sparkline cards, risk score, axolotl reacts to risk, kelp scene, "Reset" → Calm
+- **Onboarding** — 5-step first-run wizard: Welcome+Privacy → Noise slider → Lighting cards → Trigger chips → Personalized tutorial (3 tiles). Gated by Supabase user ID — shows once per account, never again.
+- **Dashboard (Home)** — live dB + motion + light + temp sensor cards, risk score, axolotl reacts to risk, kelp scene
 - **Map** — GPS venue pins (blue circle / orange square / red triangle), frosted glass bottom sheet, "Full details" + "Rate"
 - **Calm** — breathing circle → tool picker → sensory reset with 2-min timer → "You did it" success
 - **Profile** — sensory preferences, text size accessibility setting (Normal/Large/X-Large), sign out
@@ -196,6 +198,8 @@ The app learns your patterns over time and warns you proactively.
 - Restart with `npx expo start --clear` after `.env` changes
 - `expo-sensors` DeviceMotion returns `isAvailable: false` on iOS simulator
 - Email confirmation must be disabled in Supabase for development
+- Onboarding gate uses `onboardingCompletedForUserId` (Supabase user ID) — not a simple boolean. A new account on the same device always sees onboarding. Stored in `sensly-settings-v2` AsyncStorage key.
+- `_hasHydrated` in settingsStore is runtime-only (not persisted) — RootNavigator waits for it before mounting AppNavigator to avoid `initialRouteName` race condition
 
 ---
 
