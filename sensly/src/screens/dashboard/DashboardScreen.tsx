@@ -211,14 +211,6 @@ export function DashboardScreen() {
             <ScaledText style={styles.wordmark}>sensly</ScaledText>
             <ScaledText style={styles.tagline}>Sensory insights, simply</ScaledText>
           </View>
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={() => navigation.navigate('ProfileEdit')}
-            accessibilityRole="button"
-            accessibilityLabel="Settings"
-          >
-            <ScaledText style={{ fontSize: 18 }}>⚙️</ScaledText>
-          </TouchableOpacity>
         </View>
 
         {/* Sensor cards — tap to see Current Sense */}
