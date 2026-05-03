@@ -25,9 +25,9 @@ const MIN_DB = 30;
 const MAX_DB = 100;
 
 function dbToColor(db: number): string {
-  if (db < 55) return colors.calm;
-  if (db < 70) return colors.moderate;
-  return colors.loud;
+  if (db < 55) return '#3AACB2';   // designer's teal — calm
+  if (db < 70) return '#F2B85B';   // designer's amber — moderate
+  return '#FF8A8A';                 // designer's coral — loud
 }
 
 function dbToAngle(db: number): number {

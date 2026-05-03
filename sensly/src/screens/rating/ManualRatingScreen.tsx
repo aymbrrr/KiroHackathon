@@ -11,11 +11,12 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { colors, typography, spacing } from '../../constants/theme';
+import { colors, typography, spacing, frostedCard } from '../../constants/theme';
 import { SensorySlider, SliderOption } from '../../components/rating/SensorySlider';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
 import { validate } from '../../lib/validation';
+import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import { RatingStackParamList } from './AutoSenseScreen';
 
 type Props = {
@@ -135,6 +136,7 @@ export function ManualRatingScreen({ navigation, route }: Props) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.successContainer}>
+          <AxolotlSvg mood="happy" size={100} />
           <Text style={styles.successIcon}>✅</Text>
           <Text style={styles.successHeading}>Rating submitted</Text>
           <Text style={styles.successBody}>
@@ -288,6 +290,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryMuted,
     borderRadius: 10,
     padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   noiseSummaryText: { ...typography.body, color: colors.primary },
   bold: { fontWeight: '700' },
@@ -296,10 +300,10 @@ const styles = StyleSheet.create({
   notesField: { gap: spacing.xs },
   notesLabel: { ...typography.label, color: colors.textSecondary },
   notesInput: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(58,172,178,0.4)',
+    borderRadius: 14,
     padding: spacing.md,
     ...typography.body,
     color: colors.textPrimary,
@@ -316,11 +320,16 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: colors.primary,
-    borderRadius: 12,
+    borderRadius: 30,
     paddingVertical: spacing.md,
     alignItems: 'center',
     minHeight: 52,
     justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 4,
   },
   primaryButtonText: { ...typography.label, color: colors.textInverse, fontSize: 17 },
   disabled: { opacity: 0.4 },

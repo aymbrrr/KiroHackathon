@@ -4,7 +4,7 @@ import {
   SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing } from '../../constants/theme';
+import { colors, typography, spacing, frostedCard } from '../../constants/theme';
 import { useAuthStore } from '../../stores/authStore';
 import { AuthStackParamList } from '../../navigation/types';
 
@@ -38,10 +38,11 @@ export function SignInScreen({ navigation }: Props) {
           >
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
+          <Text style={styles.wordmark}>sensly</Text>
           <Text style={styles.title}>Welcome back</Text>
         </View>
 
-        <View style={styles.form}>
+        <View style={[frostedCard, styles.form]}>
           {error ? (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>{error}</Text>
@@ -111,13 +112,21 @@ export function SignInScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: '#DFF6F7' },
   inner: { flex: 1, paddingHorizontal: spacing.xl },
   header: { paddingTop: spacing.lg, marginBottom: spacing.xl },
   backButton: { marginBottom: spacing.md },
   backText: { ...typography.body, color: colors.primary },
-  title: { fontSize: 28, fontWeight: '700', color: colors.textPrimary },
-  form: { gap: spacing.md },
+  wordmark: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: colors.primary,
+    letterSpacing: -1,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  title: { fontSize: 28, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
+  form: { gap: spacing.md, padding: spacing.lg },
   errorBox: {
     backgroundColor: '#FDECEA',
     borderRadius: 8,
@@ -127,10 +136,10 @@ const styles = StyleSheet.create({
   field: { gap: spacing.xs },
   label: { ...typography.label, color: colors.textSecondary },
   input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(58,172,178,0.4)',
+    borderRadius: 14,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 4,
     ...typography.body,
@@ -139,12 +148,17 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: colors.primary,
-    borderRadius: 12,
+    borderRadius: 30,
     paddingVertical: spacing.md,
     alignItems: 'center',
     minHeight: 52,
     justifyContent: 'center',
     marginTop: spacing.sm,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 4,
   },
   primaryButtonText: { ...typography.label, color: colors.textInverse, fontSize: 17 },
   disabled: { opacity: 0.5 },

@@ -17,7 +17,7 @@ import { useGeolocation } from '../../hooks/useGeolocation';
 import { useVenueStore, Venue } from '../../stores/venueStore';
 import { VenuePin } from '../../components/map/VenuePin';
 import { OfflineBanner } from '../../components/shared/OfflineBanner';
-import { colors, spacing, typography } from '../../constants/theme';
+import { colors, spacing, typography, frostedCard } from '../../constants/theme';
 import { dbToLabel, scoreToPinStyle } from '../../lib/sensoryUtils';
 import { AppRootParamList } from '../../navigation/types';
 
@@ -275,17 +275,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.surface,
+    ...frostedCard,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
   },
   fabIcon: { fontSize: 22 },
-  sheetBackground: { backgroundColor: colors.surface, borderRadius: 20 },
+  sheetBackground: { backgroundColor: 'rgba(248,254,252,0.98)', borderRadius: 24 },
   sheetHandle: { backgroundColor: colors.border, width: 40 },
   sheetContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl },
 });
@@ -306,6 +303,8 @@ const cardStyles = StyleSheet.create({
     gap: 4,
     backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
   },
@@ -333,11 +332,16 @@ const cardStyles = StyleSheet.create({
   rateButton: {
     flex: 2,
     backgroundColor: colors.primary,
-    borderRadius: 10,
+    borderRadius: 30,
     paddingVertical: spacing.sm + 2,
     alignItems: 'center',
     minHeight: 44,
     justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 4,
   },
   rateButtonText: { ...typography.label, color: colors.textInverse, fontSize: 14 },
 });

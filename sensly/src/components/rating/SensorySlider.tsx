@@ -5,7 +5,7 @@
  */
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors, typography, spacing } from '../../constants/theme';
+import { colors, typography, spacing, frostedCard } from '../../constants/theme';
 
 export interface SliderOption {
   value: number;
@@ -50,7 +50,13 @@ export function SensorySlider({ label, options, value, onChange }: SensorySlider
 
 const styles = StyleSheet.create({
   container: { gap: spacing.sm },
-  label: { ...typography.label, color: colors.textSecondary },
+  label: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: colors.textSecondary,
+  },
   options: {
     flexDirection: 'row',
     gap: spacing.xs,
@@ -61,10 +67,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.sm,
     paddingHorizontal: 4,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    ...frostedCard,
     minHeight: 64,
     gap: 4,
   },

@@ -6,11 +6,6 @@
  * Phase 1: Tool picker — select calming tools
  * Phase 2: Guided intervention — step through tools with timer
  * Phase 3: Crisis averted — success screen
- *
- * Person C placeholders:
- *   - AxolotlSvg → colored circle with emoji
- *   - Kelp background → teal gradient
- *   - Fredoka font → system font
  */
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -22,26 +17,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { colors, spacing, typography } from '../../constants/theme';
 import { AppTabParamList } from '../../navigation/types';
-
-// ─── Placeholder: AxolotlSvg ─────────────────────────────────────────────────
-function AxolotlPlaceholder({ mood, size }: { mood: string; size: number }) {
-  const moodColors: Record<string, string> = {
-    happy: '#46B7AE', thinking: '#F2B85B', relieved: '#7ED6A5',
-    alert: '#F2B85B', stressed: '#EC7D6E',
-  };
-  const moodEmoji: Record<string, string> = {
-    happy: '😊', thinking: '🤔', relieved: '😌', alert: '😟', stressed: '😣',
-  };
-  return (
-    <View style={{
-      width: size, height: size, borderRadius: size / 2,
-      backgroundColor: moodColors[mood] ?? '#46B7AE',
-      alignItems: 'center', justifyContent: 'center',
-    }}>
-      <Text style={{ fontSize: size * 0.38 }}>{moodEmoji[mood] ?? '🐾'}</Text>
-    </View>
-  );
-}
+import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 
 // ─── Breathing phases ─────────────────────────────────────────────────────────
 const BREATH_PHASES = [
@@ -89,9 +65,9 @@ function BreathingPhase({ onNext }: { onNext: () => void }) {
       {/* Breathing circle */}
       <View style={styles.breathingOuter}>
         <Animated.View style={[styles.breathingCircle, { transform: [{ scale: scaleAnim }] }]} />
-        {/* Axolotl placeholder — replace with <AxolotlSvg mood="relieved" size={130} animate={false} /> */}
+        {/* Axolotl — relieved during breathing */}
         <View style={styles.breathingAxolotl}>
-          <AxolotlPlaceholder mood="relieved" size={130} />
+          <AxolotlSvg mood="relieved" size={130} animate={false} />
         </View>
       </View>
 
@@ -213,8 +189,8 @@ function InterventionPhase({
         <Text style={[styles.phaseSubtitle, { fontSize: 11 }]}>time remaining</Text>
       </View>
 
-      {/* Axolotl placeholder */}
-      <AxolotlPlaceholder mood="happy" size={90} />
+      {/* Axolotl — happy during intervention */}
+      <AxolotlSvg mood="happy" size={90} animate />
 
       <TouchableOpacity
         style={styles.primaryButton}
@@ -234,8 +210,8 @@ function CrisisAverted() {
 
   return (
     <View style={[styles.phaseContainer, { justifyContent: 'center' }]}>
-      {/* Axolotl placeholder */}
-      <AxolotlPlaceholder mood="relieved" size={150} />
+      {/* Axolotl — relieved on success */}
+      <AxolotlSvg mood="relieved" size={150} animate />
 
       <Text style={[styles.phaseTitle, { color: '#1D9A78', fontSize: 28, marginTop: spacing.lg }]}>
         You did it ✦

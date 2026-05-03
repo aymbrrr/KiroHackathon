@@ -28,6 +28,7 @@ export function OfflineBanner() {
 
   return (
     <Animated.View style={[styles.banner, { opacity }]}>
+      <View style={styles.dot} />
       <Text style={styles.text}>No connection — map unavailable</Text>
     </Animated.View>
   );
@@ -35,10 +36,20 @@ export function OfflineBanner() {
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: colors.warning,
+    backgroundColor: '#FF8A8A',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fff',
+    opacity: 0.9,
   },
   text: {
     ...typography.bodySm,

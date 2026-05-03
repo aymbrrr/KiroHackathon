@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing } from '../../constants/theme';
+import { colors, typography, spacing, frostedCard } from '../../constants/theme';
 import { useAuthStore } from '../../stores/authStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { AppRootParamList } from '../../navigation/types';
@@ -92,14 +92,17 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.xl },
   heading: { ...typography.heading1, color: colors.textPrimary },
   section: { gap: spacing.sm },
-  sectionTitle: { ...typography.label, color: colors.textSecondary },
+  sectionTitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: colors.textSecondary,
+  },
   modeRow: { flexDirection: 'row', gap: spacing.sm },
   modeButton: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.border,
+    ...frostedCard,
     padding: spacing.md,
     gap: 4,
     alignItems: 'center',
@@ -113,8 +116,7 @@ const styles = StyleSheet.create({
   modeLabelActive: { color: colors.primary },
   modeDesc: { ...typography.bodySm, color: colors.textMuted, textAlign: 'center', fontSize: 11 },
   menuRow: {
-    backgroundColor: colors.surface,
-    borderRadius: 10,
+    ...frostedCard,
     padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',

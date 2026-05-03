@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { colors, typography, spacing } from '../../constants/theme';
+import { colors, typography, spacing, frostedCard } from '../../constants/theme';
 import { useVenueStore, Venue } from '../../stores/venueStore';
 import { supabase } from '../../lib/supabase';
 import { SensoryRadar } from '../../components/venue/SensoryRadar';
@@ -248,6 +248,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   scoreBadge: {
+    ...frostedCard,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.surfaceMuted,
+    ...frostedCard,
     borderRadius: 8,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
@@ -278,18 +279,23 @@ const styles = StyleSheet.create({
   },
   selfNoiseText: { ...typography.bodyLg, color: colors.primary, fontWeight: '600' },
   section: { gap: spacing.sm },
-  sectionTitle: { ...typography.label, color: colors.textSecondary },
+  sectionTitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: colors.textSecondary,
+  },
   featureChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   featureChip: {
-    backgroundColor: colors.primaryMuted,
+    backgroundColor: colors.primary,
     borderRadius: 6,
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
   },
-  featureChipText: { ...typography.bodySm, color: colors.primary },
+  featureChipText: { ...typography.bodySm, color: colors.textInverse },
   quietHourRow: {
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: 8,
+    ...frostedCard,
     padding: spacing.sm,
   },
   quietHourText: { ...typography.bodySm, color: colors.textSecondary },
@@ -302,11 +308,16 @@ const styles = StyleSheet.create({
   },
   rateButton: {
     backgroundColor: colors.primary,
-    borderRadius: 12,
+    borderRadius: 30,
     paddingVertical: spacing.md,
     alignItems: 'center',
     minHeight: 52,
     justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 4,
   },
   rateButtonText: { ...typography.label, color: colors.textInverse, fontSize: 17 },
 });

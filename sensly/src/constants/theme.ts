@@ -11,20 +11,27 @@
 
 export const colors = {
   // Backgrounds
-  background:       '#F8F6F2',  // warm off-white — reduces glare vs pure white
+  background:       '#F0FAFB',  // calm teal-tinted off-white
   backgroundMuted:  '#EFEDE8',
-  surface:          '#FFFFFF',
-  surfaceMuted:     '#F4F2EE',
+  surface:          'rgba(255,255,255,0.85)',
+  surfaceMuted:     '#E8F6F8',
 
   // Text
-  textPrimary:      '#1A1814',  // near-black, warm tone
-  textSecondary:    '#5C5750',
-  textMuted:        '#8C8680',
+  textPrimary:      '#1A4D55',  // deep teal — replaces warm near-black
+  textSecondary:    '#426773',
+  textMuted:        '#5d7b86',
   textInverse:      '#FFFFFF',
 
   // Brand
-  primary:          '#0077BB',  // blue — also the "calm" venue pin color
-  primaryMuted:     '#E8F4FB',
+  primary:          '#4FB3BF',  // teal — designer's primary
+  primaryMuted:     '#E8F6F8',
+
+  // Extended teal palette (designer tokens)
+  tealLight:        '#7DCDD6',
+  tealDark:         '#2A8A96',
+  tealPale:         '#B8E5EA',
+  bgCalm:           '#F0FAFB',
+  bgGentle:         '#E8F6F8',
 
   // Sensory score colors (colorblind-safe)
   calm:             '#0077BB',  // blue  — score 1.0–2.4
@@ -38,8 +45,8 @@ export const colors = {
   info:             '#0077BB',  // blue
 
   // UI
-  border:           '#D8D4CE',
-  borderMuted:      '#E8E4DE',
+  border:           'rgba(79,179,191,0.2)',
+  borderMuted:      'rgba(79,179,191,0.15)',
   overlay:          'rgba(26, 24, 20, 0.5)',
 } as const;
 
@@ -105,4 +112,20 @@ export const animation = {
 export const tapTarget = {
   min: 44,
   selfMode: 56,  // larger in Self mode for use during sensory overload
+} as const;
+
+/**
+ * Frosted glass card style — designer's exact spec.
+ * Use as a base style for cards throughout the app.
+ */
+export const frostedCard = {
+  backgroundColor: 'rgba(255,255,255,0.45)',
+  borderWidth: 2,
+  borderColor: 'rgba(35,88,105,0.35)',
+  borderRadius: 20,
+  shadowColor: '#43818F',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.12,
+  shadowRadius: 12,
+  elevation: 3,
 } as const;

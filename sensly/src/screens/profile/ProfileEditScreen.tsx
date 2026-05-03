@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useNavigation } from '@react-navigation/native';
-import { colors, typography, spacing } from '../../constants/theme';
+import { colors, typography, spacing, frostedCard } from '../../constants/theme';
 import { useAuthStore } from '../../stores/authStore';
 import { useProfileStore } from '../../stores/profileStore';
 import { supabase } from '../../lib/supabase';
@@ -207,7 +207,13 @@ const styles = StyleSheet.create({
   title: { ...typography.heading3, color: colors.textPrimary },
   content: { padding: spacing.lg, gap: spacing.xl, paddingBottom: spacing.xxl },
   section: { gap: spacing.sm },
-  sectionTitle: { ...typography.label, color: colors.textSecondary },
+  sectionTitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: colors.textSecondary,
+  },
   sectionDesc: { ...typography.bodySm, color: colors.textMuted, lineHeight: 20 },
   sliderRow: {
     flexDirection: 'row',
@@ -222,10 +228,7 @@ const styles = StyleSheet.create({
   optionRow: { flexDirection: 'row', gap: spacing.sm },
   optionCard: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.border,
+    ...frostedCard,
     padding: spacing.sm,
     alignItems: 'center',
     gap: 4,
@@ -241,10 +244,10 @@ const styles = StyleSheet.create({
   triggerCategoryLabel: { ...typography.bodySm, color: colors.textMuted, fontWeight: '600', textTransform: 'capitalize' },
   triggerChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   triggerChip: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.8)',
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: 'rgba(58,172,178,0.4)',
     paddingHorizontal: spacing.sm,
     paddingVertical: 5,
   },
@@ -260,11 +263,16 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: colors.primary,
-    borderRadius: 12,
+    borderRadius: 30,
     paddingVertical: spacing.md,
     alignItems: 'center',
     minHeight: 52,
     justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 4,
   },
   saveButtonText: { ...typography.label, color: colors.textInverse, fontSize: 17 },
   disabled: { opacity: 0.5 },

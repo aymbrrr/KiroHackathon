@@ -1,53 +1,21 @@
 /**
  * Dashboard screen — Home tab.
  * Shows live sensor readings (sound + motion), risk score, and axolotl mood.
- *
- * Person C deliverables used as placeholders:
- *   - AxolotlSvg → replaced with a colored circle placeholder
- *   - Fredoka font → falls back to system font until loaded
- *   - Frosted glass card style → approximated with semi-transparent white
- *   - Kelp background image → replaced with gradient
- *
- * Replace placeholders when Person C delivers:
- *   import { AxolotlSvg } from '@/components/shared/AxolotlSvg';
- *   import kelpBg from '@/assets/kelp-bg.png';
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  SafeAreaView, Animated,
+  SafeAreaView, Animated, Image,
 } from 'react-native';
+import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
+import kelpBg from '../../../assets/kelp-bg.png';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAudioMeter } from '../../hooks/useAudioMeter';
 import { useMotionSensor } from '../../hooks/useMotionSensor';
 import { computeRiskScore, riskToMood, riskToLevel, dbToLabel } from '../../lib/sensoryUtils';
-import { colors, spacing, typography } from '../../constants/theme';
+import { colors, spacing, typography, frostedCard } from '../../constants/theme';
 import { AppRootParamList } from '../../navigation/types';
-
-// ─── Placeholder: AxolotlSvg (replace when Person C delivers) ────────────────
-function AxolotlPlaceholder({ mood, size }: { mood: string; size: number }) {
-  const moodColors: Record<string, string> = {
-    happy:    '#46B7AE',
-    thinking: '#F2B85B',
-    alert:    '#F2B85B',
-    stressed: '#EC7D6E',
-    relieved: '#46B7AE',
-  };
-  const moodEmoji: Record<string, string> = {
-    happy: '😊', thinking: '🤔', alert: '😟', stressed: '😣', relieved: '😌',
-  };
-  return (
-    <View style={{
-      width: size, height: size, borderRadius: size / 2,
-      backgroundColor: moodColors[mood] ?? colors.primary,
-      alignItems: 'center', justifyContent: 'center',
-      opacity: 0.85,
-    }}>
-      <Text style={{ fontSize: size * 0.4 }}>{moodEmoji[mood] ?? '🐾'}</Text>
-    </View>
-  );
-}
 
 // ─── Sensor sparkline (step chart) ───────────────────────────────────────────
 function SparkLine({ data, color, width = 110, height = 36 }: {
@@ -191,8 +159,8 @@ export function DashboardScreen() {
                 Risk: {risk}
               </Text>
             </View>
-            {/* Axolotl placeholder — replace with <AxolotlSvg mood={mood} size={100} animate /> */}
-            <AxolotlPlaceholder mood={mood} size={100} />
+            {/* Axolotl mascot */}
+            <AxolotlSvg mood={mood} size={100} animate />
           </View>
         </View>
 
@@ -222,8 +190,9 @@ export function DashboardScreen() {
           </View>
         </View>
 
-        {/* Kelp scene placeholder — replace with Image when Person C delivers kelp-bg.png */}
-        <View style={styles.kelpPlaceholder}>
+        {/* Kelp background scene */}
+        <View style={styles.kelpContainer}>
+          <Image source={kelpBg} style={styles.kelpImage} resizeMode="cover" />
           <View style={styles.kelpOverlay}>
             <View style={styles.kelpBadge}>
               <Text style={styles.kelpBadgeText}>Sensly is monitoring ✦</Text>
@@ -253,7 +222,7 @@ const styles = StyleSheet.create({
   wordmark: {
     fontSize: 36,
     fontWeight: '800',
-    color: colors.textPrimary,
+    color: colors.primary,
     letterSpacing: -1,
   },
   tagline: {
@@ -269,18 +238,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Frosted glass card — approximated (Person C will refine with backdropFilter)
+  // Frosted glass card — designer's exact spec
   card: {
-    backgroundColor: 'rgba(255,255,255,0.75)',
-    borderWidth: 2,
-    borderColor: 'rgba(35,88,105,0.25)',
-    borderRadius: 20,
+    ...frostedCard,
     padding: spacing.md,
-    shadowColor: '#43818F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 3,
   },
   sensorGrid: { flexDirection: 'row', gap: spacing.sm },
   sensorCard: { flex: 1, gap: spacing.xs },
@@ -339,14 +300,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
   },
-  // Kelp placeholder — replace with Image component when Person C delivers asset
-  kelpPlaceholder: {
+  // Kelp background image container
+  kelpContainer: {
     height: 90,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: '#BDE6ED',
     borderWidth: 2,
     borderColor: 'rgba(35,88,105,0.2)',
+  },
+  kelpImage: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
   },
   kelpOverlay: {
     flex: 1,

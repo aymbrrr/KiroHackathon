@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { colors, typography, spacing } from '../../constants/theme';
+import { colors, typography, spacing, frostedCard } from '../../constants/theme';
 import { useAudioMeter, MeasurementResult } from '../../hooks/useAudioMeter';
 import { DbGauge } from '../../components/sensing/DbGauge';
 import { VenueDetector } from '../../components/sensing/VenueDetector';
@@ -112,13 +112,13 @@ export function AutoSenseScreen({ navigation, route }: Props) {
 
         {phase === 'measuring' && (
           <View style={styles.statusBlock}>
-            <Text style={styles.statusText}>Measuring noise level...</Text>
+            <Text style={styles.statusMono}>MEASURING</Text>
             <Text style={styles.countdown}>{secondsLeft}s remaining</Text>
           </View>
         )}
 
         {phase === 'done' && result && (
-          <View style={styles.resultBlock}>
+          <View style={[frostedCard, styles.resultBlock]}>
             <Text style={styles.resultHeading}>
               This place is <Text style={styles.resultDb}>{result.avg} dB</Text>
             </Text>
@@ -198,9 +198,15 @@ const styles = StyleSheet.create({
     gap: spacing.xl,
   },
   statusBlock: { alignItems: 'center', gap: spacing.xs },
-  statusText: { ...typography.body, color: colors.textSecondary },
+  statusMono: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: colors.textSecondary,
+  },
   countdown: { ...typography.heading2, color: colors.primary },
-  resultBlock: { alignItems: 'center', gap: spacing.xs },
+  resultBlock: { alignItems: 'center', gap: spacing.xs, padding: spacing.lg, width: '100%' },
   resultHeading: { ...typography.bodyLg, color: colors.textPrimary, textAlign: 'center' },
   resultDb: { fontWeight: '800', color: colors.primary },
   resultLabel: { ...typography.body, color: colors.textSecondary },
@@ -218,16 +224,21 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: colors.primary,
-    borderRadius: 12,
+    borderRadius: 30,
     paddingVertical: spacing.md,
     alignItems: 'center',
     minHeight: 52,
     justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 4,
   },
   primaryButtonText: { ...typography.label, color: colors.textInverse, fontSize: 17 },
   stopButton: {
     backgroundColor: colors.surfaceMuted,
-    borderRadius: 12,
+    borderRadius: 30,
     paddingVertical: spacing.md,
     alignItems: 'center',
     minHeight: 52,
