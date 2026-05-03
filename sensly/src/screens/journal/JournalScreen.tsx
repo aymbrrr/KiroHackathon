@@ -173,11 +173,6 @@ export function JournalScreen() {
             <ScaledText style={styles.heading}>Journal</ScaledText>
             <ScaledText style={styles.subtitle}>Recent sensory moments</ScaledText>
           </View>
-          {streak > 0 && (
-            <View style={styles.streakBadge}>
-              <ScaledText style={styles.streakText}>🌱 {streak} day{streak !== 1 ? 's' : ''}</ScaledText>
-            </View>
-          )}
         </View>
 
         {/* AI Insights */}
@@ -190,6 +185,42 @@ export function JournalScreen() {
                 <ScaledText style={styles.insightText}>{insight.text}</ScaledText>
               </View>
             ))}
+          </View>
+        )}
+
+        {/* Weekly risk chart */}
+        {logs.length > 0 && (
+          <View style={styles.chartCard}>
+            <ScaledText style={styles.chartTitle}>This week</ScaledText>
+            <View style={styles.chartBars}>
+              {(() => {
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const today = new Date().getDay();
+                // Compute average risk per day from logs
+                const dayRisks: Record<number, number[]> = {};
+                logs.forEach(log => {
+                  const d = new Date(log.time);
+                  const day = d.getDay?.() ?? 0;
+                  if (!dayRisks[day]) dayRisks[day] = [];
+                  dayRisks[day].push(log.risk);
+                });
+                return days.map((name, i) => {
+                  const risks = dayRisks[i] ?? [];
+                  const avg = risks.length > 0
+                    ? Math.round(risks.reduce((a, b) => a + b, 0) / risks.length)
+                    : 0;
+                  const barH = Math.max(4, (avg / 100) * 80);
+                  const color = avg > 75 ? '#EC7D6E' : avg > 55 ? '#F2B85B' : avg > 0 ? '#46B7AE' : 'rgba(79,179,191,0.15)';
+                  const isToday = i === today;
+                  return (
+                    <View key={i} style={styles.chartBarCol}>
+                      <View style={[styles.chartBar, { height: barH, backgroundColor: color, opacity: isToday ? 1 : 0.6 }]} />
+                      <ScaledText style={[styles.chartDayLabel, isToday && { color: colors.primary, fontWeight: '700' }]}>{name}</ScaledText>
+                    </View>
+                  );
+                });
+              })()}
+            </View>
           </View>
         )}
 
@@ -304,6 +335,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#426773',
     lineHeight: 20,
+  },
+
+  // Weekly chart
+  chartCard: {
+    ...CARD_STYLE,
+    padding: 16,
+    gap: 10,
+  },
+  chartTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#183844',
+  },
+  chartBars: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    height: 100,
+    gap: 6,
+  },
+  chartBarCol: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+  },
+  chartBar: {
+    width: '80%',
+    borderRadius: 6,
+    minHeight: 4,
+  },
+  chartDayLabel: {
+    fontSize: 10,
+    color: '#5d7b86',
+    fontWeight: '500',
   },
 
   // Log entries

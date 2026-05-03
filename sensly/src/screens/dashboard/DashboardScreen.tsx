@@ -284,17 +284,6 @@ export function DashboardScreen() {
           </View>
           <ScaledText style={styles.tapHint}>Tap for details →</ScaledText>
         </TouchableOpacity>
-
-        {/* Reset / Calm button — always visible */}
-        <TouchableOpacity
-          style={styles.resetButton}
-          onPress={() => navigation.navigate('Calm')}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel="Open calm reset tools"
-        >
-          <ScaledText style={styles.resetButtonText}>🌊  Reset</ScaledText>
-        </TouchableOpacity>
       </ScrollView>
       </KelpBackground>
     </SafeAreaView>
@@ -376,24 +365,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'right',
     marginTop: spacing.sm,
-  },
-  resetButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 30,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 52,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  resetButtonText: {
-    ...typography.label,
-    color: colors.textInverse,
-    fontSize: 17,
   },
   // Kelp background image container
   kelpContainer: {
