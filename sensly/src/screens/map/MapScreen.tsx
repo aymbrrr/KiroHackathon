@@ -5,7 +5,7 @@
  */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  View, StyleSheet, TouchableOpacity, Text, ActivityIndicator,
+  View, StyleSheet, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import MapView, { Region, PROVIDER_DEFAULT } from 'react-native-maps';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -20,6 +20,7 @@ import { OfflineBanner } from '../../components/shared/OfflineBanner';
 import { colors, spacing, typography, frostedCard } from '../../constants/theme';
 import { dbToLabel, scoreToPinStyle } from '../../lib/sensoryUtils';
 import { AppRootParamList } from '../../navigation/types';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 const DEFAULT_REGION: Region = {
   latitude: 35.2810,
@@ -120,11 +121,11 @@ export function MapScreen() {
       {/* Location permission prompt */}
       {permissionGranted === false && geoError && (
         <View style={styles.permissionBanner}>
-          <Text style={styles.permissionText}>
+          <ScaledText style={styles.permissionText}>
             Enable location to see nearby venues
-          </Text>
+          </ScaledText>
           <TouchableOpacity onPress={requestPermission} style={styles.permissionButton}>
-            <Text style={styles.permissionButtonText}>Enable</Text>
+            <ScaledText style={styles.permissionButtonText}>Enable</ScaledText>
           </TouchableOpacity>
         </View>
       )}
@@ -136,7 +137,7 @@ export function MapScreen() {
         accessibilityRole="button"
         accessibilityLabel="Center map on my location"
       >
-        <Text style={styles.fabIcon}>📍</Text>
+        <ScaledText style={styles.fabIcon}>📍</ScaledText>
       </TouchableOpacity>
 
       {/* Venue bottom sheet */}
@@ -180,13 +181,13 @@ function VenueCard({ venue, onRate }: { venue: Venue; onRate: () => void }) {
       <View style={cardStyles.header}>
         <View style={[cardStyles.scoreDot, { backgroundColor: pin.color }]} />
         <View style={cardStyles.titleBlock}>
-          <Text style={cardStyles.name} numberOfLines={1}>{venue.name}</Text>
+          <ScaledText style={cardStyles.name} numberOfLines={1}>{venue.name}</ScaledText>
           {venue.address && (
-            <Text style={cardStyles.address} numberOfLines={1}>{venue.address}</Text>
+            <ScaledText style={cardStyles.address} numberOfLines={1}>{venue.address}</ScaledText>
           )}
         </View>
         <View style={[cardStyles.scoreBadge, { backgroundColor: pin.color + '22' }]}>
-          <Text style={[cardStyles.scoreLabel, { color: pin.color }]}>{pin.label}</Text>
+          <ScaledText style={[cardStyles.scoreLabel, { color: pin.color }]}>{pin.label}</ScaledText>
         </View>
       </View>
 
@@ -199,7 +200,7 @@ function VenueCard({ venue, onRate }: { venue: Venue; onRate: () => void }) {
         <View style={cardStyles.features}>
           {(venue.sensory_features as string[]).slice(0, 3).map((f, i) => (
             <View key={i} style={cardStyles.featureChip}>
-              <Text style={cardStyles.featureText}>{f}</Text>
+              <ScaledText style={cardStyles.featureText}>{f}</ScaledText>
             </View>
           ))}
         </View>
@@ -212,7 +213,7 @@ function VenueCard({ venue, onRate }: { venue: Venue; onRate: () => void }) {
           accessibilityRole="button"
           accessibilityLabel={`See full details for ${venue.name}`}
         >
-          <Text style={cardStyles.secondaryButtonText}>Full details</Text>
+          <ScaledText style={cardStyles.secondaryButtonText}>Full details</ScaledText>
         </TouchableOpacity>
         <TouchableOpacity
           style={cardStyles.rateButton}
@@ -220,7 +221,7 @@ function VenueCard({ venue, onRate }: { venue: Venue; onRate: () => void }) {
           accessibilityRole="button"
           accessibilityLabel={`Rate ${venue.name}`}
         >
-          <Text style={cardStyles.rateButtonText}>🎙️ Rate</Text>
+          <ScaledText style={cardStyles.rateButtonText}>🎙️ Rate</ScaledText>
         </TouchableOpacity>
       </View>
     </View>
@@ -230,8 +231,8 @@ function VenueCard({ venue, onRate }: { venue: Venue; onRate: () => void }) {
 function StatChip({ icon, label }: { icon: string; label: string }) {
   return (
     <View style={cardStyles.statChip}>
-      <Text style={cardStyles.statIcon}>{icon}</Text>
-      <Text style={cardStyles.statLabel}>{label}</Text>
+      <ScaledText style={cardStyles.statIcon}>{icon}</ScaledText>
+      <ScaledText style={cardStyles.statLabel}>{label}</ScaledText>
     </View>
   );
 }

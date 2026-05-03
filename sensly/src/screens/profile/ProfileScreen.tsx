@@ -4,8 +4,8 @@
  */
 import React from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
-  ScrollView, Switch,
+  View, StyleSheet, TouchableOpacity, SafeAreaView,
+  ScrollView, Switch, Text,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,6 +13,7 @@ import { colors, typography, spacing, frostedCard } from '../../constants/theme'
 import { useAuthStore } from '../../stores/authStore';
 import { useSettingsStore, TextSizeMode } from '../../stores/settingsStore';
 import { AppRootParamList } from '../../navigation/types';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 const TEXT_SIZE_OPTIONS: Array<{ value: TextSizeMode; label: string; preview: number }> = [
   { value: 'normal', label: 'Normal',  preview: 16 },
@@ -33,27 +34,27 @@ export function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.heading}>Profile</Text>
+        <ScaledText style={styles.heading}>Profile</ScaledText>
 
         {/* Sensory preferences */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sensory preferences</Text>
+          <ScaledText style={styles.sectionTitle}>Sensory preferences</ScaledText>
           <TouchableOpacity
             style={styles.menuRow}
             onPress={() => navigation.navigate('ProfileEdit')}
             accessibilityRole="button"
           >
-            <Text style={styles.menuRowText}>Edit noise threshold & triggers</Text>
-            <Text style={styles.menuRowArrow}>›</Text>
+            <ScaledText style={styles.menuRowText}>Edit noise threshold & triggers</ScaledText>
+            <ScaledText style={styles.menuRowArrow}>›</ScaledText>
           </TouchableOpacity>
         </View>
 
         {/* Accessibility — inline */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Accessibility</Text>
+          <ScaledText style={styles.sectionTitle}>Accessibility</ScaledText>
 
           {/* Text size */}
-          <Text style={styles.subLabel}>Text size</Text>
+          <ScaledText style={styles.subLabel}>Text size</ScaledText>
           <View style={styles.sizeRow}>
             {TEXT_SIZE_OPTIONS.map((opt) => {
               const selected = textSizeMode === opt.value;
@@ -66,10 +67,10 @@ export function ProfileScreen() {
                   accessibilityState={{ selected }}
                   accessibilityLabel={opt.label}
                 >
-                  <Text style={[styles.sizeLabel, selected && styles.sizeLabelSelected]}>
+                  <ScaledText style={[styles.sizeLabel, selected && styles.sizeLabelSelected]}>
                     {opt.label}
-                  </Text>
-                  {/* Live preview of the font size */}
+                  </ScaledText>
+                  {/* Preview uses fixed size so you can see the difference */}
                   <Text style={[styles.sizePreview, { fontSize: opt.preview }, selected && styles.sizeLabelSelected]}>
                     Aa
                   </Text>
@@ -81,10 +82,10 @@ export function ProfileScreen() {
           {/* Dyslexia mode */}
           <View style={[frostedCard, styles.toggleRow]}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.toggleLabel}>Dyslexia-friendly text</Text>
-              <Text style={styles.toggleDesc}>
+              <ScaledText style={styles.toggleLabel}>Dyslexia-friendly text</ScaledText>
+              <ScaledText style={styles.toggleDesc}>
                 Easier-to-read font with more spacing between letters.
-              </Text>
+              </ScaledText>
             </View>
             <Switch
               value={dyslexiaMode}
@@ -100,16 +101,16 @@ export function ProfileScreen() {
 
         {/* Account */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <ScaledText style={styles.sectionTitle}>Account</ScaledText>
           <View style={styles.menuRow}>
-            <Text style={styles.menuRowText}>{user?.email ?? 'Signed in'}</Text>
+            <ScaledText style={styles.menuRowText}>{user?.email ?? 'Signed in'}</ScaledText>
           </View>
           <TouchableOpacity
             style={[styles.menuRow, styles.signOutRow]}
             onPress={signOut}
             accessibilityRole="button"
           >
-            <Text style={styles.signOutText}>Sign out</Text>
+            <ScaledText style={styles.signOutText}>Sign out</ScaledText>
           </TouchableOpacity>
         </View>
       </ScrollView>

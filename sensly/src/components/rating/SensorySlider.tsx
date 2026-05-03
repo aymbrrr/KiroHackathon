@@ -4,8 +4,9 @@
  * Each level has an icon + short label — never color-only.
  */
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors, typography, spacing, frostedCard } from '../../constants/theme';
+import { ScaledText } from '../shared/ScaledText';
 
 export interface SliderOption {
   value: number;
@@ -23,7 +24,7 @@ interface SensorySliderProps {
 export function SensorySlider({ label, options, value, onChange }: SensorySliderProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+      <ScaledText style={styles.label}>{label}</ScaledText>
       <View style={styles.options}>
         {options.map((opt) => {
           const selected = value === opt.value;
@@ -36,10 +37,10 @@ export function SensorySlider({ label, options, value, onChange }: SensorySlider
               accessibilityState={{ selected }}
               accessibilityLabel={`${label}: ${opt.label}`}
             >
-              <Text style={styles.optionIcon}>{opt.icon}</Text>
-              <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
+              <ScaledText style={styles.optionIcon}>{opt.icon}</ScaledText>
+              <ScaledText style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
                 {opt.label}
-              </Text>
+              </ScaledText>
             </TouchableOpacity>
           );
         })}

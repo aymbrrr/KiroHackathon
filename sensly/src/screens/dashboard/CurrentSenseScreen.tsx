@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image,
+  View, StyleSheet, SafeAreaView, TouchableOpacity, Image,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,6 +12,7 @@ import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import kelpBg from '../../../assets/kelp-bg.png';
 import { colors, spacing, typography, frostedCard } from '../../constants/theme';
 import { AppRootParamList } from '../../navigation/types';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 type RouteParams = {
   CurrentSense: {
@@ -40,7 +41,7 @@ export function CurrentSenseScreen() {
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
         >
-          <Text style={styles.backText}>← Back</Text>
+          <ScaledText style={styles.backText}>← Back</ScaledText>
         </TouchableOpacity>
 
         {/* Axolotl — large and centered */}
@@ -50,14 +51,14 @@ export function CurrentSenseScreen() {
 
         {/* Current sense card */}
         <View style={styles.card}>
-          <Text style={styles.cardMono}>CURRENT SENSE</Text>
-          <Text style={styles.senseMessage}>{message}</Text>
+          <ScaledText style={styles.cardMono}>CURRENT SENSE</ScaledText>
+          <ScaledText style={styles.senseMessage}>{message}</ScaledText>
           <View style={[styles.riskBadge, { backgroundColor: levelColor + '22', borderColor: levelColor }]}>
-            <Text style={[styles.riskLabel, { color: levelColor }]}>{label}</Text>
+            <ScaledText style={[styles.riskLabel, { color: levelColor }]}>{label}</ScaledText>
           </View>
-          <Text style={[styles.riskScore, { color: levelColor }]}>Risk: {risk}</Text>
+          <ScaledText style={[styles.riskScore, { color: levelColor }]}>Risk: {risk}</ScaledText>
           <View style={styles.sensorSummary}>
-            <Text style={styles.sensorSummaryText}>🔊 {soundLabel}  ·  🏃 {motionLabel}</Text>
+            <ScaledText style={styles.sensorSummaryText}>🔊 {soundLabel}  ·  🏃 {motionLabel}</ScaledText>
           </View>
         </View>
 
@@ -66,8 +67,8 @@ export function CurrentSenseScreen() {
           <Image source={kelpBg} style={styles.kelpImage} resizeMode="cover" />
           <View style={styles.kelpOverlay}>
             <View style={styles.kelpBadge}>
-              <Text style={styles.kelpBadgeText}>Sensly is monitoring ✦</Text>
-              <Text style={styles.kelpBadgeSub}>Stay calm, we've got you</Text>
+              <ScaledText style={styles.kelpBadgeText}>Sensly is monitoring ✦</ScaledText>
+              <ScaledText style={styles.kelpBadgeSub}>Stay calm, we've got you</ScaledText>
             </View>
           </View>
         </View>
@@ -79,7 +80,7 @@ export function CurrentSenseScreen() {
             onPress={() => navigation.navigate('Insight' as any, { risk, soundLabel, motionLabel, db })}
             accessibilityRole="button"
           >
-            <Text style={styles.insightButtonText}>View Insight ✦</Text>
+            <ScaledText style={styles.insightButtonText}>View Insight ✦</ScaledText>
           </TouchableOpacity>
 
           {risk >= 70 && (
@@ -88,7 +89,7 @@ export function CurrentSenseScreen() {
               onPress={() => navigation.navigate('Calm')}
               accessibilityRole="button"
             >
-              <Text style={styles.resetButtonText}>Start Reset</Text>
+              <ScaledText style={styles.resetButtonText}>Start Reset</ScaledText>
             </TouchableOpacity>
           )}
         </View>

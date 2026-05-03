@@ -14,13 +14,14 @@
  */
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, SafeAreaView,
+  View, StyleSheet, ScrollView, SafeAreaView,
   ActivityIndicator, TouchableOpacity, RefreshControl,
 } from 'react-native';
 import { colors, spacing, typography } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
 import { dbToLabel } from '../../lib/sensoryUtils';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 interface Insight {
   text: string;
@@ -167,12 +168,12 @@ export function JournalScreen() {
         {/* Header */}
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.heading}>Journal</Text>
-            <Text style={styles.subtitle}>Recent sensory moments</Text>
+            <ScaledText style={styles.heading}>Journal</ScaledText>
+            <ScaledText style={styles.subtitle}>Recent sensory moments</ScaledText>
           </View>
           {streak > 0 && (
             <View style={styles.streakBadge}>
-              <Text style={styles.streakText}>🌱 {streak} day{streak !== 1 ? 's' : ''}</Text>
+              <ScaledText style={styles.streakText}>🌱 {streak} day{streak !== 1 ? 's' : ''}</ScaledText>
             </View>
           )}
         </View>
@@ -180,11 +181,11 @@ export function JournalScreen() {
         {/* AI Insights */}
         {insights.length > 0 && (
           <View style={styles.insightsCard}>
-            <Text style={styles.insightsTitle}>✦ AI Insights</Text>
+            <ScaledText style={styles.insightsTitle}>✦ AI Insights</ScaledText>
             {insights.map((insight, i) => (
               <View key={i} style={styles.insightRow}>
-                <Text style={styles.insightIcon}>{insightIcon(insight.type)}</Text>
-                <Text style={styles.insightText}>{insight.text}</Text>
+                <ScaledText style={styles.insightIcon}>{insightIcon(insight.type)}</ScaledText>
+                <ScaledText style={styles.insightText}>{insight.text}</ScaledText>
               </View>
             ))}
           </View>
@@ -193,28 +194,28 @@ export function JournalScreen() {
         {/* Log entries */}
         {logs.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📓</Text>
-            <Text style={styles.emptyTitle}>No entries yet</Text>
-            <Text style={styles.emptyBody}>
+            <ScaledText style={styles.emptyIcon}>📓</ScaledText>
+            <ScaledText style={styles.emptyTitle}>No entries yet</ScaledText>
+            <ScaledText style={styles.emptyBody}>
               Log an environment from the Map or Sense tab to start building your journal.
-            </Text>
+            </ScaledText>
           </View>
         ) : (
           <View style={styles.logList}>
             {logs.map((log) => (
               <View key={log.id} style={styles.logCard}>
                 <View style={styles.logContent}>
-                  <Text style={styles.logTime}>{log.time}</Text>
-                  <Text style={styles.logTitle}>{log.title}</Text>
-                  <Text style={styles.logDetail}>{log.detail}</Text>
+                  <ScaledText style={styles.logTime}>{log.time}</ScaledText>
+                  <ScaledText style={styles.logTitle}>{log.title}</ScaledText>
+                  <ScaledText style={styles.logDetail}>{log.detail}</ScaledText>
                 </View>
                 <View style={[styles.riskCircle, {
                   borderColor: riskColor(log.risk),
                   backgroundColor: riskColor(log.risk) + '18',
                 }]}>
-                  <Text style={[styles.riskValue, { color: riskColor(log.risk) }]}>
+                  <ScaledText style={[styles.riskValue, { color: riskColor(log.risk) }]}>
                     {log.risk}%
-                  </Text>
+                  </ScaledText>
                 </View>
               </View>
             ))}

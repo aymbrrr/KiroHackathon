@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity,
+  View, StyleSheet, TextInput, TouchableOpacity,
   SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, frostedCard } from '../../constants/theme';
 import { useAuthStore } from '../../stores/authStore';
 import { AuthStackParamList } from '../../navigation/types';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'SignUp'>;
@@ -52,38 +53,38 @@ export function SignUpScreen({ navigation }: Props) {
               accessibilityLabel="Go back"
               style={styles.backButton}
             >
-              <Text style={styles.backText}>← Back</Text>
+              <ScaledText style={styles.backText}>← Back</ScaledText>
             </TouchableOpacity>
-            <Text style={styles.wordmark}>sensly</Text>
-            <Text style={styles.title}>Create account</Text>
-            <Text style={styles.subtitle}>
+            <ScaledText style={styles.wordmark}>sensly</ScaledText>
+            <ScaledText style={styles.title}>Create account</ScaledText>
+            <ScaledText style={styles.subtitle}>
               Your contributions are always anonymous to other users.
-            </Text>
+            </ScaledText>
           </View>
 
           <View style={[frostedCard, styles.form]}>
             {displayError ? (
               <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{displayError}</Text>
+                <ScaledText style={styles.errorText}>{displayError}</ScaledText>
               </View>
             ) : null}
 
             {emailSent && !error ? (
               <View style={styles.successBox}>
-                <Text style={styles.successText}>
+                <ScaledText style={styles.successText}>
                   ✅ Check your email to confirm your account, then sign in.
-                </Text>
+                </ScaledText>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('SignIn')}
                   style={styles.primaryButton}
                 >
-                  <Text style={styles.primaryButtonText}>Go to sign in</Text>
+                  <ScaledText style={styles.primaryButtonText}>Go to sign in</ScaledText>
                 </TouchableOpacity>
               </View>
             ) : (
               <>
                 <View style={styles.field}>
-                  <Text style={styles.label}>Email</Text>
+                  <ScaledText style={styles.label}>Email</ScaledText>
                   <TextInput
                     style={styles.input}
                     value={email}
@@ -100,7 +101,7 @@ export function SignUpScreen({ navigation }: Props) {
                 </View>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>Password</Text>
+                  <ScaledText style={styles.label}>Password</ScaledText>
                   <TextInput
                     style={styles.input}
                     value={password}
@@ -115,7 +116,7 @@ export function SignUpScreen({ navigation }: Props) {
                 </View>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>Confirm password</Text>
+                  <ScaledText style={styles.label}>Confirm password</ScaledText>
                   <TextInput
                     style={styles.input}
                     value={confirm}
@@ -139,13 +140,13 @@ export function SignUpScreen({ navigation }: Props) {
                 >
                   {isLoading
                     ? <ActivityIndicator color={colors.textInverse} />
-                    : <Text style={styles.primaryButtonText}>Create account</Text>
+                    : <ScaledText style={styles.primaryButtonText}>Create account</ScaledText>
                   }
                 </TouchableOpacity>
 
-                <Text style={styles.privacyNote}>
+                <ScaledText style={styles.privacyNote}>
                   Your ratings and contributions are always anonymous. We never share your personal data.
-                </Text>
+                </ScaledText>
               </>
             )}
           </View>
@@ -155,10 +156,10 @@ export function SignUpScreen({ navigation }: Props) {
             accessibilityRole="button"
             style={styles.switchLink}
           >
-            <Text style={styles.switchText}>
+            <ScaledText style={styles.switchText}>
               Already have an account?{' '}
-              <Text style={styles.switchTextBold}>Sign in</Text>
-            </Text>
+              <ScaledText style={styles.switchTextBold}>Sign in</ScaledText>
+            </ScaledText>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

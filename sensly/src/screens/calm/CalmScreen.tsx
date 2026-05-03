@@ -9,7 +9,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
+  View, StyleSheet, TouchableOpacity, SafeAreaView,
   ScrollView, Animated,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
@@ -18,6 +18,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { colors, spacing, typography } from '../../constants/theme';
 import { AppTabParamList } from '../../navigation/types';
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 // ─── Breathing phases ─────────────────────────────────────────────────────────
 const BREATH_PHASES = [
@@ -59,8 +60,8 @@ function BreathingPhase({ onNext }: { onNext: () => void }) {
 
   return (
     <View style={styles.phaseContainer}>
-      <Text style={styles.phaseTitle}>Calm with Sensly</Text>
-      <Text style={styles.phaseSubtitle}>Take a moment · You're doing a great job.</Text>
+      <ScaledText style={styles.phaseTitle}>Calm with Sensly</ScaledText>
+      <ScaledText style={styles.phaseSubtitle}>Take a moment · You're doing a great job.</ScaledText>
 
       {/* Breathing circle */}
       <View style={styles.breathingOuter}>
@@ -71,7 +72,7 @@ function BreathingPhase({ onNext }: { onNext: () => void }) {
         </View>
       </View>
 
-      <Text style={styles.breathLabel}>{phase.label}</Text>
+      <ScaledText style={styles.breathLabel}>{phase.label}</ScaledText>
 
       {/* Phase dots */}
       <View style={styles.phaseDots}>
@@ -84,7 +85,7 @@ function BreathingPhase({ onNext }: { onNext: () => void }) {
       </View>
 
       <TouchableOpacity style={styles.primaryButton} onPress={onNext}>
-        <Text style={styles.primaryButtonText}>I'm ready — choose my tools →</Text>
+        <ScaledText style={styles.primaryButtonText}>I'm ready — choose my tools →</ScaledText>
       </TouchableOpacity>
     </View>
   );
@@ -101,8 +102,8 @@ function ToolPickerPhase({ onNext }: { onNext: (ids: string[]) => void }) {
 
   return (
     <ScrollView contentContainerStyle={styles.phaseContainer}>
-      <Text style={styles.phaseTitle}>Calm Steps</Text>
-      <Text style={styles.phaseSubtitle}>Pick what helps you most right now.</Text>
+      <ScaledText style={styles.phaseTitle}>Calm Steps</ScaledText>
+      <ScaledText style={styles.phaseSubtitle}>Pick what helps you most right now.</ScaledText>
 
       <View style={{ gap: spacing.sm, width: '100%' }}>
         {TOOLS.map((tool) => {
@@ -118,27 +119,27 @@ function ToolPickerPhase({ onNext }: { onNext: (ids: string[]) => void }) {
               accessibilityRole="checkbox"
               accessibilityState={{ checked: sel }}
             >
-              <Text style={styles.toolEmoji}>{tool.emoji}</Text>
+              <ScaledText style={styles.toolEmoji}>{tool.emoji}</ScaledText>
               <View style={{ flex: 1 }}>
-                <Text style={styles.toolTitle}>{tool.title}</Text>
-                <Text style={styles.toolSub}>{tool.sub}</Text>
+                <ScaledText style={styles.toolTitle}>{tool.title}</ScaledText>
+                <ScaledText style={styles.toolSub}>{tool.sub}</ScaledText>
               </View>
               <View style={[styles.toolCheck, sel && styles.toolCheckSelected]}>
-                {sel && <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>✓</Text>}
+                {sel && <ScaledText style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>✓</ScaledText>}
               </View>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      <Text style={[styles.phaseSubtitle, { marginTop: spacing.md }]}>You've got this! 💕</Text>
+      <ScaledText style={[styles.phaseSubtitle, { marginTop: spacing.md }]}>You've got this! 💕</ScaledText>
 
       <TouchableOpacity
         style={[styles.primaryButton, selected.length === 0 && styles.primaryButtonDisabled]}
         onPress={() => selected.length > 0 && onNext(selected)}
         disabled={selected.length === 0}
       >
-        <Text style={styles.primaryButtonText}>Start my calm plan →</Text>
+        <ScaledText style={styles.primaryButtonText}>Start my calm plan →</ScaledText>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -169,11 +170,11 @@ function InterventionPhase({
 
   return (
     <View style={styles.phaseContainer}>
-      <Text style={[styles.phaseSubtitle, { marginBottom: 2 }]}>
+      <ScaledText style={[styles.phaseSubtitle, { marginBottom: 2 }]}>
         Step {stepIdx + 1} of {tools.length}
-      </Text>
-      <Text style={styles.phaseTitle}>Sensory Reset</Text>
-      <Text style={styles.phaseSubtitle}>You're in a safe space.</Text>
+      </ScaledText>
+      <ScaledText style={styles.phaseTitle}>Sensory Reset</ScaledText>
+      <ScaledText style={styles.phaseSubtitle}>You're in a safe space.</ScaledText>
 
       {/* Progress bar */}
       <View style={styles.progressTrack}>
@@ -182,11 +183,11 @@ function InterventionPhase({
 
       {/* Step card */}
       <View style={[styles.card, { alignItems: 'center', gap: spacing.sm, width: '100%' }]}>
-        <Text style={{ fontSize: 42 }}>{tool.emoji}</Text>
-        <Text style={styles.phaseTitle}>{tool.title}</Text>
-        <Text style={styles.phaseSubtitle}>{tool.sub}</Text>
-        <Text style={[styles.timerText, { color: colors.primary }]}>{fmt(timeLeft)}</Text>
-        <Text style={[styles.phaseSubtitle, { fontSize: 11 }]}>time remaining</Text>
+        <ScaledText style={{ fontSize: 42 }}>{tool.emoji}</ScaledText>
+        <ScaledText style={styles.phaseTitle}>{tool.title}</ScaledText>
+        <ScaledText style={styles.phaseSubtitle}>{tool.sub}</ScaledText>
+        <ScaledText style={[styles.timerText, { color: colors.primary }]}>{fmt(timeLeft)}</ScaledText>
+        <ScaledText style={[styles.phaseSubtitle, { fontSize: 11 }]}>time remaining</ScaledText>
       </View>
 
       {/* Axolotl — happy during intervention */}
@@ -196,9 +197,9 @@ function InterventionPhase({
         style={styles.primaryButton}
         onPress={() => isLast ? onFinish() : setStepIdx((i) => i + 1)}
       >
-        <Text style={styles.primaryButtonText}>
+        <ScaledText style={styles.primaryButtonText}>
           {isLast ? 'Continue ✦' : 'Continue →'}
-        </Text>
+        </ScaledText>
       </TouchableOpacity>
     </View>
   );
@@ -213,27 +214,27 @@ function CrisisAverted() {
       {/* Axolotl — relieved on success */}
       <AxolotlSvg mood="relieved" size={150} animate />
 
-      <Text style={[styles.phaseTitle, { color: '#1D9A78', fontSize: 28, marginTop: spacing.lg }]}>
+      <ScaledText style={[styles.phaseTitle, { color: '#1D9A78', fontSize: 28, marginTop: spacing.lg }]}>
         You did it ✦
-      </Text>
-      <Text style={styles.phaseSubtitle}>
+      </ScaledText>
+      <ScaledText style={styles.phaseSubtitle}>
         Great job taking a moment for yourself.
-      </Text>
+      </ScaledText>
 
       {/* Risk badge */}
       <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: spacing.xl }]}>
         <View style={{ alignItems: 'center' }}>
-          <Text style={[styles.phaseSubtitle, { fontSize: 10 }]}>Before</Text>
-          <Text style={[styles.phaseTitle, { color: '#FF8A8A', fontSize: 20 }]}>Stressed</Text>
+          <ScaledText style={[styles.phaseSubtitle, { fontSize: 10 }]}>Before</ScaledText>
+          <ScaledText style={[styles.phaseTitle, { color: '#FF8A8A', fontSize: 20 }]}>Stressed</ScaledText>
         </View>
-        <Text style={{ fontSize: 22, color: colors.primary }}>→</Text>
+        <ScaledText style={{ fontSize: 22, color: colors.primary }}>→</ScaledText>
         <View style={{ alignItems: 'center' }}>
-          <Text style={[styles.phaseSubtitle, { fontSize: 10 }]}>Now</Text>
-          <Text style={[styles.phaseTitle, { color: '#7ED6A5', fontSize: 20 }]}>Calm</Text>
+          <ScaledText style={[styles.phaseSubtitle, { fontSize: 10 }]}>Now</ScaledText>
+          <ScaledText style={[styles.phaseTitle, { color: '#7ED6A5', fontSize: 20 }]}>Calm</ScaledText>
         </View>
       </View>
 
-      <Text style={[styles.phaseSubtitle, { fontSize: 12 }]}>Sensly logged this moment ✦</Text>
+      <ScaledText style={[styles.phaseSubtitle, { fontSize: 12 }]}>Sensly logged this moment ✦</ScaledText>
 
       <TouchableOpacity
         style={styles.primaryButton}
@@ -241,7 +242,7 @@ function CrisisAverted() {
         accessibilityRole="button"
         accessibilityLabel="Go back to home"
       >
-        <Text style={styles.primaryButtonText}>Back to home</Text>
+        <ScaledText style={styles.primaryButtonText}>Back to home</ScaledText>
       </TouchableOpacity>
     </View>
   );

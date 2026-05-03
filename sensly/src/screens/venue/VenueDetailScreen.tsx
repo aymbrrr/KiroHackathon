@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, StyleSheet, ScrollView, TouchableOpacity,
   SafeAreaView, ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -20,6 +20,7 @@ import { TimeHeatmap } from '../../components/venue/TimeHeatmap';
 import { scoreToPinStyle, dbToLabel } from '../../lib/sensoryUtils';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { AppRootParamList } from '../../navigation/types';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 // Extend AppRootParamList to include VenueDetail
 export type VenueDetailParamList = AppRootParamList & {
@@ -81,7 +82,7 @@ export function VenueDetailScreen({ navigation, route }: Props) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.errorText}>Venue not found</Text>
+          <ScaledText style={styles.errorText}>Venue not found</ScaledText>
         </View>
       </SafeAreaView>
     );
@@ -102,12 +103,12 @@ export function VenueDetailScreen({ navigation, route }: Props) {
           accessibilityLabel="Go back"
           style={styles.backButton}
         >
-          <Text style={styles.backText}>←</Text>
+          <ScaledText style={styles.backText}>←</ScaledText>
         </TouchableOpacity>
         <View style={styles.headerTitle}>
-          <Text style={styles.venueName} numberOfLines={2}>{venue.name}</Text>
+          <ScaledText style={styles.venueName} numberOfLines={2}>{venue.name}</ScaledText>
           {venue.address && (
-            <Text style={styles.venueAddress} numberOfLines={1}>{venue.address}</Text>
+            <ScaledText style={styles.venueAddress} numberOfLines={1}>{venue.address}</ScaledText>
           )}
         </View>
       </View>
@@ -121,11 +122,11 @@ export function VenueDetailScreen({ navigation, route }: Props) {
         <View style={styles.scoreBadgeRow}>
           <View style={[styles.scoreBadge, { backgroundColor: pin.color + '22', borderColor: pin.color }]}>
             <View style={[styles.scoreDot, { backgroundColor: pin.color }]} />
-            <Text style={[styles.scoreBadgeText, { color: pin.color }]}>{pin.label}</Text>
+            <ScaledText style={[styles.scoreBadgeText, { color: pin.color }]}>{pin.label}</ScaledText>
           </View>
-          <Text style={styles.ratingCount}>
+          <ScaledText style={styles.ratingCount}>
             {venue.total_ratings} rating{venue.total_ratings !== 1 ? 's' : ''}
-          </Text>
+          </ScaledText>
         </View>
 
         {/* Quick stats */}
@@ -143,18 +144,18 @@ export function VenueDetailScreen({ navigation, route }: Props) {
 
         {selfMode && noiseLabel && (
           <View style={styles.selfNoiseBanner}>
-            <Text style={styles.selfNoiseText}>🎙️ {noiseLabel}</Text>
+            <ScaledText style={styles.selfNoiseText}>🎙️ {noiseLabel}</ScaledText>
           </View>
         )}
 
         {/* Sensory features */}
         {venue.sensory_features && Array.isArray(venue.sensory_features) && venue.sensory_features.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Sensory features</Text>
+            <ScaledText style={styles.sectionTitle}>Sensory features</ScaledText>
             <View style={styles.featureChips}>
               {(venue.sensory_features as string[]).map((f, i) => (
                 <View key={i} style={styles.featureChip}>
-                  <Text style={styles.featureChipText}>{f}</Text>
+                  <ScaledText style={styles.featureChipText}>{f}</ScaledText>
                 </View>
               ))}
             </View>
@@ -163,14 +164,14 @@ export function VenueDetailScreen({ navigation, route }: Props) {
 
         {/* Radar chart */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sensory profile</Text>
+          <ScaledText style={styles.sectionTitle}>Sensory profile</ScaledText>
           <SensoryRadar venue={venue} selfMode={selfMode} />
         </View>
 
         {/* Time heatmap — Support mode only */}
         {!selfMode && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Best times to visit</Text>
+            <ScaledText style={styles.sectionTitle}>Best times to visit</ScaledText>
             <TimeHeatmap ratings={ratings} />
           </View>
         )}
@@ -178,12 +179,12 @@ export function VenueDetailScreen({ navigation, route }: Props) {
         {/* Quiet hours */}
         {venue.quiet_hours && Array.isArray(venue.quiet_hours) && venue.quiet_hours.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quiet hours</Text>
+            <ScaledText style={styles.sectionTitle}>Quiet hours</ScaledText>
             {(venue.quiet_hours as any[]).map((qh, i) => (
               <View key={i} style={styles.quietHourRow}>
-                <Text style={styles.quietHourText}>
+                <ScaledText style={styles.quietHourText}>
                   🔇 {qh.label} — {qh.day?.toUpperCase()} {qh.start}–{qh.end}
-                </Text>
+                </ScaledText>
               </View>
             ))}
           </View>
@@ -201,7 +202,7 @@ export function VenueDetailScreen({ navigation, route }: Props) {
           accessibilityRole="button"
           accessibilityLabel={`Rate ${venue.name}`}
         >
-          <Text style={styles.rateButtonText}>🎙️ Rate this place</Text>
+          <ScaledText style={styles.rateButtonText}>🎙️ Rate this place</ScaledText>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -211,8 +212,8 @@ export function VenueDetailScreen({ navigation, route }: Props) {
 function StatChip({ icon, label }: { icon: string; label: string }) {
   return (
     <View style={styles.statChip}>
-      <Text style={styles.statIcon}>{icon}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <ScaledText style={styles.statIcon}>{icon}</ScaledText>
+      <ScaledText style={styles.statLabel}>{label}</ScaledText>
     </View>
   );
 }

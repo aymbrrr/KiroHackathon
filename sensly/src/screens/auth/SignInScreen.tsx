@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity,
+  View, StyleSheet, TextInput, TouchableOpacity,
   SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, frostedCard } from '../../constants/theme';
 import { useAuthStore } from '../../stores/authStore';
 import { AuthStackParamList } from '../../navigation/types';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'SignIn'>;
@@ -36,21 +37,21 @@ export function SignInScreen({ navigation }: Props) {
             accessibilityLabel="Go back"
             style={styles.backButton}
           >
-            <Text style={styles.backText}>← Back</Text>
+            <ScaledText style={styles.backText}>← Back</ScaledText>
           </TouchableOpacity>
-          <Text style={styles.wordmark}>sensly</Text>
-          <Text style={styles.title}>Welcome back</Text>
+          <ScaledText style={styles.wordmark}>sensly</ScaledText>
+          <ScaledText style={styles.title}>Welcome back</ScaledText>
         </View>
 
         <View style={[frostedCard, styles.form]}>
           {error ? (
             <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{error}</Text>
+              <ScaledText style={styles.errorText}>{error}</ScaledText>
             </View>
           ) : null}
 
           <View style={styles.field}>
-            <Text style={styles.label}>Email</Text>
+            <ScaledText style={styles.label}>Email</ScaledText>
             <TextInput
               style={styles.input}
               value={email}
@@ -67,7 +68,7 @@ export function SignInScreen({ navigation }: Props) {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Password</Text>
+            <ScaledText style={styles.label}>Password</ScaledText>
             <TextInput
               style={styles.input}
               value={password}
@@ -91,7 +92,7 @@ export function SignInScreen({ navigation }: Props) {
           >
             {isLoading
               ? <ActivityIndicator color={colors.textInverse} />
-              : <Text style={styles.primaryButtonText}>Sign in</Text>
+              : <ScaledText style={styles.primaryButtonText}>Sign in</ScaledText>
             }
           </TouchableOpacity>
         </View>
@@ -101,10 +102,10 @@ export function SignInScreen({ navigation }: Props) {
           accessibilityRole="button"
           style={styles.switchLink}
         >
-          <Text style={styles.switchText}>
+          <ScaledText style={styles.switchText}>
             Don't have an account?{' '}
-            <Text style={styles.switchTextBold}>Create one</Text>
-          </Text>
+            <ScaledText style={styles.switchTextBold}>Create one</ScaledText>
+          </ScaledText>
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>

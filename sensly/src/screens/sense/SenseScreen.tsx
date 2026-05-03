@@ -8,11 +8,12 @@
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Animated,
+  View, StyleSheet, TouchableOpacity, SafeAreaView, Animated,
 } from 'react-native';
 import { colors, typography, spacing } from '../../constants/theme';
 import { useAudioMeter, MeasurementResult } from '../../hooks/useAudioMeter';
 import { dbToLabel, dbToLevel } from '../../lib/sensoryUtils';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 const CAPTURE_DURATION_MS = 5_000;
 
@@ -99,53 +100,53 @@ export function SenseScreen() {
         <View style={styles.centered}>
           {/* Axolotl placeholder — replace with <AxolotlSvg mood="happy" size={200} /> when Person C delivers */}
           <View style={styles.axolotlPlaceholder}>
-            <Text style={styles.axolotlEmoji}>🦎</Text>
+            <ScaledText style={styles.axolotlEmoji}>🦎</ScaledText>
           </View>
-          <Text style={styles.heading}>Quick Sense Check</Text>
-          <Text style={styles.body}>
+          <ScaledText style={styles.heading}>Quick Sense Check</ScaledText>
+          <ScaledText style={styles.body}>
             Tap to measure the noise around you for 5 seconds.
-          </Text>
-          {error && <Text style={styles.errorText}>{error}</Text>}
+          </ScaledText>
+          {error && <ScaledText style={styles.errorText}>{error}</ScaledText>}
           <TouchableOpacity
             style={styles.captureButton}
             onPress={startCapture}
             accessibilityRole="button"
             accessibilityLabel="Start 5-second noise capture"
           >
-            <Text style={styles.captureButtonText}>🎙️  Start sensing</Text>
+            <ScaledText style={styles.captureButtonText}>🎙️  Start sensing</ScaledText>
           </TouchableOpacity>
         </View>
       )}
 
       {phase === 'capturing' && (
         <View style={styles.captureOverlay}>
-          <Text style={styles.countdownText}>{countdown}</Text>
+          <ScaledText style={styles.countdownText}>{countdown}</ScaledText>
           <Animated.View
             style={[
               styles.axolotlCapture,
               { transform: [{ scale: pulseAnim }] },
             ]}
           >
-            <Text style={styles.axolotlCaptureEmoji}>{getMood(db)}</Text>
+            <ScaledText style={styles.axolotlCaptureEmoji}>{getMood(db)}</ScaledText>
           </Animated.View>
-          <Text style={styles.liveDb}>{db} dB</Text>
-          <Text style={styles.liveLabel}>{dbToLabel(db)}</Text>
-          <Text style={styles.listeningText}>Listening...</Text>
+          <ScaledText style={styles.liveDb}>{db} dB</ScaledText>
+          <ScaledText style={styles.liveLabel}>{dbToLabel(db)}</ScaledText>
+          <ScaledText style={styles.listeningText}>Listening...</ScaledText>
         </View>
       )}
 
       {phase === 'result' && result && (
         <View style={styles.centered}>
           <View style={[styles.resultBadge, { backgroundColor: dbToLevel(result.avg).color + '20' }]}>
-            <Text style={[styles.resultDb, { color: dbToLevel(result.avg).color }]}>
+            <ScaledText style={[styles.resultDb, { color: dbToLevel(result.avg).color }]}>
               {result.avg} dB
-            </Text>
-            <Text style={styles.resultLabel}>{dbToLabel(result.avg)}</Text>
+            </ScaledText>
+            <ScaledText style={styles.resultLabel}>{dbToLabel(result.avg)}</ScaledText>
           </View>
-          <Text style={styles.resultContext}>{dbToLevel(result.avg).context}</Text>
+          <ScaledText style={styles.resultContext}>{dbToLevel(result.avg).context}</ScaledText>
           <View style={styles.resultDetails}>
-            <Text style={styles.detailText}>Peak: {result.peak} dB</Text>
-            <Text style={styles.detailText}>Low: {result.min} dB</Text>
+            <ScaledText style={styles.detailText}>Peak: {result.peak} dB</ScaledText>
+            <ScaledText style={styles.detailText}>Low: {result.min} dB</ScaledText>
           </View>
           <View style={styles.resultActions}>
             <TouchableOpacity
@@ -153,7 +154,7 @@ export function SenseScreen() {
               onPress={reset}
               accessibilityRole="button"
             >
-              <Text style={styles.secondaryButtonText}>Measure again</Text>
+              <ScaledText style={styles.secondaryButtonText}>Measure again</ScaledText>
             </TouchableOpacity>
           </View>
         </View>

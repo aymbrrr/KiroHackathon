@@ -3,9 +3,10 @@
  * Uses @react-native-community/netinfo to detect connectivity.
  */
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, StyleSheet, Animated } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { colors, typography, spacing } from '../../constants/theme';
+import { ScaledText } from './ScaledText';
 
 export function OfflineBanner() {
   const [isOffline, setIsOffline] = useState(false);
@@ -29,7 +30,7 @@ export function OfflineBanner() {
   return (
     <Animated.View style={[styles.banner, { opacity }]}>
       <View style={styles.dot} />
-      <Text style={styles.text}>No connection — map unavailable</Text>
+      <ScaledText style={styles.text}>No connection — map unavailable</ScaledText>
     </Animated.View>
   );
 }

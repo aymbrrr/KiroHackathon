@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
+  View, StyleSheet, SafeAreaView, TouchableOpacity,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,6 +12,7 @@ import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import { dbToLabel } from '../../lib/sensoryUtils';
 import { colors, spacing, typography, frostedCard } from '../../constants/theme';
 import { AppRootParamList } from '../../navigation/types';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 type RouteParams = {
   Insight: {
@@ -47,36 +48,36 @@ export function InsightScreen() {
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
         >
-          <Text style={styles.backText}>← Back</Text>
+          <ScaledText style={styles.backText}>← Back</ScaledText>
         </TouchableOpacity>
 
         {/* Header */}
         <View style={styles.headerRow}>
-          <Text style={styles.heading}>Insight ✦</Text>
+          <ScaledText style={styles.heading}>Insight ✦</ScaledText>
           <AxolotlSvg mood={risk > 70 ? 'stressed' : risk > 40 ? 'thinking' : 'happy'} size={60} />
         </View>
 
         {/* Main insight card */}
         <View style={styles.card}>
-          <Text style={styles.insightText}>{insightText}</Text>
+          <ScaledText style={styles.insightText}>{insightText}</ScaledText>
         </View>
 
         {/* Tips */}
         {tips.length > 0 && (
           <View style={styles.tipsCard}>
-            <Text style={styles.tipsTitle}>What this means for you</Text>
+            <ScaledText style={styles.tipsTitle}>What this means for you</ScaledText>
             {tips.map((tip, i) => (
-              <Text key={i} style={styles.tipText}>{tip}</Text>
+              <ScaledText key={i} style={styles.tipText}>{tip}</ScaledText>
             ))}
           </View>
         )}
 
         {/* Risk gauge */}
         <View style={styles.riskCard}>
-          <Text style={styles.riskCardLabel}>RISK SCORE</Text>
-          <Text style={[styles.riskValue, {
+          <ScaledText style={styles.riskCardLabel}>RISK SCORE</ScaledText>
+          <ScaledText style={[styles.riskValue, {
             color: risk > 70 ? '#EC7D6E' : risk > 40 ? '#F2B85B' : '#46B7AE',
-          }]}>{risk}</Text>
+          }]}>{risk}</ScaledText>
           <View style={styles.riskBar}>
             <View style={[styles.riskBarFill, {
               width: `${Math.min(100, risk)}%`,
@@ -93,7 +94,7 @@ export function InsightScreen() {
               onPress={() => navigation.navigate('Calm')}
               accessibilityRole="button"
             >
-              <Text style={styles.resetButtonText}>Start Sensory Reset</Text>
+              <ScaledText style={styles.resetButtonText}>Start Sensory Reset</ScaledText>
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -101,7 +102,7 @@ export function InsightScreen() {
             onPress={() => navigation.popToTop()}
             accessibilityRole="button"
           >
-            <Text style={styles.secondaryButtonText}>Back to Dashboard</Text>
+            <ScaledText style={styles.secondaryButtonText}>Back to Dashboard</ScaledText>
           </TouchableOpacity>
         </View>
       </View>

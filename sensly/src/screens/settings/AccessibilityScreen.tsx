@@ -16,6 +16,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, typography, frostedCard } from '../../constants/theme';
 import { useSettingsStore, TextSizeMode } from '../../stores/settingsStore';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 // ─── Text size — applied via Text.defaultProps ────────────────────────────────
 
@@ -58,9 +59,9 @@ export function AccessibilityScreen() {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Text style={styles.backText}>← Back</Text>
+          <ScaledText style={styles.backText}>← Back</ScaledText>
         </TouchableOpacity>
-        <Text style={styles.title}>Accessibility</Text>
+        <ScaledText style={styles.title}>Accessibility</ScaledText>
         <View style={{ width: 60 }} />
       </View>
 
@@ -68,7 +69,7 @@ export function AccessibilityScreen() {
 
         {/* Text size */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Text size</Text>
+          <ScaledText style={styles.sectionTitle}>Text size</ScaledText>
           <View style={styles.sizeRow}>
             {TEXT_SIZE_OPTIONS.map((opt) => {
               const selected = textSizeMode === opt.value;
@@ -81,12 +82,12 @@ export function AccessibilityScreen() {
                   accessibilityState={{ selected }}
                   accessibilityLabel={opt.label}
                 >
-                  <Text style={[styles.sizeLabel, selected && styles.sizeLabelSelected]}>
+                  <ScaledText style={[styles.sizeLabel, selected && styles.sizeLabelSelected]}>
                     {opt.label}
-                  </Text>
-                  <Text style={[styles.sizePreview, selected && styles.sizeLabelSelected]}>
+                  </ScaledText>
+                  <ScaledText style={[styles.sizePreview, selected && styles.sizeLabelSelected]}>
                     Aa
-                  </Text>
+                  </ScaledText>
                 </TouchableOpacity>
               );
             })}
@@ -95,13 +96,13 @@ export function AccessibilityScreen() {
 
         {/* Dyslexia mode */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Reading</Text>
+          <ScaledText style={styles.sectionTitle}>Reading</ScaledText>
           <View style={[frostedCard, styles.toggleRow]}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.toggleLabel}>Dyslexia-friendly text</Text>
-              <Text style={styles.toggleDesc}>
+              <ScaledText style={styles.toggleLabel}>Dyslexia-friendly text</ScaledText>
+              <ScaledText style={styles.toggleDesc}>
                 Easier-to-read font with more spacing between letters.
-              </Text>
+              </ScaledText>
             </View>
             <Switch
               value={dyslexiaMode}
@@ -116,9 +117,9 @@ export function AccessibilityScreen() {
         </View>
 
         <View style={styles.infoBox}>
-          <Text style={styles.infoText}>
+          <ScaledText style={styles.infoText}>
             💡 Settings are saved and apply immediately.
-          </Text>
+          </ScaledText>
         </View>
 
       </ScrollView>

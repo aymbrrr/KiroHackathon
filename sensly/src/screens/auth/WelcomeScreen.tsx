@@ -7,6 +7,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, spacing, typography } from '../../constants/theme';
 import { AuthStackParamList } from '../../navigation/types';
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Welcome'>;
@@ -145,14 +146,14 @@ export function WelcomeScreen({ navigation }: Props) {
           <View style={{ height: 28 }} />
 
           {/* Title */}
-          <Text style={[styles.title, { color: current.textColor }]}>
+          <ScaledText style={[styles.title, { color: current.textColor }]}>
             {current.title}
-          </Text>
+          </ScaledText>
 
           {/* Subtitle */}
-          <Text style={[styles.subtitle, { color: current.subColor }]}>
+          <ScaledText style={[styles.subtitle, { color: current.subColor }]}>
             {current.sub}
-          </Text>
+          </ScaledText>
 
           {/* CTA on final slide */}
           {current.cta && (
@@ -163,7 +164,7 @@ export function WelcomeScreen({ navigation }: Props) {
                 accessibilityRole="button"
                 accessibilityLabel="Begin — create your account"
               >
-                <Text style={styles.beginButtonText}>Begin</Text>
+                <ScaledText style={styles.beginButtonText}>Begin</ScaledText>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -172,9 +173,9 @@ export function WelcomeScreen({ navigation }: Props) {
                 accessibilityRole="button"
                 accessibilityLabel="Already using Sensly? Sign in"
               >
-                <Text style={styles.continueButtonText}>
+                <ScaledText style={styles.continueButtonText}>
                   Already using Sensly? Continue →
-                </Text>
+                </ScaledText>
               </TouchableOpacity>
             </View>
           )}

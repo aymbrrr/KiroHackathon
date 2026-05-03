@@ -4,7 +4,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
+  View, StyleSheet, TouchableOpacity, SafeAreaView,
   ScrollView, ActivityIndicator,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
@@ -14,6 +14,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useProfileStore } from '../../stores/profileStore';
 import { supabase } from '../../lib/supabase';
 import { TRIGGER_OPTIONS, NOISE_THRESHOLD_DEFAULTS } from '../../constants/sensoryScales';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 const LIGHTING_OPTIONS = [
   { value: 'dim',      label: 'Dim',      icon: '🌙', desc: 'Cozy, low light' },
@@ -85,23 +86,23 @@ export function ProfileEditScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityRole="button">
-          <Text style={styles.backText}>← Back</Text>
+          <ScaledText style={styles.backText}>← Back</ScaledText>
         </TouchableOpacity>
-        <Text style={styles.title}>Sensory preferences</Text>
+        <ScaledText style={styles.title}>Sensory preferences</ScaledText>
         <View style={{ width: 60 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Noise threshold */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Noise comfort level</Text>
-          <Text style={styles.sectionDesc}>
+          <ScaledText style={styles.sectionTitle}>Noise comfort level</ScaledText>
+          <ScaledText style={styles.sectionDesc}>
             You'll get an alert when a venue or your surroundings exceed this level.
-          </Text>
+          </ScaledText>
           <View style={styles.sliderRow}>
-            <Text style={styles.sliderMin}>🤫 Quiet</Text>
-            <Text style={styles.sliderValue}>{noiseThreshold} dB</Text>
-            <Text style={styles.sliderMax}>Loud 📢</Text>
+            <ScaledText style={styles.sliderMin}>🤫 Quiet</ScaledText>
+            <ScaledText style={styles.sliderValue}>{noiseThreshold} dB</ScaledText>
+            <ScaledText style={styles.sliderMax}>Loud 📢</ScaledText>
           </View>
           <Slider
             style={styles.slider}
@@ -115,16 +116,16 @@ export function ProfileEditScreen() {
             thumbTintColor={colors.primary}
             accessibilityLabel="Noise comfort threshold"
           />
-          <Text style={styles.thresholdHint}>
+          <ScaledText style={styles.thresholdHint}>
             {noiseThreshold <= 50 ? '🔇 Very sensitive — quiet spaces only' :
              noiseThreshold <= 65 ? '🔉 Moderate — most cafés and restaurants' :
              '🔊 Tolerant — comfortable in most environments'}
-          </Text>
+          </ScaledText>
         </View>
 
         {/* Lighting preference */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Lighting preference</Text>
+          <ScaledText style={styles.sectionTitle}>Lighting preference</ScaledText>
           <View style={styles.optionRow}>
             {LIGHTING_OPTIONS.map((opt) => (
               <TouchableOpacity
@@ -134,11 +135,11 @@ export function ProfileEditScreen() {
                 accessibilityRole="radio"
                 accessibilityState={{ selected: lightingPref === opt.value }}
               >
-                <Text style={styles.optionIcon}>{opt.icon}</Text>
-                <Text style={[styles.optionLabel, lightingPref === opt.value && styles.optionLabelActive]}>
+                <ScaledText style={styles.optionIcon}>{opt.icon}</ScaledText>
+                <ScaledText style={[styles.optionLabel, lightingPref === opt.value && styles.optionLabelActive]}>
                   {opt.label}
-                </Text>
-                <Text style={styles.optionDesc}>{opt.desc}</Text>
+                </ScaledText>
+                <ScaledText style={styles.optionDesc}>{opt.desc}</ScaledText>
               </TouchableOpacity>
             ))}
           </View>
@@ -146,11 +147,11 @@ export function ProfileEditScreen() {
 
         {/* Triggers */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>What bothers you most?</Text>
-          <Text style={styles.sectionDesc}>Select any that apply — used to personalise your map.</Text>
+          <ScaledText style={styles.sectionTitle}>What bothers you most?</ScaledText>
+          <ScaledText style={styles.sectionDesc}>Select any that apply — used to personalise your map.</ScaledText>
           {Object.entries(TRIGGER_OPTIONS).map(([category, triggers]) => (
             <View key={category} style={styles.triggerCategory}>
-              <Text style={styles.triggerCategoryLabel}>{category.charAt(0).toUpperCase() + category.slice(1)}</Text>
+              <ScaledText style={styles.triggerCategoryLabel}>{category.charAt(0).toUpperCase() + category.slice(1)}</ScaledText>
               <View style={styles.triggerChips}>
                 {triggers.map((trigger) => {
                   const selected = selectedTriggers.includes(trigger);
@@ -162,9 +163,9 @@ export function ProfileEditScreen() {
                       accessibilityRole="checkbox"
                       accessibilityState={{ checked: selected }}
                     >
-                      <Text style={[styles.triggerChipText, selected && styles.triggerChipTextSelected]}>
+                      <ScaledText style={[styles.triggerChipText, selected && styles.triggerChipTextSelected]}>
                         {trigger}
-                      </Text>
+                      </ScaledText>
                     </TouchableOpacity>
                   );
                 })}
@@ -183,7 +184,7 @@ export function ProfileEditScreen() {
         >
           {isSaving
             ? <ActivityIndicator color={colors.textInverse} />
-            : <Text style={styles.saveButtonText}>{saved ? '✅ Saved' : 'Save preferences'}</Text>
+            : <ScaledText style={styles.saveButtonText}>{saved ? '✅ Saved' : 'Save preferences'}</ScaledText>
           }
         </TouchableOpacity>
       </View>

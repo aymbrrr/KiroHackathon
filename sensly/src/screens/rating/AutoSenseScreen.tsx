@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
+  View, StyleSheet, TouchableOpacity, SafeAreaView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -17,6 +17,7 @@ import { DbGauge } from '../../components/sensing/DbGauge';
 import { VenueDetector } from '../../components/sensing/VenueDetector';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { dbToLabel } from '../../lib/sensoryUtils';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 export type RatingStackParamList = {
   AutoSense: { venueId: string; venueName: string };
@@ -110,9 +111,9 @@ export function AutoSenseScreen({ navigation, route }: Props) {
           accessibilityRole="button"
           accessibilityLabel="Skip noise measurement"
         >
-          <Text style={styles.skipText}>Skip</Text>
+          <ScaledText style={styles.skipText}>Skip</ScaledText>
         </TouchableOpacity>
-        <Text style={styles.title}>{venueName}</Text>
+        <ScaledText style={styles.title}>{venueName}</ScaledText>
         <View style={{ width: 40 }} />
       </View>
 
@@ -123,27 +124,27 @@ export function AutoSenseScreen({ navigation, route }: Props) {
 
         {phase === 'measuring' && (
           <View style={styles.statusBlock}>
-            <Text style={styles.statusMono}>MEASURING</Text>
-            <Text style={styles.countdown}>{secondsLeft}s remaining</Text>
-            {error && <Text style={styles.errorText}>{error}</Text>}
+            <ScaledText style={styles.statusMono}>MEASURING</ScaledText>
+            <ScaledText style={styles.countdown}>{secondsLeft}s remaining</ScaledText>
+            {error && <ScaledText style={styles.errorText}>{error}</ScaledText>}
           </View>
         )}
 
         {phase === 'done' && result && (
           <View style={[frostedCard, styles.resultBlock]}>
-            <Text style={styles.resultHeading}>
-              This place is <Text style={styles.resultDb}>{result.avg} dB</Text>
-            </Text>
-            <Text style={styles.resultLabel}>{dbToLabel(result.avg)}</Text>
-            <Text style={styles.resultDetail}>
+            <ScaledText style={styles.resultHeading}>
+              This place is <ScaledText style={styles.resultDb}>{result.avg} dB</ScaledText>
+            </ScaledText>
+            <ScaledText style={styles.resultLabel}>{dbToLabel(result.avg)}</ScaledText>
+            <ScaledText style={styles.resultDetail}>
               Peak: {result.peak} dB · Quiet: {result.min} dB · {result.samples} samples
-            </Text>
+            </ScaledText>
           </View>
         )}
 
         {phase === 'idle' && error && (
           <View style={styles.errorBlock}>
-            <Text style={styles.errorText}>{error}</Text>
+            <ScaledText style={styles.errorText}>{error}</ScaledText>
           </View>
         )}
       </View>
@@ -156,7 +157,7 @@ export function AutoSenseScreen({ navigation, route }: Props) {
             accessibilityRole="button"
             accessibilityLabel="Stop measurement early"
           >
-            <Text style={styles.stopButtonText}>Done early</Text>
+            <ScaledText style={styles.stopButtonText}>Done early</ScaledText>
           </TouchableOpacity>
         )}
 
@@ -167,7 +168,7 @@ export function AutoSenseScreen({ navigation, route }: Props) {
             accessibilityRole="button"
             accessibilityLabel="Continue to rate other dimensions"
           >
-            <Text style={styles.primaryButtonText}>Continue →</Text>
+            <ScaledText style={styles.primaryButtonText}>Continue →</ScaledText>
           </TouchableOpacity>
         )}
 
@@ -178,14 +179,14 @@ export function AutoSenseScreen({ navigation, route }: Props) {
               onPress={handleStart}
               accessibilityRole="button"
             >
-              <Text style={styles.primaryButtonText}>Start measuring</Text>
+              <ScaledText style={styles.primaryButtonText}>Start measuring</ScaledText>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleSkip} style={styles.skipLink}>
-              <Text style={styles.skipLinkText}>Skip noise — rate other dimensions</Text>
+              <ScaledText style={styles.skipLinkText}>Skip noise — rate other dimensions</ScaledText>
             </TouchableOpacity>
-            <Text style={styles.skipHint}>
+            <ScaledText style={styles.skipHint}>
               Noise can only be measured when you're at the venue. Other ratings can be submitted anytime.
-            </Text>
+            </ScaledText>
           </>
         )}
       </View>

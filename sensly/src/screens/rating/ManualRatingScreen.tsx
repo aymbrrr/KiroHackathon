@@ -6,7 +6,7 @@
  */
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
+  View, StyleSheet, TouchableOpacity, SafeAreaView,
   ScrollView, ActivityIndicator, TextInput,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,6 +18,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { validate } from '../../lib/validation';
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import { RatingStackParamList } from './AutoSenseScreen';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 type Props = {
   navigation: NativeStackNavigationProp<RatingStackParamList, 'ManualRating'>;
@@ -137,17 +138,17 @@ export function ManualRatingScreen({ navigation, route }: Props) {
       <SafeAreaView style={styles.container}>
         <View style={styles.successContainer}>
           <AxolotlSvg mood="happy" size={100} />
-          <Text style={styles.successIcon}>✅</Text>
-          <Text style={styles.successHeading}>Rating submitted</Text>
-          <Text style={styles.successBody}>
+          <ScaledText style={styles.successIcon}>✅</ScaledText>
+          <ScaledText style={styles.successHeading}>Rating submitted</ScaledText>
+          <ScaledText style={styles.successBody}>
             Thanks for helping the community know what {venueName} is like.
-          </Text>
+          </ScaledText>
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => navigation.getParent()?.goBack()}
             accessibilityRole="button"
           >
-            <Text style={styles.primaryButtonText}>Back to map</Text>
+            <ScaledText style={styles.primaryButtonText}>Back to map</ScaledText>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -163,9 +164,9 @@ export function ManualRatingScreen({ navigation, route }: Props) {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Text style={styles.backText}>← Back</Text>
+          <ScaledText style={styles.backText}>← Back</ScaledText>
         </TouchableOpacity>
-        <Text style={styles.title} numberOfLines={1}>{venueName}</Text>
+        <ScaledText style={styles.title} numberOfLines={1}>{venueName}</ScaledText>
         <View style={{ width: 48 }} />
       </View>
 
@@ -177,15 +178,15 @@ export function ManualRatingScreen({ navigation, route }: Props) {
         {/* Noise summary from AutoSense */}
         {noiseMeasurement && (
           <View style={styles.noiseSummary}>
-            <Text style={styles.noiseSummaryText}>
-              🎙️ Measured <Text style={styles.bold}>{noiseMeasurement.avg} dB</Text> — auto-filled
-            </Text>
+            <ScaledText style={styles.noiseSummaryText}>
+              🎙️ Measured <ScaledText style={styles.bold}>{noiseMeasurement.avg} dB</ScaledText> — auto-filled
+            </ScaledText>
           </View>
         )}
 
         {error && (
           <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
+            <ScaledText style={styles.errorText}>{error}</ScaledText>
           </View>
         )}
 
@@ -231,7 +232,7 @@ export function ManualRatingScreen({ navigation, route }: Props) {
 
         {/* Notes */}
         <View style={styles.notesField}>
-          <Text style={styles.notesLabel}>Notes (optional)</Text>
+          <ScaledText style={styles.notesLabel}>Notes (optional)</ScaledText>
           <TextInput
             style={styles.notesInput}
             value={notes}
@@ -244,7 +245,7 @@ export function ManualRatingScreen({ navigation, route }: Props) {
           />
         </View>
 
-        <Text style={styles.requiredNote}>* Required</Text>
+        <ScaledText style={styles.requiredNote}>* Required</ScaledText>
       </ScrollView>
 
       {/* Submit */}
@@ -258,7 +259,7 @@ export function ManualRatingScreen({ navigation, route }: Props) {
         >
           {isSubmitting
             ? <ActivityIndicator color={colors.textInverse} />
-            : <Text style={styles.primaryButtonText}>Submit rating</Text>
+            : <ScaledText style={styles.primaryButtonText}>Submit rating</ScaledText>
           }
         </TouchableOpacity>
       </View>

@@ -4,7 +4,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, StyleSheet, ScrollView, TouchableOpacity,
   SafeAreaView, Animated, Image,
 } from 'react-native';
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
@@ -16,6 +16,7 @@ import { useMotionSensor } from '../../hooks/useMotionSensor';
 import { computeRiskScore, riskToMood, riskToLevel, dbToLabel } from '../../lib/sensoryUtils';
 import { colors, spacing, typography, frostedCard } from '../../constants/theme';
 import { AppRootParamList } from '../../navigation/types';
+import { ScaledText } from '../../components/shared/ScaledText';
 
 // ─── Sensor sparkline (step chart) ───────────────────────────────────────────
 function SparkLine({ data, color, width = 110, height = 36 }: {
@@ -67,12 +68,12 @@ function SensorCard({ title, value, unit, label, data, color, onPress }: {
       accessibilityRole="button"
       accessibilityLabel={`${title}: ${value} ${unit}, ${label}. Tap for details.`}
     >
-      <Text style={[styles.cardMono, { color: colors.textSecondary }]}>{title}</Text>
-      <Text style={[styles.sensorValue, { color: colors.textPrimary }]}>
-        {value}<Text style={styles.sensorUnit}> {unit}</Text>
-      </Text>
+      <ScaledText style={[styles.cardMono, { color: colors.textSecondary }]}>{title}</ScaledText>
+      <ScaledText style={[styles.sensorValue, { color: colors.textPrimary }]}>
+        {value}<ScaledText style={styles.sensorUnit}> {unit}</ScaledText>
+      </ScaledText>
       <SparkLine data={data} color={color} />
-      <Text style={[styles.cardMono, { color, marginTop: 4 }]}>{label}</Text>
+      <ScaledText style={[styles.cardMono, { color, marginTop: 4 }]}>{label}</ScaledText>
     </TouchableOpacity>
   );
 }
@@ -140,8 +141,8 @@ export function DashboardScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.wordmark}>sensly</Text>
-            <Text style={styles.tagline}>Sensory insights, simply</Text>
+            <ScaledText style={styles.wordmark}>sensly</ScaledText>
+            <ScaledText style={styles.tagline}>Sensory insights, simply</ScaledText>
           </View>
           <TouchableOpacity
             style={styles.settingsButton}
@@ -149,7 +150,7 @@ export function DashboardScreen() {
             accessibilityRole="button"
             accessibilityLabel="Settings"
           >
-            <Text style={{ fontSize: 18 }}>⚙️</Text>
+            <ScaledText style={{ fontSize: 18 }}>⚙️</ScaledText>
           </TouchableOpacity>
         </View>
 
@@ -186,13 +187,13 @@ export function DashboardScreen() {
           <View style={styles.statusRow}>
             <View style={{ flex: 1 }}>
               <View style={[styles.riskBadge, { backgroundColor: level.color + '22', borderColor: level.color }]}>
-                <Text style={[styles.riskLabel, { color: level.color }]}>{level.label}</Text>
+                <ScaledText style={[styles.riskLabel, { color: level.color }]}>{level.label}</ScaledText>
               </View>
-              <Text style={styles.statusMessage}>{level.message}</Text>
+              <ScaledText style={styles.statusMessage}>{level.message}</ScaledText>
             </View>
             <AxolotlSvg mood={mood} size={80} animate />
           </View>
-          <Text style={styles.tapHint}>Tap for details →</Text>
+          <ScaledText style={styles.tapHint}>Tap for details →</ScaledText>
         </TouchableOpacity>
 
         {/* Kelp scene */}
@@ -200,8 +201,8 @@ export function DashboardScreen() {
           <Image source={kelpBg} style={styles.kelpImage} resizeMode="cover" />
           <View style={styles.kelpOverlay}>
             <View style={styles.kelpBadge}>
-              <Text style={styles.kelpBadgeText}>Sensly is monitoring ✦</Text>
-              <Text style={styles.kelpBadgeSub}>Stay calm, we've got you</Text>
+              <ScaledText style={styles.kelpBadgeText}>Sensly is monitoring ✦</ScaledText>
+              <ScaledText style={styles.kelpBadgeSub}>Stay calm, we've got you</ScaledText>
             </View>
           </View>
         </View>

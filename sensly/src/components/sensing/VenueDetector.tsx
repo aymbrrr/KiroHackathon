@@ -3,9 +3,10 @@
  * Debounced to 1 req/sec to respect Nominatim's ToS.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { GeoPosition } from '../../hooks/useGeolocation';
 import { colors, typography, spacing } from '../../constants/theme';
+import { ScaledText } from '../shared/ScaledText';
 
 interface VenueDetectorProps {
   position: GeoPosition | null;
@@ -76,9 +77,9 @@ export function VenueDetector({ position, onVenueDetected }: VenueDetectorProps)
       {isLoading ? (
         <ActivityIndicator size="small" color={colors.primary} />
       ) : venueName ? (
-        <Text style={styles.text}>📍 You're at <Text style={styles.bold}>{venueName}</Text></Text>
+        <ScaledText style={styles.text}>📍 You're at <ScaledText style={styles.bold}>{venueName}</ScaledText></ScaledText>
       ) : (
-        <Text style={styles.text}>📍 Measuring your current location</Text>
+        <ScaledText style={styles.text}>📍 Measuring your current location</ScaledText>
       )}
     </View>
   );

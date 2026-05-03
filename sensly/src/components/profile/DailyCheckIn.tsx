@@ -12,12 +12,13 @@
  */
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Modal, Animated,
+  View, StyleSheet, TouchableOpacity, Modal, Animated,
 } from 'react-native';
 import { colors, spacing } from '../../constants/theme';
 import { useProfileStore } from '../../stores/profileStore';
 import { useAuthStore } from '../../stores/authStore';
 import { supabase } from '../../lib/supabase';
+import { ScaledText } from '../shared/ScaledText';
 
 interface DailyCheckInProps {
   visible: boolean;
@@ -118,11 +119,11 @@ export function DailyCheckIn({ visible, onDismiss }: DailyCheckInProps) {
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
         <View style={styles.card}>
           {/* Header */}
-          <Text style={styles.emoji}>🌤️</Text>
-          <Text style={styles.heading}>How are you feeling today?</Text>
-          <Text style={styles.subtitle}>
+          <ScaledText style={styles.emoji}>🌤️</ScaledText>
+          <ScaledText style={styles.heading}>How are you feeling today?</ScaledText>
+          <ScaledText style={styles.subtitle}>
             This adjusts your sensory thresholds for today only.
-          </Text>
+          </ScaledText>
 
           {/* Options */}
           <View style={styles.options}>
@@ -138,10 +139,10 @@ export function DailyCheckIn({ visible, onDismiss }: DailyCheckInProps) {
                 accessibilityState={{ selected: selected === opt.key }}
                 accessibilityLabel={`${opt.label}: ${opt.desc}`}
               >
-                <Text style={styles.optionEmoji}>{opt.emoji}</Text>
+                <ScaledText style={styles.optionEmoji}>{opt.emoji}</ScaledText>
                 <View style={styles.optionText}>
-                  <Text style={styles.optionLabel}>{opt.label}</Text>
-                  <Text style={styles.optionDesc}>{opt.desc}</Text>
+                  <ScaledText style={styles.optionLabel}>{opt.label}</ScaledText>
+                  <ScaledText style={styles.optionDesc}>{opt.desc}</ScaledText>
                 </View>
               </TouchableOpacity>
             ))}
@@ -153,7 +154,7 @@ export function DailyCheckIn({ visible, onDismiss }: DailyCheckInProps) {
             onPress={dismiss}
             accessibilityRole="button"
           >
-            <Text style={styles.skipText}>Skip for now</Text>
+            <ScaledText style={styles.skipText}>Skip for now</ScaledText>
           </TouchableOpacity>
         </View>
       </Animated.View>

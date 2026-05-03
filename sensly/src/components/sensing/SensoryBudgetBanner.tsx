@@ -8,11 +8,12 @@
  * no countdown pressure. Banner is dismissible.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, typography, spacing } from '../../constants/theme';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { dbToLabel } from '../../lib/sensoryUtils';
+import { ScaledText } from '../shared/ScaledText';
 
 interface SensoryBudgetBannerProps {
   currentDb: number;
@@ -76,10 +77,10 @@ export function SensoryBudgetBanner({ currentDb, threshold }: SensoryBudgetBanne
   return (
     <Animated.View style={[styles.banner, { opacity }]}>
       <View style={styles.content}>
-        <Text style={styles.text}>
-          🔊 Current noise: <Text style={styles.bold}>{currentDb} dB</Text> — above your comfort level ({threshold} dB)
-        </Text>
-        <Text style={styles.subtext}>{dbToLabel(currentDb)}</Text>
+        <ScaledText style={styles.text}>
+          🔊 Current noise: <ScaledText style={styles.bold}>{currentDb} dB</ScaledText> — above your comfort level ({threshold} dB)
+        </ScaledText>
+        <ScaledText style={styles.subtext}>{dbToLabel(currentDb)}</ScaledText>
       </View>
       <TouchableOpacity
         onPress={dismiss}
@@ -87,7 +88,7 @@ export function SensoryBudgetBanner({ currentDb, threshold }: SensoryBudgetBanne
         accessibilityRole="button"
         accessibilityLabel="Dismiss noise alert"
       >
-        <Text style={styles.dismissText}>✕</Text>
+        <ScaledText style={styles.dismissText}>✕</ScaledText>
       </TouchableOpacity>
     </Animated.View>
   );
