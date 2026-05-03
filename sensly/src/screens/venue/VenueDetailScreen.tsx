@@ -21,6 +21,7 @@ import { scoreToPinStyle, dbToLabel } from '../../lib/sensoryUtils';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { AppRootParamList } from '../../navigation/types';
 import { ScaledText } from '../../components/shared/ScaledText';
+import { KelpBackground } from '../../components/shared/KelpBackground';
 
 // Extend AppRootParamList to include VenueDetail
 export type VenueDetailParamList = AppRootParamList & {
@@ -95,6 +96,7 @@ export function VenueDetailScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <KelpBackground variant="kelp2">
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -205,6 +207,7 @@ export function VenueDetailScreen({ navigation, route }: Props) {
           <ScaledText style={styles.rateButtonText}>🎙️ Rate this place</ScaledText>
         </TouchableOpacity>
       </View>
+      </KelpBackground>
     </SafeAreaView>
   );
 }

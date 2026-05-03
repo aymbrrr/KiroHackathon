@@ -1,32 +1,36 @@
 /**
  * Kelp background — full-screen watercolor kelp image behind all content.
  * Wrap any screen content with this for the underwater theme.
+ *
+ * source defaults to kelp_2 (original). Pass kelpBG2 for the new asset.
  */
 import React from 'react';
 import { View, Image, StyleSheet, Dimensions } from 'react-native';
 
 // @ts-ignore
-import kelpBg from '../../../assets/background_kelp.png';
+const kelpBottom = require('../../../assets/kelp_2.png');
+// @ts-ignore
+const kelpBG2 = require('../../../assets/kelpBG2.png');
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface KelpBackgroundProps {
   children: React.ReactNode;
   opacity?: number;
+  variant?: 'kelp1' | 'kelp2';
 }
 
-export function KelpBackground({ children, opacity = 0.35 }: KelpBackgroundProps) {
+export function KelpBackground({ children, opacity = 0.35, variant = 'kelp1' }: KelpBackgroundProps) {
+  const source = variant === 'kelp2' ? kelpBG2 : kelpBottom;
+
   return (
     <View style={styles.container}>
-      {/* Full-screen kelp background image */}
       <Image
-        source={kelpBg}
+        source={source}
         style={[styles.bgImage, { opacity }]}
         resizeMode="contain"
         pointerEvents="none"
       />
-
-      {/* Content on top */}
       {children}
     </View>
   );

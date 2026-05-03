@@ -20,6 +20,7 @@ import { AppTabParamList } from '../../navigation/types';
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import { ScaledText } from '../../components/shared/ScaledText';
 import { useProfileStore } from '../../stores/profileStore';
+import { KelpBackground } from '../../components/shared/KelpBackground';
 
 // ─── Breathing phases ─────────────────────────────────────────────────────────
 const BREATH_PHASES = [
@@ -337,10 +338,12 @@ export function CalmScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <KelpBackground variant="kelp2">
       {phase === 0 && <BreathingPhase onNext={() => setPhase(1)} />}
       {phase === 1 && <ToolPickerPhase onNext={handleToolsSelected} />}
       {phase === 2 && <InterventionPhase tools={selectedTools} onFinish={() => setPhase(3)} />}
       {phase === 3 && <CrisisAverted />}
+      </KelpBackground>
     </SafeAreaView>
   );
 }

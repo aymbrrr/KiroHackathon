@@ -12,13 +12,20 @@
  */
 import React, { useState, useEffect } from 'react';
 import {
-  View, StyleSheet, TouchableOpacity, Modal, Animated,
+  View, StyleSheet, TouchableOpacity, Modal, Animated, Image,
 } from 'react-native';
 import { colors, spacing } from '../../constants/theme';
 import { useProfileStore } from '../../stores/profileStore';
 import { useAuthStore } from '../../stores/authStore';
 import { supabase } from '../../lib/supabase';
 import { ScaledText } from '../shared/ScaledText';
+
+// @ts-ignore
+const greenMood = require('../../../assets/greenMood.png');
+// @ts-ignore
+const yellowMood = require('../../../assets/yellowMood.png');
+// @ts-ignore
+const redMood = require('../../../assets/redMood.png');
 
 interface DailyCheckInProps {
   visible: boolean;
@@ -28,21 +35,21 @@ interface DailyCheckInProps {
 const OPTIONS = [
   {
     key: 'good',
-    emoji: '🟢',
+    image: greenMood,
     label: 'Good day',
     desc: 'Use my normal settings',
     offset: 0,
   },
   {
     key: 'sensitive',
-    emoji: '🟡',
+    image: yellowMood,
     label: 'Sensitive day',
     desc: 'Lower my thresholds a bit',
     offset: -10,
   },
   {
     key: 'hard',
-    emoji: '🔴',
+    image: redMood,
     label: 'Hard day',
     desc: 'Extra protection today',
     offset: -20,
@@ -139,7 +146,7 @@ export function DailyCheckIn({ visible, onDismiss }: DailyCheckInProps) {
                 accessibilityState={{ selected: selected === opt.key }}
                 accessibilityLabel={`${opt.label}: ${opt.desc}`}
               >
-                <ScaledText style={styles.optionEmoji}>{opt.emoji}</ScaledText>
+                <Image source={opt.image} style={styles.optionImage} resizeMode="contain" />
                 <View style={styles.optionText}>
                   <ScaledText style={styles.optionLabel}>{opt.label}</ScaledText>
                   <ScaledText style={styles.optionDesc}>{opt.desc}</ScaledText>
@@ -216,7 +223,7 @@ const styles = StyleSheet.create({
     borderColor: '#4FB3BF',
     backgroundColor: 'rgba(79,179,191,0.12)',
   },
-  optionEmoji: { fontSize: 28 },
+  optionImage: { width: 36, height: 36 },
   optionText: { flex: 1 },
   optionLabel: {
     fontSize: 16,

@@ -14,6 +14,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useSettingsStore, TextSizeMode } from '../../stores/settingsStore';
 import { AppRootParamList } from '../../navigation/types';
 import { ScaledText } from '../../components/shared/ScaledText';
+import { KelpBackground } from '../../components/shared/KelpBackground';
 
 const TEXT_SIZE_OPTIONS: Array<{ value: TextSizeMode; label: string; preview: number }> = [
   { value: 'normal', label: 'Normal',  preview: 16 },
@@ -30,6 +31,7 @@ export function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <KelpBackground variant="kelp2">
       <ScrollView contentContainerStyle={styles.content}>
         <ScaledText style={styles.heading}>Profile</ScaledText>
 
@@ -92,6 +94,7 @@ export function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </KelpBackground>
     </SafeAreaView>
   );
 }

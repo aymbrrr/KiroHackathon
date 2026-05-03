@@ -15,6 +15,7 @@ import { useAudioMeter, MeasurementResult } from '../../hooks/useAudioMeter';
 import { dbToLabel, dbToLevel } from '../../lib/sensoryUtils';
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import { ScaledText } from '../../components/shared/ScaledText';
+import { KelpBackground } from '../../components/shared/KelpBackground';
 
 const CAPTURE_DURATION_MS = 5_000;
 
@@ -97,6 +98,7 @@ export function SenseScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <KelpBackground variant="kelp2">
       {phase === 'idle' && (
         <View style={styles.centered}>
           {/* Axolotl mascot */}
@@ -158,6 +160,7 @@ export function SenseScreen() {
           </View>
         </View>
       )}
+      </KelpBackground>
     </SafeAreaView>
   );
 }

@@ -22,6 +22,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
 import { dbToLabel } from '../../lib/sensoryUtils';
 import { ScaledText } from '../../components/shared/ScaledText';
+import { KelpBackground } from '../../components/shared/KelpBackground';
 
 interface Insight {
   text: string;
@@ -160,6 +161,7 @@ export function JournalScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <KelpBackground variant="kelp2">
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -222,6 +224,7 @@ export function JournalScreen() {
           </View>
         )}
       </ScrollView>
+      </KelpBackground>
     </SafeAreaView>
   );
 }
