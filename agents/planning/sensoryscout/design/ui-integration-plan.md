@@ -261,13 +261,14 @@ alter table ratings add column if not exists texture smallint check (texture bet
 | 1 | A — Design tokens + Fredoka | 30 min | High — every screen |
 | 2 | B — Axolotl mascot | 45 min | High — visual identity |
 | 3 | F — Navigation restructure | 30 min | High — correct tab order |
-| 4 | C — Dashboard screen | 2 hrs | High — core differentiator |
-| 5 | D — Calm screen | 1.5 hrs | High — completes the nav |
-| 6 | E — Sense screen | 1 hr | Medium — reuses audio |
-| 7 | G — Frosted glass cards | 30 min | Medium — polish |
-| 8 | H — Rating dimensions | 30 min | Low — additive |
+| 4 | **I — Onboarding wizard** | **1.5 hrs** | **High — first impression, Supabase integration** |
+| 5 | C — Dashboard screen | 2 hrs | High — core differentiator |
+| 6 | D — Calm screen | 1.5 hrs | High — completes the nav |
+| 7 | E — Sense screen | 1 hr | Medium — reuses audio |
+| 8 | G — Frosted glass cards | 30 min | Medium — polish |
+| 9 | H — Rating dimensions | 30 min | Low — additive |
 
-**Total estimated time: ~7 hours**
+**Total estimated time: ~8.5 hours**
 
 ---
 
@@ -281,6 +282,205 @@ alter table ratings add column if not exists texture smallint check (texture bet
 
 ---
 
+## Step I — First-Run Onboarding Flow (Sensory Setup Wizard)
+
+> PDD artifact. Source of truth: `sensly/ui/Sensly (1)/src/app/pages/Settings.tsx` (Figma design).
+> First-time only. Editable later from Profile → "Edit noise threshold & triggers".
+
+---
+
+### What we're building
+
+A multi-step sensory setup wizard that appears **once**, immediately after a user creates their account. It collects the same data as `ProfileEditScreen` (noise threshold, lighting preference, triggers) but presented as a friendly, step-by-step flow with the axolotl mascot — not a settings dump.
+
+After completion, `hasCompletedOnboarding` is set to `true` in `settingsStore` and the user lands on the Dashboard. On every subsequent launch, the wizard is skipped entirely.
+
+---
+
+### Figma design reference (`Settings.tsx`)
+
+The Figma Settings page shows:
+- **Frosted glass card** with teal border (`rgba(100,170,190,0.35)`, `borderRadius: 24px`)
+- **Noise Limit slider** — range 40–100 dB, step 1, live value display (`{value} dB`)
+- **Light Limit slider** — range 100–2000 lx, step 50, live value display (`{value} lx`)
+- **Section label style** — `10px`, `700` weight, `0.15em` letter-spacing, uppercase, `#7AABB5`
+- **Row label style** — `12px`, `700` weight, `0.08em` letter-spacing, uppercase, `#2A6070`
+- **Value display** — `16px`, `600` weight, `#1A5060`
+- **Icon + label row** — `Volume2` icon (teal) + label left, value right
+- **Primary color** — `#3AACB2` (matches our `colors.primary`)
+
+We adapt this into a 3-step wizard (not a single settings page) to reduce cognitive load.
+
+---
+
+### Screen design: `OnboardingScreen.tsx`
+
+**3 steps, one screen, step indicator at top:**
+
+```
+Step 1 of 3 — Noise
+  [Axolotl: thinking]
+  "How loud is too loud for you?"
+  [Slider: 40–90 dB, step 5]
+  [Live label: "🔉 Moderate — most cafés"]
+  [Next →]
+
+Step 2 of 3 — Lighting
+  [Axolotl: happy]
+  "What lighting feels comfortable?"
+  [3 option cards: Dim 🌙 / Moderate 💡 / Bright ☀️]
+  [← Back]  [Next →]
+
+Step 3 of 3 — Triggers
+  "What bothers you most?"
+  [Trigger chips — multi-select]
+  [← Back]  [Finish →]
+```
+
+**Progress indicator:** 3 dots at top, filled teal for current step.
+
+**Axolotl mood per step:**
+- Step 1 (noise): `thinking` — reacts to slider value (> 70 dB → `alert`, < 50 dB → `happy`)
+- Step 2 (lighting): `happy`
+- Step 3 (triggers): `thinking`
+
+**Skip option:** "Skip for now" link at bottom of each step — goes straight to Dashboard with defaults saved.
+
+---
+
+### Data model
+
+No schema changes needed. All fields already exist in the `profiles` table:
+- `noise_threshold` (int) — from Step 1
+- `lighting_preference` ('dim' | 'moderate' | 'bright') — from Step 2
+- `triggers` (text[]) — from Step 3
+
+On "Finish", call `profileStore.saveProfile({ noise_threshold, lighting_preference, triggers })` then `settingsStore.setOnboardingComplete()`.
+
+---
+
+### Navigation gate
+
+**Where the gate lives:** `RootNavigator.tsx`, inside `AppNavigator`.
+
+**Logic:**
+```typescript
+// In AppNavigator, before rendering MainTabs:
+const { hasCompletedOnboarding } = useSettingsStore();
+
+// If onboarding not done, show Onboarding screen instead of MainTabs
+<AppRootStack.Screen name="Onboarding" component={OnboardingScreen} />
+// initialRouteName = hasCompletedOnboarding ? 'MainTabs' : 'Onboarding'
+```
+
+**After finish/skip:** Navigate to `MainTabs` and replace the stack so Back doesn't return to onboarding.
+
+---
+
+### Files to create / modify
+
+| File | Action | Notes |
+|---|---|---|
+| `sensly/src/screens/auth/OnboardingScreen.tsx` | **CREATE** | New 3-step wizard |
+| `sensly/src/navigation/RootNavigator.tsx` | **MODIFY** | Add `Onboarding` to `AppRootParamList`, gate on `hasCompletedOnboarding` |
+| `sensly/src/navigation/types.ts` | **MODIFY** | Add `Onboarding: undefined` to `AppRootParamList` |
+
+No store changes needed — `hasCompletedOnboarding` + `setOnboardingComplete` already exist in `settingsStore`. `saveProfile` already exists in `profileStore`.
+
+---
+
+### Implementation spec
+
+#### `OnboardingScreen.tsx`
+
+```typescript
+// Props / navigation
+type Props = NativeStackScreenProps<AppRootParamList, 'Onboarding'>;
+
+// State
+const [step, setStep] = useState(1);           // 1 | 2 | 3
+const [noiseThreshold, setNoiseThreshold] = useState(65);
+const [lightingPref, setLightingPref] = useState<'dim'|'moderate'|'bright'>('moderate');
+const [triggers, setTriggers] = useState<string[]>([]);
+const [isSaving, setIsSaving] = useState(false);
+
+// Axolotl mood for step 1 reacts to slider
+const noiseMood = noiseThreshold > 70 ? 'alert' : noiseThreshold < 50 ? 'happy' : 'thinking';
+
+// On finish
+const handleFinish = async () => {
+  setIsSaving(true);
+  await saveProfile({ noise_threshold: noiseThreshold, lighting_preference: lightingPref, triggers });
+  setOnboardingComplete();
+  navigation.replace('MainTabs');  // replace so Back doesn't return here
+};
+
+// On skip
+const handleSkip = () => {
+  setOnboardingComplete();
+  navigation.replace('MainTabs');
+};
+```
+
+#### Step 1 — Noise slider (Figma-faithful)
+```
+Card (frostedCard style):
+  Row: [Volume2 icon teal] "NOISE LIMIT"    "{noiseThreshold} dB"
+  Slider: min=40, max=90, step=5
+  Hint text below slider (same as ProfileEditScreen)
+```
+
+#### Step 2 — Lighting cards
+```
+3 option cards (same as ProfileEditScreen LIGHTING_OPTIONS)
+Dim 🌙 / Moderate 💡 / Bright ☀️
+```
+
+#### Step 3 — Trigger chips
+```
+Same chip grid as ProfileEditScreen
+Scrollable, multi-select
+```
+
+#### Navigation gate in `RootNavigator.tsx`
+```typescript
+// Change AppNavigator initialRouteName:
+const { hasCompletedOnboarding } = useSettingsStore();
+
+<AppRootStack.Navigator
+  screenOptions={{ headerShown: false }}
+  initialRouteName={hasCompletedOnboarding ? 'MainTabs' : 'Onboarding'}
+>
+  <AppRootStack.Screen name="Onboarding" component={OnboardingScreen} />
+  <AppRootStack.Screen name="MainTabs" component={TabNavigator} />
+  {/* ...rest unchanged */}
+</AppRootStack.Navigator>
+```
+
+---
+
+### Acceptance criteria
+
+- [ ] New user sees the 3-step wizard immediately after sign-up, before Dashboard
+- [ ] Returning user (onboarding done) goes straight to Dashboard — wizard never shown again
+- [ ] Axolotl mood on Step 1 reacts to slider value in real-time
+- [ ] "Skip for now" saves defaults and goes to Dashboard
+- [ ] "Finish" saves all 3 fields to Supabase `profiles` table and goes to Dashboard
+- [ ] Back button on Step 2/3 returns to previous step (not to auth)
+- [ ] Back button on Step 1 does nothing (or is hidden)
+- [ ] `hasCompletedOnboarding` persists across app restarts (AsyncStorage via zustand persist)
+- [ ] No TypeScript errors, no `as any`
+
+---
+
+### Person assignment
+
+This is **Person A scope** — logic + screens, no new visual assets needed (reuses `AxolotlSvg`, `frostedCard`, existing slider + chip components from `ProfileEditScreen`).
+
+**Estimated time:** 1.5 hours
+
+---
+
 ## Three-Person Split
 
 Designed to minimize conflicts. The key principle: **Person C (Visual) works on assets and styles that Person A and B import — never on the same screen files.**
@@ -288,7 +488,7 @@ Designed to minimize conflicts. The key principle: **Person C (Visual) works on 
 ---
 
 ### Person A — Logic & Screens (core functionality)
-**Owns:** Dashboard screen, Calm screen, navigation restructure, motion sensor hook, risk score logic.
+**Owns:** Dashboard screen, Calm screen, navigation restructure, motion sensor hook, risk score logic, **onboarding wizard**.
 
 **Start condition:** Can start immediately — no dependency on B or C.
 
@@ -296,16 +496,19 @@ Designed to minimize conflicts. The key principle: **Person C (Visual) works on 
 | Step | Task | Time |
 |---|---|---|
 | F | Navigation restructure — Dashboard as first tab, add Calm + Sense tabs | 30 min |
+| **I** | **Onboarding wizard** — 3-step sensory setup (noise, lighting, triggers), first-run gate | **1.5 hrs** |
 | C | Dashboard screen — sensor cards, risk score, axolotl mood, kelp strip | 2 hrs |
 | D | Calm screen — 4-phase flow (breathing → tool picker → intervention → crisis averted) | 1.5 hrs |
 | Motion hook | `useMotionSensor.ts` using `expo-sensors` DeviceMotion | 30 min |
 
 **Files owned:**
 ```
+sensly/src/screens/auth/OnboardingScreen.tsx   ← NEW — 3-step wizard
 sensly/src/screens/dashboard/DashboardScreen.tsx
 sensly/src/screens/calm/CalmScreen.tsx
 sensly/src/hooks/useMotionSensor.ts
-sensly/src/navigation/RootNavigator.tsx  ← navigation restructure
+sensly/src/navigation/RootNavigator.tsx        ← navigation restructure + onboarding gate
+sensly/src/navigation/types.ts                 ← add Onboarding to AppRootParamList
 ```
 
 **Imports from Person C (wait for these before styling):**
