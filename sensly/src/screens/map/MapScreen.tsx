@@ -90,6 +90,12 @@ export function MapScreen() {
     <View style={styles.container}>
       <OfflineBanner />
 
+      {/* Map header */}
+      <View style={styles.mapHeader}>
+        <ScaledText style={styles.mapTitle}>🗺️ Sensory Map</ScaledText>
+        <ScaledText style={styles.mapSubtitle}>Tap a pin to see sensory details</ScaledText>
+      </View>
+
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -242,7 +248,26 @@ function StatChip({ icon, label }: { icon: string; label: string }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  map: { flex: 1 },
+  mapHeader: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  mapTitle: {
+    ...typography.heading2,
+    color: colors.textPrimary,
+  },
+  mapSubtitle: {
+    ...typography.bodySm,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  map: {
+    flex: 1,
+    margin: spacing.sm,
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
   loadingOverlay: {
     position: 'absolute',
     top: spacing.xl,

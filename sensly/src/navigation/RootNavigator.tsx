@@ -31,6 +31,7 @@ import { ProfileEditScreen } from '../screens/profile/ProfileEditScreen';
 import { CurrentSenseScreen } from '../screens/dashboard/CurrentSenseScreen';
 import { InsightScreen } from '../screens/dashboard/InsightScreen';
 import { DailyCheckIn } from '../components/profile/DailyCheckIn';
+import { KelpBackground } from '../components/shared/KelpBackground';
 import { useProfileStore } from '../stores/profileStore';
 
 import { AuthStackParamList, AppRootParamList, AppTabParamList } from './types';
@@ -208,18 +209,20 @@ export function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
-      {session ? (
-        <>
-          <AppNavigator hasCompletedOnboarding={hasCompletedOnboarding} />
-          <DailyCheckIn
-            visible={showCheckIn}
-            onDismiss={() => setShowCheckIn(false)}
-          />
-        </>
-      ) : (
-        <AuthNavigator />
-      )}
-    </NavigationContainer>
+    <KelpBackground opacity={0.2}>
+      <NavigationContainer>
+        {session ? (
+          <>
+            <AppNavigator hasCompletedOnboarding={hasCompletedOnboarding} />
+            <DailyCheckIn
+              visible={showCheckIn}
+              onDismiss={() => setShowCheckIn(false)}
+            />
+          </>
+        ) : (
+          <AuthNavigator />
+        )}
+      </NavigationContainer>
+    </KelpBackground>
   );
 }

@@ -198,7 +198,6 @@ export function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KelpBackground showBottom>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -286,7 +285,6 @@ export function DashboardScreen() {
           </View>
         </View>
       </ScrollView>
-      </KelpBackground>
     </SafeAreaView>
   );
 }
