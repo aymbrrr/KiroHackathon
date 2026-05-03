@@ -10,6 +10,13 @@ import {
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import { KelpBackground } from '../../components/shared/KelpBackground';
 import kelpBg from '../../../assets/kelp-bg.png';
+
+// @ts-ignore
+const soundBg = require('../../../assets/soundComponent.png');
+// @ts-ignore
+const motionBg = require('../../../assets/motionComponent.png');
+// @ts-ignore
+const lightBg = require('../../../assets/lightComponent.png');
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAudioMeter } from '../../hooks/useAudioMeter';
@@ -57,9 +64,10 @@ function SparkLine({ data, color, width = 110, height = 36 }: {
 }
 
 // ─── Sensor card ─────────────────────────────────────────────────────────────
-function SensorCard({ title, value, unit, label, data, color, onPress }: {
+function SensorCard({ title, value, unit, label, data, color, onPress, bgImage }: {
   title: string; value: number | string; unit: string;
   label: string; data: number[]; color: string; onPress?: () => void;
+  bgImage?: any;
 }) {
   return (
     <TouchableOpacity
@@ -69,6 +77,15 @@ function SensorCard({ title, value, unit, label, data, color, onPress }: {
       accessibilityRole="button"
       accessibilityLabel={`${title}: ${value} ${unit}, ${label}. Tap for details.`}
     >
+      {/* Background icon image — centered, fills card height */}
+      {bgImage && (
+        <Image
+          source={bgImage}
+          style={styles.sensorCardBg}
+          resizeMode="contain"
+          pointerEvents="none"
+        />
+      )}
       <ScaledText style={[styles.cardMono, { color: colors.textSecondary }]}>{title}</ScaledText>
       <ScaledText style={[styles.sensorValue, { color: colors.textPrimary }]}>
         {value}<ScaledText style={styles.sensorUnit}> {unit}</ScaledText>
