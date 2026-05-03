@@ -18,7 +18,7 @@ import {
   ScrollView, Animated,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { colors, spacing, typography } from '../../constants/theme';
 import { AppTabParamList } from '../../navigation/types';
@@ -275,6 +275,18 @@ function CrisisAverted() {
 export function CalmScreen() {
   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
   const [selectedTools, setSelectedTools] = useState<typeof TOOLS>([]);
+
+  // Reset to phase 0 every time the tab comes back into focus.
+  // This ensures the flow restarts fresh after "Back to home" navigates away.
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        // Runs when screen loses focus (user navigates away)
+        setPhase(0);
+        setSelectedTools([]);
+      };
+    }, [])
+  );
 
   const handleToolsSelected = (ids: string[]) => {
     const tools = TOOLS.filter((t) => ids.includes(t.id));
