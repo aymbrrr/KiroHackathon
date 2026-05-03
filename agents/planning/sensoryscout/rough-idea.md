@@ -137,6 +137,9 @@ The app learns your patterns over time and warns you proactively.
 - Business owner portal (venue claiming, official quiet hours)
 - Wearable integration (Apple Watch, hearing aids)
 - Offline map tile caching
+- Dyslexia mode (removed — requires native font loading, out of scope)
+- Color blindness filters (removed — `CMIFColorMatrixImageFilter` requires native module not available in Expo Go)
+- Caregiver/support mode (removed — out of scope for v1)
 
 ---
 
@@ -153,7 +156,7 @@ The app learns your patterns over time and warns you proactively.
 | 7 | ✅ Done | Sensory profile — `ProfileScreen`, `ProfileEditScreen`, `SensoryBudgetBanner`, 4-tab nav |
 | UI-A | ✅ Done | Dashboard (Home tab, live sensors + risk score + axolotl), Calm screen (4-phase), `useMotionSensor`, navigation restructured |
 | UI-C | ✅ Done | Full visual pass — `AxolotlSvg` (5 moods, react-native-svg), teal palette, frosted glass, pill buttons, kelp bg, Figma design system on all screens |
-| Accessibility | ✅ Done | `AccessibilitySettingsScreen` (color blindness filters, dyslexia mode, high contrast, reduce motion, text size), `AccessibilityWrapper` (native ColorMatrix) |
+| Accessibility | ✅ Done | Text size (Normal/Large/X-Large) via `AccessibilityContext` + `ScaledText` across all screens. Dyslexia mode and color blindness filters removed as out of scope (native modules not available in Expo Go). Settings embedded inline in ProfileScreen. |
 
 ## What's currently in the app (full feature list)
 
@@ -163,7 +166,7 @@ The app learns your patterns over time and warns you proactively.
 - **Dashboard (Home)** — live dB + motion sparkline cards, risk score, axolotl reacts to risk, kelp scene, "Reset" → Calm
 - **Map** — GPS venue pins (blue circle / orange square / red triangle), frosted glass bottom sheet, "Full details" + "Rate"
 - **Calm** — breathing circle → tool picker → sensory reset with 2-min timer → "You did it" success
-- **Profile** — sensory preferences, sign out
+- **Profile** — sensory preferences, text size accessibility setting (Normal/Large/X-Large), sign out
 - **Profile Edit** — noise threshold slider (30–90 dB), lighting preference, trigger chips, saves to Supabase
 - **AutoSense** — 30s mic measurement, live dB gauge, countdown, "Done early"
 - **Manual Rating** — 6 sliders (lighting, crowding, smell, predictability, temperature, texture), notes

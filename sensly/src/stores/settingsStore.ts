@@ -14,14 +14,12 @@ interface SettingsState {
   uiMode: UiMode;
   language: string;
   colorBlindMode: ColorBlindMode;
-  dyslexiaMode: boolean;
   textSizeMode: TextSizeMode;
   hasCompletedOnboarding: boolean;
 
   setUiMode: (mode: UiMode) => void;
   setLanguage: (lang: string) => void;
   setColorBlindMode: (mode: ColorBlindMode) => void;
-  setDyslexiaMode: (enabled: boolean) => void;
   setTextSizeMode: (mode: TextSizeMode) => void;
   setOnboardingComplete: () => void;
 }
@@ -32,19 +30,17 @@ export const useSettingsStore = create<SettingsState>()(
       uiMode: 'self',
       language: 'en',
       colorBlindMode: 'none',
-      dyslexiaMode: false,   // OFF by default
       textSizeMode: 'normal',
       hasCompletedOnboarding: false,
 
       setUiMode: (uiMode) => set({ uiMode }),
       setLanguage: (language) => set({ language }),
       setColorBlindMode: (colorBlindMode) => set({ colorBlindMode }),
-      setDyslexiaMode: (dyslexiaMode) => set({ dyslexiaMode }),
       setTextSizeMode: (textSizeMode) => set({ textSizeMode }),
       setOnboardingComplete: () => set({ hasCompletedOnboarding: true }),
     }),
     {
-      name: 'sensly-settings-v2', // bumped version clears stale persisted data
+      name: 'sensly-settings-v2',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

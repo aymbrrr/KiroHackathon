@@ -1,11 +1,11 @@
 /**
  * Profile screen — sensory preferences, accessibility settings, account.
- * Accessibility settings are embedded inline (text size + dyslexia mode).
+ * Accessibility settings are embedded inline (text size only).
  */
 import React from 'react';
 import {
   View, StyleSheet, TouchableOpacity, SafeAreaView,
-  ScrollView, Switch, Text,
+  ScrollView, Text,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -26,10 +26,7 @@ const TEXT_SIZE_OPTIONS: Array<{ value: TextSizeMode; label: string; preview: nu
 export function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppRootParamList>>();
   const { user, signOut } = useAuthStore();
-  const {
-    dyslexiaMode, setDyslexiaMode,
-    textSizeMode, setTextSizeMode,
-  } = useSettingsStore();
+  const { textSizeMode, setTextSizeMode } = useSettingsStore();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -44,7 +41,7 @@ export function ProfileScreen() {
             onPress={() => navigation.navigate('ProfileEdit')}
             accessibilityRole="button"
           >
-            <ScaledText style={styles.menuRowText}>Edit noise threshold & triggers</ScaledText>
+            <ScaledText style={styles.menuRowText}>Edit noise threshold &amp; triggers</ScaledText>
             <ScaledText style={styles.menuRowArrow}>›</ScaledText>
           </TouchableOpacity>
         </View>
@@ -70,32 +67,13 @@ export function ProfileScreen() {
                   <ScaledText style={[styles.sizeLabel, selected && styles.sizeLabelSelected]}>
                     {opt.label}
                   </ScaledText>
-                  {/* Preview uses fixed size so you can see the difference */}
+                  {/* Preview uses fixed size so you can see the difference before selecting */}
                   <Text style={[styles.sizePreview, { fontSize: opt.preview }, selected && styles.sizeLabelSelected]}>
                     Aa
                   </Text>
                 </TouchableOpacity>
               );
             })}
-          </View>
-
-          {/* Dyslexia mode */}
-          <View style={[frostedCard, styles.toggleRow]}>
-            <View style={{ flex: 1 }}>
-              <ScaledText style={styles.toggleLabel}>Dyslexia-friendly text</ScaledText>
-              <ScaledText style={styles.toggleDesc}>
-                Easier-to-read font with more spacing between letters.
-              </ScaledText>
-            </View>
-            <Switch
-              value={dyslexiaMode}
-              onValueChange={setDyslexiaMode}
-              trackColor={{ false: colors.borderMuted, true: colors.primary }}
-              thumbColor="#fff"
-              accessibilityRole="switch"
-              accessibilityLabel="Dyslexia-friendly text"
-              accessibilityState={{ checked: dyslexiaMode }}
-            />
           </View>
         </View>
 
@@ -163,13 +141,4 @@ const styles = StyleSheet.create({
   sizeLabel: { ...typography.label, color: colors.textPrimary, fontSize: 12 },
   sizeLabelSelected: { color: colors.primary },
   sizePreview: { color: colors.textMuted, fontWeight: '700' },
-  // Dyslexia toggle
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  toggleLabel: { ...typography.label, color: colors.textPrimary },
-  toggleDesc: { ...typography.bodySm, color: colors.textMuted, marginTop: 2, lineHeight: 18 },
 });

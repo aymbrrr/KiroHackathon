@@ -1,55 +1,26 @@
 /**
- * Accessibility screen — two implemented features:
- *
- * 1. TEXT SIZE — scales all text via Text.defaultProps.maxFontSizeMultiplier
- *    Pure React Native, no native modules, no app-root wrappers.
- *
- * 2. DYSLEXIA MODE — OpenDyslexic font + increased letter spacing.
- *    Applied per-component via the useDyslexicStyle() hook.
- *    Font loaded via expo-font in App.tsx.
+ * Accessibility screen — text size setting.
+ * Embedded in the Profile tab.
  */
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
-  ScrollView, Switch,
+  View, StyleSheet, TouchableOpacity, SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, typography, frostedCard } from '../../constants/theme';
 import { useSettingsStore, TextSizeMode } from '../../stores/settingsStore';
 import { ScaledText } from '../../components/shared/ScaledText';
 
-// ─── Text size — applied via Text.defaultProps ────────────────────────────────
-
-const TEXT_SCALE: Record<TextSizeMode, number> = {
-  normal: 1.0,
-  large:  1.25,
-  xlarge: 1.5,
-};
-
-const TEXT_SIZE_OPTIONS: Array<{ value: TextSizeMode; label: string }> = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'large',  label: 'Large'  },
-  { value: 'xlarge', label: 'X-Large' },
+const TEXT_SIZE_OPTIONS: Array<{ value: TextSizeMode; label: string; preview: number }> = [
+  { value: 'normal', label: 'Normal',  preview: 16 },
+  { value: 'large',  label: 'Large',   preview: 20 },
+  { value: 'xlarge', label: 'X-Large', preview: 24 },
 ];
-
-// ─── Screen ───────────────────────────────────────────────────────────────────
 
 export function AccessibilityScreen() {
   const navigation = useNavigation();
-  const { dyslexiaMode, setDyslexiaMode, textSizeMode, setTextSizeMode } = useSettingsStore();
-  const prevSize = useRef<TextSizeMode>('normal');
-
-  // Apply text scale globally whenever it changes.
-  // Uses Text.defaultProps — the React Native-recommended way to scale all
-  // text app-wide without wrapping the app root.
-  useEffect(() => {
-    if (prevSize.current === textSizeMode) return;
-    prevSize.current = textSizeMode;
-    const scale = TEXT_SCALE[textSizeMode];
-    if (!(Text as any).defaultProps) (Text as any).defaultProps = {};
-    (Text as any).defaultProps.maxFontSizeMultiplier = scale;
-    (Text as any).defaultProps.allowFontScaling = true;
-  }, [textSizeMode]);
+  const { textSizeMode, setTextSizeMode } = useSettingsStore();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -66,8 +37,6 @@ export function AccessibilityScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-
-        {/* Text size */}
         <View style={styles.section}>
           <ScaledText style={styles.sectionTitle}>Text size</ScaledText>
           <View style={styles.sizeRow}>
@@ -85,7 +54,8 @@ export function AccessibilityScreen() {
                   <ScaledText style={[styles.sizeLabel, selected && styles.sizeLabelSelected]}>
                     {opt.label}
                   </ScaledText>
-                  <ScaledText style={[styles.sizePreview, selected && styles.sizeLabelSelected]}>
+                  {/* Fixed-size preview so you can compare before selecting */}
+                  <ScaledText style={[{ fontSize: opt.preview }, styles.sizePreview, selected && styles.sizeLabelSelected]}>
                     Aa
                   </ScaledText>
                 </TouchableOpacity>
@@ -94,34 +64,11 @@ export function AccessibilityScreen() {
           </View>
         </View>
 
-        {/* Dyslexia mode */}
-        <View style={styles.section}>
-          <ScaledText style={styles.sectionTitle}>Reading</ScaledText>
-          <View style={[frostedCard, styles.toggleRow]}>
-            <View style={{ flex: 1 }}>
-              <ScaledText style={styles.toggleLabel}>Dyslexia-friendly text</ScaledText>
-              <ScaledText style={styles.toggleDesc}>
-                Easier-to-read font with more spacing between letters.
-              </ScaledText>
-            </View>
-            <Switch
-              value={dyslexiaMode}
-              onValueChange={setDyslexiaMode}
-              trackColor={{ false: colors.borderMuted, true: colors.primary }}
-              thumbColor="#fff"
-              accessibilityRole="switch"
-              accessibilityLabel="Dyslexia-friendly text"
-              accessibilityState={{ checked: dyslexiaMode }}
-            />
-          </View>
-        </View>
-
         <View style={styles.infoBox}>
           <ScaledText style={styles.infoText}>
-            💡 Settings are saved and apply immediately.
+            💡 Text size applies across the whole app immediately.
           </ScaledText>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -162,15 +109,7 @@ const styles = StyleSheet.create({
   },
   sizeLabel: { ...typography.label, color: colors.textPrimary, fontSize: 13 },
   sizeLabelSelected: { color: colors.primary },
-  sizePreview: { fontSize: 22, color: colors.textMuted, fontWeight: '700' },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  toggleLabel: { ...typography.label, color: colors.textPrimary },
-  toggleDesc: { ...typography.bodySm, color: colors.textMuted, marginTop: 2, lineHeight: 18 },
+  sizePreview: { color: colors.textMuted, fontWeight: '700' },
   infoBox: {
     backgroundColor: colors.primaryMuted,
     borderRadius: 12,
