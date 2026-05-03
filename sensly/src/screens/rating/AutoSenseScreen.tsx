@@ -38,13 +38,16 @@ export function AutoSenseScreen({ navigation, route }: Props) {
   const [phase, setPhase] = useState<'idle' | 'measuring' | 'done'>('idle');
   const [result, setResult] = useState<MeasurementResult | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startedRef = useRef(false);
 
-  // Auto-start measurement on mount
+  // Auto-start measurement on mount (with guard against double-invoke in strict mode)
   useEffect(() => {
-    handleStart();
+    if (!startedRef.current) {
+      startedRef.current = true;
+      handleStart();
+    }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      stop(); // cleanup if user navigates away
     };
   }, []);
 
@@ -71,6 +74,11 @@ export function AutoSenseScreen({ navigation, route }: Props) {
     setSecondsLeft(MEASUREMENT_SECONDS);
     await start();
   };
+
+  // Cleanup mic on unmount
+  useEffect(() => {
+    return () => { stop(); };
+  }, []);
 
   const handleStop = async () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -114,6 +122,7 @@ export function AutoSenseScreen({ navigation, route }: Props) {
           <View style={styles.statusBlock}>
             <Text style={styles.statusMono}>MEASURING</Text>
             <Text style={styles.countdown}>{secondsLeft}s remaining</Text>
+            {error && <Text style={styles.errorText}>{error}</Text>}
           </View>
         )}
 
@@ -169,8 +178,11 @@ export function AutoSenseScreen({ navigation, route }: Props) {
               <Text style={styles.primaryButtonText}>Start measuring</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleSkip} style={styles.skipLink}>
-              <Text style={styles.skipLinkText}>Rate manually instead</Text>
+              <Text style={styles.skipLinkText}>Skip noise — rate other dimensions</Text>
             </TouchableOpacity>
+            <Text style={styles.skipHint}>
+              Noise can only be measured when you're at the venue. Other ratings can be submitted anytime.
+            </Text>
           </>
         )}
       </View>
@@ -247,4 +259,6 @@ const styles = StyleSheet.create({
   stopButtonText: { ...typography.label, color: colors.textPrimary, fontSize: 17 },
   skipLink: { alignItems: 'center', paddingVertical: spacing.sm },
   skipLinkText: { ...typography.body, color: colors.textMuted },
+  skipHint: { ...typography.bodySm, color: colors.textMuted, textAlign: 'center', lineHeight: 18, paddingHorizontal: spacing.md },
+  errorText: { ...typography.bodySm, color: colors.error, textAlign: 'center', marginTop: spacing.xs },
 });
