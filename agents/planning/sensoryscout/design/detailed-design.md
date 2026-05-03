@@ -1517,6 +1517,18 @@ The following rules govern every UI interaction with diagnosis data:
 7. **Not used in public aggregates** — diagnosis data never influences venue scores or any data visible to other users
 8. **Deletion is immediate and complete** — deleting a profile cascades to all associated data including diagnosis tags; no soft-delete retention
 
+### 17.11 Location Privacy
+
+Location is the most sensitive data this app handles — a history of where someone goes can reveal their medical providers, mental health support, religious practice, and daily routine.
+
+- **Never store raw location history** — the app uses GPS to detect nearby venues and measure the current environment, but precise coordinates must never be logged to the database against a user ID
+- **Venue check-ins are anonymous** — when a user rates a venue, store the venue ID and timestamp, not the GPS coordinates of where they were standing
+- **No movement tracking** — the app must not record a trail of locations over time. GPS is used in-session only (to center the map and detect nearby venues) and discarded immediately after use
+- **Companion mode location sharing** *(stretch goal)* — if built, location must be shared peer-to-peer for the duration of the session only, never stored server-side. Session ends when either party closes it. No replay, no history
+- **Dwell time detection** (used for auto-report prompts) — dwell time is calculated on-device only. The server receives "user left a venue quickly" as a boolean event, not the coordinates or duration
+- **On-device processing first** — any feature that can be computed on-device (nearby venue detection, threshold breach alerts) should be, to minimize what gets transmitted
+- **Location permission prompt** — request "while using the app" permission only, never "always on." Explain why in the permission prompt: "To show nearby venues and measure your current environment"
+
 ---
 
 ## 18. Backend Team Split
