@@ -233,3 +233,78 @@ When generating any text shown to users (tips, briefings, journal insights, warn
 - UK-based, retail and public venues
 - Criteria: noise management, lighting adjustability, clear layout, staff training, quiet spaces
 - Limitation: pass/fail, not a continuous scale
+
+
+---
+
+## Sensory Reset & Grounding Strategies
+
+Evidence-based calming and regulation strategies organized by sensory modality. Use this when implementing or modifying the Calm screen, intervention suggestions, or any AI-generated calming guidance.
+
+Sources: [Simply Psychology](https://www.simplypsychology.org/emotional-regulation-strategies-for-autistic-adults.html), [NeuroSpark Health](https://neurosparkhealth.com/sensory/nervous-system-regulation), [FLOAAT Center](https://www.floaatcenter.com/blog/sensory-friendly-coping-strategies-for-anxiety), [Myndset Therapeutics](https://www.myndset-therapeutics.com/post/calming-the-storm-20-somatic-resources-to-help-autistic-and-adhd-adults-shift-from-fight-or-flight), [Healthemindset](https://www.healthemindset.com/articles/neurodivergent-nervous-systems-somatic-strategies-for-adhd-and-autism)
+
+### By Sensory Modality
+
+**Auditory**
+- Noise-canceling headphones — blocks unpredictable sounds, most effective for autism/SPD/migraine
+- White noise or brown noise — masks environmental sounds, helps ADHD focus and reduces startle for PTSD
+- Move to quiet space — universal, reduces total sensory load
+- Humming or vocal toning — vagal nerve stimulation, self-soothing
+
+**Visual**
+- Close eyes — immediate visual input reduction
+- Sunglasses — reduces harsh/fluorescent light, especially for autism and migraine
+- Find dim lighting — move away from fluorescent sources, seek natural or warm light
+- Reduce visual clutter — face a wall, look at a single point, reduce screen brightness
+
+**Tactile / Proprioceptive**
+- Deep pressure — firm self-hug, weighted lap pad, compression vest. Organizes sensory pathways, promotes calm alertness. Best for autism/SPD
+- Wall push-ups — heavy work that discharges energy and provides proprioceptive input. Best for ADHD/SPD
+- Fidget tool — tactile grounding, redirects sensory-seeking behavior. Best for ADHD/anxiety
+- Chewy snack or gum — oral proprioceptive input, calming for autism/SPD
+- Cold water on wrists or face — vagal nerve reset, rapidly lowers heart rate. Best for PTSD/anxiety/panic
+
+**Vestibular / Movement**
+- Gentle walking — discharges fight-or-flight energy, especially for ADHD
+- Rocking or swaying — self-soothing vestibular input, common in autism
+- Stretching — releases muscle tension from stress response
+
+**Breathing / Regulation**
+- Deep belly breathing — 4 seconds in, 6 seconds out. Universal, activates parasympathetic nervous system
+- Box breathing — 4 in, 4 hold, 4 out, 4 hold. Structured pattern helps PTSD and anxiety
+- Alternate nostril breathing — balances nervous system, improves focus. 2-3 minutes
+
+**Grounding (PTSD / Anxiety specific)**
+- 5-4-3-2-1 technique — name 5 things you see, 4 you hear, 3 you touch, 2 you smell, 1 you taste. Anchors to present moment, interrupts dissociation and flashback
+- Feet on floor — press feet firmly into ground, notice the sensation. Simple, can be done anywhere
+- Hold ice or cold object — strong sensory input overrides panic response
+- Name your surroundings — "I am in [place], it is [time], I am safe." Reorients after dissociation
+
+**Olfactory**
+- Fresh air — step outside or open window. Reduces smell-based triggers
+- Familiar calming scent — lavender, peppermint (carry in pocket). Olfactory anchoring
+
+### Personalization Rules
+
+When suggesting strategies to a user:
+1. **Match to trigger categories first** — if their triggers include "sound", prioritize auditory strategies
+2. **Match to diagnosis second** — PTSD users get grounding techniques, ADHD users get movement-based strategies
+3. **Universal strategies always available** — deep breathing, quiet space, fresh air work for everyone
+4. **Never suggest strategies that require unavailable tools** — if user doesn't list headphones in comfort_items, don't make it the top suggestion
+5. **Limit to 6-8 options** — too many choices increases cognitive load during a crisis
+6. **Order by immediacy** — strategies that can be done right now, right here, should appear first
+7. **No clinical language** — say "deep pressure" not "proprioceptive input" in user-facing text
+
+### Duration Guidelines
+
+| Strategy | Time needed | Can do anywhere? |
+|---|---|---|
+| Close eyes | 10 seconds | Yes |
+| Deep breathing | 1-2 minutes | Yes |
+| 5-4-3-2-1 grounding | 2-3 minutes | Yes |
+| Cold water on wrists | 30 seconds | Needs water |
+| Fidget tool | Ongoing | Yes (if carrying) |
+| Wall push-ups | 1 minute | Needs a wall |
+| Walk/stretch | 5 minutes | Needs space |
+| Quiet space | 5-15 minutes | Needs access |
+| Headphones | Ongoing | Yes (if carrying) |
