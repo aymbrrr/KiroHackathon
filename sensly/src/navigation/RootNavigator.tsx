@@ -65,7 +65,7 @@ function TabNavigator() {
     Profile: require('../../assets/profile.png'),
   };
 
-  const iconSize = selfMode ? 28 : 24;
+  const iconSize = selfMode ? 32 : 28;
 
   return (
     <Tab.Navigator

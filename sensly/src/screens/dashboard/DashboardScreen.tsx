@@ -157,6 +157,34 @@ export function DashboardScreen() {
     : (lightEstimate > 300 ? 'bright' : lightEstimate > 100 ? 'ambient' : 'dim');
   const lightHistory = useRef<number[]>(Array(12).fill(lightEstimate));
 
+  // Temperature — use venue's reported temperature if nearby, otherwise outdoor estimate
+  const getNearestVenueTemp = (): number | null => {
+    if (!position || nearbyVenues.length === 0) return null;
+    for (const v of nearbyVenues) {
+      // Check ratings table for temperature — for now use a heuristic from category
+      const dLat = position.lat - v.lat;
+      const dLng = position.lng - v.lng;
+      const dist = Math.sqrt(dLat * dLat + dLng * dLng) * 111;
+      if (dist < 0.2) {
+        // Indoor venues tend to be ~70°F, outdoor varies
+        if (v.category === 'park' || v.category === 'street') return null; // outdoor, use weather
+        return 70; // indoor default
+      }
+    }
+    return null;
+  };
+
+  const venueTemp = getNearestVenueTemp();
+  // Outdoor estimate based on time of day (SLO climate approximation)
+  const outdoorTemp = hour >= 6 && hour < 10 ? 58
+    : hour >= 10 && hour < 16 ? 72
+    : hour >= 16 && hour < 20 ? 65
+    : 55;
+  const tempEstimate = venueTemp ?? outdoorTemp;
+  const isIndoor = venueTemp !== null;
+  const tempLabel = isIndoor ? 'indoor' : 'outside';
+  const tempHistory = useRef<number[]>(Array(12).fill(tempEstimate));
+
   const navigateToSense = () => {
     navigation.navigate('CurrentSense' as any, {
       risk,
@@ -215,8 +243,8 @@ export function DashboardScreen() {
           />
         </View>
 
-        {/* Light card — centered below the grid */}
-        <View style={styles.lightCardRow}>
+        {/* Light + Temperature cards — second row */}
+        <View style={styles.sensorGrid}>
           <SensorCard
             title="LIGHT"
             value={lightEstimate}
@@ -224,6 +252,15 @@ export function DashboardScreen() {
             label={lightLabel}
             data={lightHistory.current}
             color="#F2B85B"
+            onPress={navigateToSense}
+          />
+          <SensorCard
+            title="TEMP"
+            value={tempEstimate}
+            unit="°F"
+            label={tempLabel}
+            data={tempHistory.current}
+            color="#9B8FE8"
             onPress={navigateToSense}
           />
         </View>
@@ -303,7 +340,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   sensorGrid: { flexDirection: 'row', gap: spacing.sm },
-  lightCardRow: { alignItems: 'center', width: '52%', alignSelf: 'center' },
   sensorCard: { flex: 1, gap: spacing.xs },
   cardMono: {
     fontSize: 10,

@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    height: SCREEN_HEIGHT * 0.45,
     zIndex: 0,
   },
 });
