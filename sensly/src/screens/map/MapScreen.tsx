@@ -90,11 +90,11 @@ export function MapScreen() {
     <View style={styles.container}>
       <OfflineBanner />
 
-      {/* Map header */}
-      <View style={styles.mapHeader}>
+      {/* Map header — SafeAreaView keeps it below the notch */}
+      <SafeAreaView edges={['top']} style={styles.mapHeaderSafe}>
         <ScaledText style={styles.mapTitle}>🗺️ Sensory Map</ScaledText>
         <ScaledText style={styles.mapSubtitle}>Tap a pin to see sensory details</ScaledText>
-      </View>
+      </SafeAreaView>
 
       <MapView
         ref={mapRef}
@@ -248,10 +248,10 @@ function StatChip({ icon, label }: { icon: string; label: string }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  mapHeader: {
+  mapHeaderSafe: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
     paddingBottom: spacing.sm,
+    backgroundColor: colors.background,
   },
   mapTitle: {
     ...typography.heading2,
