@@ -120,6 +120,15 @@ export function DashboardScreen() {
   const soundLabel = db > 75 ? 'loud' : db > 55 ? 'moderate' : 'quiet';
   const motionLabel = motionLevel > 55 ? 'active' : 'steady';
 
+  // Light estimate — approximate lux from time of day (AmbientLightSensor has poor support)
+  const hour = new Date().getHours();
+  const lightEstimate = hour >= 6 && hour < 9 ? 200
+    : hour >= 9 && hour < 17 ? 450
+    : hour >= 17 && hour < 20 ? 150
+    : 30;
+  const lightLabel = lightEstimate > 300 ? 'bright' : lightEstimate > 100 ? 'ambient' : 'dim';
+  const lightHistory = useRef<number[]>(Array(12).fill(lightEstimate));
+
   const navigateToSense = () => {
     navigation.navigate('CurrentSense' as any, {
       risk,
@@ -174,6 +183,19 @@ export function DashboardScreen() {
             label={motionAvailable ? motionLabel : 'unavailable'}
             data={motionHistory.current}
             color="#FF8A8A"
+            onPress={navigateToSense}
+          />
+        </View>
+
+        {/* Light card — centered below the grid */}
+        <View style={styles.lightCardRow}>
+          <SensorCard
+            title="LIGHT"
+            value={lightEstimate}
+            unit="lux"
+            label={lightLabel}
+            data={lightHistory.current}
+            color="#F2B85B"
             onPress={navigateToSense}
           />
         </View>
@@ -253,6 +275,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   sensorGrid: { flexDirection: 'row', gap: spacing.sm },
+  lightCardRow: { alignItems: 'center', width: '52%', alignSelf: 'center' },
   sensorCard: { flex: 1, gap: spacing.xs },
   cardMono: {
     fontSize: 10,
