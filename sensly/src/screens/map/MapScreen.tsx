@@ -23,10 +23,10 @@ import { AppRootParamList } from '../../navigation/types';
 import { ScaledText } from '../../components/shared/ScaledText';
 
 const DEFAULT_REGION: Region = {
-  latitude: 35.2810,
-  longitude: -120.6600,
-  latitudeDelta: 0.02,
-  longitudeDelta: 0.02,
+  latitude: 35.2850,
+  longitude: -120.6620,
+  latitudeDelta: 0.06,
+  longitudeDelta: 0.06,
 };
 
 export function MapScreen() {
@@ -40,8 +40,9 @@ export function MapScreen() {
   const { nearbyVenues, fetchNearbyFromDB, isLoading } = useVenueStore();
 
   // Fetch venues for default region on mount (before GPS locks)
+  // Use wide radius to catch all SLO venues (campus + downtown + In-N-Out)
   useEffect(() => {
-    fetchNearbyFromDB(DEFAULT_REGION.latitude, DEFAULT_REGION.longitude, 2);
+    fetchNearbyFromDB(DEFAULT_REGION.latitude, DEFAULT_REGION.longitude, 5);
   }, []);
 
   // Center map on user when position first arrives
@@ -99,7 +100,7 @@ export function MapScreen() {
         onRegionChangeComplete={(r) => {
           setRegion(r);
           // Refetch venues when map moves significantly
-          fetchNearbyFromDB(r.latitude, r.longitude);
+          fetchNearbyFromDB(r.latitude, r.longitude, 5);
         }}
       >
         {nearbyVenues.map((venue) => (
