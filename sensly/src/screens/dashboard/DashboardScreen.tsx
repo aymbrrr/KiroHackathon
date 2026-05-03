@@ -29,27 +29,25 @@ function SparkLine({ data, color, width = 110, height = 36 }: {
   const max = Math.max(...data, 1);
   const min = Math.min(...data);
   const range = max - min || 1;
-  const segW = width / data.length;
 
-  const points = data.map((p, i) => ({
-    x: i * segW,
-    y: height - ((p - min) / range) * (height - 4) - 2,
-  }));
+  // For flat data (all same value), show bars at ~60% height instead of tiny
+  const isFlat = max === min;
 
-  // Simple SVG-free approximation using View bars
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', width, height, gap: 2 }}>
       {data.map((p, i) => {
-        const barH = Math.max(3, ((p - min) / range) * (height - 4) + 2);
+        const barH = isFlat
+          ? height * 0.4 + Math.sin(i * 0.8) * height * 0.15 // gentle wave for flat data
+          : Math.max(3, ((p - min) / range) * (height - 4) + 2);
         return (
           <View
             key={i}
             style={{
               flex: 1,
-              height: barH,
+              height: Math.max(3, barH),
               backgroundColor: color,
               borderRadius: 2,
-              opacity: 0.75 + (i / data.length) * 0.25,
+              opacity: 0.6 + (i / data.length) * 0.4,
             }}
           />
         );
@@ -243,7 +241,7 @@ export function DashboardScreen() {
             unit="lux"
             label={lightLabel}
             data={lightHistory.current}
-            color="#F2B85B"
+            color="#4FB3BF"
             onPress={navigateToSense}
           />
           <SensorCard
@@ -252,7 +250,7 @@ export function DashboardScreen() {
             unit="°F"
             label={tempLabel}
             data={tempHistory.current}
-            color="#9B8FE8"
+            color="#7DCDD6"
             onPress={navigateToSense}
           />
         </View>

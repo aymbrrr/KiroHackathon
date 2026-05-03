@@ -89,9 +89,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
+    overflow: 'hidden',
   },
   image: {
-    // PNG has transparent background — renders cleanly
+    // Slight left offset to compensate for transparent padding in the PNG
+    marginLeft: 4,
   },
   tintOverlay: {
     position: 'absolute',
