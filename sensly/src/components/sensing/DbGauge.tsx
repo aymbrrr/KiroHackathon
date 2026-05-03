@@ -129,12 +129,12 @@ const styles = StyleSheet.create({
   },
   dbUnit: {
     ...typography.label,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 13,
   },
   dbLabel: {
     ...typography.bodySm,
-    color: colors.textSecondary,
+    color: colors.textPrimary,
     textAlign: 'center',
     marginTop: spacing.xs,
     maxWidth: 120,

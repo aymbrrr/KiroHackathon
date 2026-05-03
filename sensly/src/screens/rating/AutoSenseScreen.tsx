@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, StyleSheet, TouchableOpacity, SafeAreaView,
+  View, StyleSheet, TouchableOpacity, SafeAreaView, Image,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -18,6 +18,9 @@ import { VenueDetector } from '../../components/sensing/VenueDetector';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { dbToLabel } from '../../lib/sensoryUtils';
 import { ScaledText } from '../../components/shared/ScaledText';
+
+// @ts-ignore
+const micIcon = require('../../../assets/micIcon.png');
 
 export type RatingStackParamList = {
   AutoSense: { venueId: string; venueName: string; venueLat?: number; venueLng?: number };
@@ -133,6 +136,14 @@ export function AutoSenseScreen({ navigation, route }: Props) {
       <View style={styles.content}>
         <VenueDetector position={position} />
 
+        {/* Mic icon behind the gauge — large, 80% transparent */}
+        <Image
+          source={micIcon}
+          style={styles.micBg}
+          resizeMode="contain"
+          pointerEvents="none"
+        />
+
         <DbGauge db={db} isListening={isListening} size={220} />
 
         {phase === 'measuring' && (
@@ -244,6 +255,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
     gap: spacing.xl,
+  },
+  micBg: {
+    position: 'absolute',
+    width: 187,
+    height: 404,
+    opacity: 0.22,
+    alignSelf: 'center',
+    top: '50%',
+    marginTop: -155,
+    marginLeft: -4,
+    zIndex: 0,
   },
   statusBlock: { alignItems: 'center', gap: spacing.xs },
   statusMono: {

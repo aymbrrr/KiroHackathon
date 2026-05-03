@@ -10,13 +10,6 @@ import {
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import { KelpBackground } from '../../components/shared/KelpBackground';
 import kelpBg from '../../../assets/kelp-bg.png';
-
-// @ts-ignore
-const soundBg = require('../../../assets/soundComponent.png');
-// @ts-ignore
-const motionBg = require('../../../assets/motionComponent.png');
-// @ts-ignore
-const lightBg = require('../../../assets/lightComponent.png');
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAudioMeter } from '../../hooks/useAudioMeter';
@@ -64,10 +57,9 @@ function SparkLine({ data, color, width = 110, height = 36 }: {
 }
 
 // ─── Sensor card ─────────────────────────────────────────────────────────────
-function SensorCard({ title, value, unit, label, data, color, onPress, bgImage }: {
+function SensorCard({ title, value, unit, label, data, color, onPress }: {
   title: string; value: number | string; unit: string;
   label: string; data: number[]; color: string; onPress?: () => void;
-  bgImage?: any;
 }) {
   return (
     <TouchableOpacity
@@ -77,15 +69,6 @@ function SensorCard({ title, value, unit, label, data, color, onPress, bgImage }
       accessibilityRole="button"
       accessibilityLabel={`${title}: ${value} ${unit}, ${label}. Tap for details.`}
     >
-      {/* Background icon image — centered, fills card height */}
-      {bgImage && (
-        <Image
-          source={bgImage}
-          style={styles.sensorCardBg}
-          resizeMode="contain"
-          pointerEvents="none"
-        />
-      )}
       <ScaledText style={[styles.cardMono, { color: colors.textSecondary }]}>{title}</ScaledText>
       <ScaledText style={[styles.sensorValue, { color: colors.textPrimary }]}>
         {value}<ScaledText style={styles.sensorUnit}> {unit}</ScaledText>
@@ -247,7 +230,6 @@ export function DashboardScreen() {
             label={soundLabel}
             data={soundHistory.current}
             color="#3AACB2"
-            bgImage={soundBg}
             onPress={navigateToSense}
           />
           <SensorCard
@@ -257,7 +239,6 @@ export function DashboardScreen() {
             label={motionAvailable ? motionLabel : 'unavailable'}
             data={motionHistory.current}
             color="#6BA3C7"
-            bgImage={motionBg}
             onPress={navigateToSense}
           />
         </View>
@@ -271,7 +252,6 @@ export function DashboardScreen() {
             label={lightLabel}
             data={lightHistory.current}
             color="#D4C98A"
-            bgImage={lightBg}
             onPress={navigateToSense}
           />
           <SensorCard
@@ -347,20 +327,9 @@ const styles = StyleSheet.create({
   card: {
     ...frostedCard,
     padding: spacing.md,
-    overflow: 'hidden',
   },
   sensorGrid: { flexDirection: 'row', gap: spacing.sm },
   sensorCard: { flex: 1, gap: spacing.xs },
-  sensorCardBg: {
-    position: 'absolute',
-    // Image is 1170×2532. We want to show the center ~1/3 of height.
-    // Render at 2× card width so the icon fills nicely, centered.
-    width: '200%',
-    height: '200%',
-    top: '-50%',
-    left: '-50%',
-    opacity: 0.12,
-  },
   cardMono: {
     fontSize: 10,
     fontWeight: '700',
