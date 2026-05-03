@@ -228,7 +228,7 @@ export function DashboardScreen() {
             unit="%"
             label={motionAvailable ? motionLabel : 'unavailable'}
             data={motionHistory.current}
-            color="#FF8A8A"
+            color="#6BA3C7"
             onPress={navigateToSense}
           />
         </View>
@@ -241,7 +241,7 @@ export function DashboardScreen() {
             unit="lux"
             label={lightLabel}
             data={lightHistory.current}
-            color="#4FB3BF"
+            color="#D4C98A"
             onPress={navigateToSense}
           />
           <SensorCard
@@ -250,7 +250,7 @@ export function DashboardScreen() {
             unit="°F"
             label={tempLabel}
             data={tempHistory.current}
-            color="#7DCDD6"
+            color="#8BC5A3"
             onPress={navigateToSense}
           />
         </View>

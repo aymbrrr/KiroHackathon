@@ -30,6 +30,8 @@ export function ProfileEditScreen() {
   const [noiseThreshold, setNoiseThreshold] = useState(65);
   const [lightingPref, setLightingPref] = useState<'dim' | 'moderate' | 'bright'>('moderate');
   const [selectedTriggers, setSelectedTriggers] = useState<string[]>([]);
+  const [selectedDiagnoses, setSelectedDiagnoses] = useState<string[]>([]);
+  const [diagnosisConsent, setDiagnosisConsent] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [saved, setSaved] = useState(false);
@@ -46,6 +48,8 @@ export function ProfileEditScreen() {
       setNoiseThreshold(profile.noise_threshold ?? 65);
       setLightingPref(profile.lighting_preference ?? 'moderate');
       setSelectedTriggers(profile.triggers ?? []);
+      setSelectedDiagnoses((profile.diagnosis_tags as string[]) ?? []);
+      setDiagnosisConsent(profile.diagnosis_consent ?? false);
       setIsLoading(false);
     }
   }, [profile]);
@@ -54,6 +58,37 @@ export function ProfileEditScreen() {
     setSelectedTriggers((prev) =>
       prev.includes(trigger) ? prev.filter((t) => t !== trigger) : [...prev, trigger]
     );
+  };
+
+  const DIAGNOSIS_OPTIONS = [
+    { id: 'autism', label: 'Autism / ASD', emoji: '🧩' },
+    { id: 'adhd', label: 'ADHD', emoji: '⚡' },
+    { id: 'ptsd', label: 'PTSD', emoji: '🛡️' },
+    { id: 'spd', label: 'Sensory Processing', emoji: '🌀' },
+    { id: 'anxiety', label: 'Anxiety', emoji: '💭' },
+    { id: 'migraine', label: 'Migraine', emoji: '🤕' },
+    { id: 'ocd', label: 'OCD', emoji: '🔄' },
+    { id: 'dyslexia', label: 'Dyslexia', emoji: '📖' },
+  ];
+
+  // Research-backed threshold defaults per diagnosis
+  const DIAGNOSIS_THRESHOLDS: Record<string, number> = {
+    autism: 55, migraine: 55, spd: 55,
+    ptsd: 60, anxiety: 60,
+    adhd: 65, ocd: 65, dyslexia: 65,
+  };
+
+  const toggleDiagnosis = (id: string) => {
+    setSelectedDiagnoses((prev) => {
+      const next = prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id];
+      // Auto-adjust noise threshold to the most sensitive diagnosis
+      if (next.length > 0) {
+        const lowestThreshold = Math.min(...next.map(d => DIAGNOSIS_THRESHOLDS[d] ?? 65));
+        setNoiseThreshold(lowestThreshold);
+        if (!diagnosisConsent) setDiagnosisConsent(true);
+      }
+      return next;
+    });
   };
 
   const handleSave = async () => {
@@ -65,6 +100,8 @@ export function ProfileEditScreen() {
       noise_threshold: noiseThreshold,
       lighting_preference: lightingPref,
       triggers: selectedTriggers,
+      diagnosis_tags: diagnosisConsent ? selectedDiagnoses : [],
+      diagnosis_consent: diagnosisConsent && selectedDiagnoses.length > 0,
     });
 
     setIsSaving(false);
@@ -173,6 +210,37 @@ export function ProfileEditScreen() {
             </View>
           ))}
         </View>
+
+        {/* Diagnosis tags — optional */}
+        <View style={styles.section}>
+          <ScaledText style={styles.sectionTitle}>Diagnoses (optional)</ScaledText>
+          <ScaledText style={styles.sectionDesc}>
+            Completely optional. Helps us set better defaults for you. Never shared with other users.
+          </ScaledText>
+          <View style={styles.triggerChips}>
+            {DIAGNOSIS_OPTIONS.map((diag) => {
+              const sel = selectedDiagnoses.includes(diag.id);
+              return (
+                <TouchableOpacity
+                  key={diag.id}
+                  style={[styles.triggerChip, sel && styles.triggerChipSelected]}
+                  onPress={() => toggleDiagnosis(diag.id)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: sel }}
+                >
+                  <ScaledText style={[styles.triggerChipText, sel && styles.triggerChipTextSelected]}>
+                    {diag.emoji} {diag.label}
+                  </ScaledText>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          {selectedDiagnoses.length > 0 && (
+            <ScaledText style={styles.diagnosisHint}>
+              🔒 This info is private and encrypted. It's only used to adjust your noise threshold and suggest relevant calming tools.
+            </ScaledText>
+          )}
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -255,6 +323,7 @@ const styles = StyleSheet.create({
   triggerChipSelected: { borderColor: colors.primary, backgroundColor: colors.primaryMuted },
   triggerChipText: { ...typography.bodySm, color: colors.textSecondary },
   triggerChipTextSelected: { color: colors.primary, fontWeight: '600' },
+  diagnosisHint: { ...typography.bodySm, color: colors.textMuted, lineHeight: 18, marginTop: spacing.xs, fontStyle: 'italic' },
   footer: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
