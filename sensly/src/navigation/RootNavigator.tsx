@@ -7,7 +7,7 @@ import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, View, Text } from 'react-native';
+import { ActivityIndicator, View, Text, Image } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 
 import { supabase } from '../lib/supabase';
@@ -56,9 +56,16 @@ function TabNavigator() {
   const { uiMode } = useSettingsStore();
   const selfMode = uiMode === 'self';
 
-  const TAB_ICONS: Record<string, string> = {
-    Home: '🏠', Journal: '📓', Map: '🗺️', Calm: '🌊', Profile: '👤',
+  // Custom tab icons from assets
+  const TAB_ICONS: Record<string, any> = {
+    Home: require('../../assets/home.png'),
+    Journal: require('../../assets/journal.png'),
+    Map: require('../../assets/map.png'),
+    Calm: require('../../assets/calm.png'),
+    Profile: require('../../assets/profile.png'),
   };
+
+  const iconSize = selfMode ? 28 : 24;
 
   return (
     <Tab.Navigator
@@ -72,10 +79,16 @@ function TabNavigator() {
           borderTopColor: 'rgba(79,179,191,0.2)',
           borderTopWidth: 1.5,
         },
-        tabBarIcon: () => (
-          <Text style={{ fontSize: selfMode ? 26 : 22 }}>
-            {TAB_ICONS[route.name]}
-          </Text>
+        tabBarIcon: ({ focused }) => (
+          <Image
+            source={TAB_ICONS[route.name]}
+            style={{
+              width: iconSize,
+              height: iconSize,
+              opacity: focused ? 1 : 0.5,
+            }}
+            resizeMode="contain"
+          />
         ),
       })}
     >
