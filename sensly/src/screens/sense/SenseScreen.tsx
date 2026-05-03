@@ -1,0 +1,248 @@
+/**
+ * Sense screen — quick 5-second ambient capture.
+ *
+ * Shows a fullscreen overlay with a large axolotl placeholder that reacts
+ * to live dB readings. After capture, shows the result with a label.
+ *
+ * Reuses useAudioMeter hook (same as AutoSense, shorter duration).
+ */
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Animated,
+} from 'react-native';
+import { colors, typography, spacing } from '../../constants/theme';
+import { useAudioMeter, MeasurementResult } from '../../hooks/useAudioMeter';
+import { dbToLabel, dbToLevel } from '../../lib/sensoryUtils';
+
+const CAPTURE_DURATION_MS = 5_000;
+
+type Phase = 'idle' | 'capturing' | 'result';
+
+export function SenseScreen() {
+  const { db, isListening, start, stop, permissionGranted, error } = useAudioMeter();
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [result, setResult] = useState<MeasurementResult | null>(null);
+  const [countdown, setCountdown] = useState(5);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Animated scale for the axolotl placeholder — pulses with dB
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (phase === 'capturing' && db > 0) {
+      // Scale 0.9–1.3 based on dB (30–90 range)
+      const scale = 0.9 + ((db - 30) / 60) * 0.4;
+      Animated.spring(pulseAnim, {
+        toValue: Math.min(1.3, Math.max(0.9, scale)),
+        useNativeDriver: true,
+        speed: 20,
+        bounciness: 4,
+      }).start();
+    }
+  }, [db, phase]);
+
+  const startCapture = useCallback(async () => {
+    setPhase('capturing');
+    setCountdown(5);
+    setResult(null);
+    await start();
+
+    // Countdown timer
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Auto-stop after 5 seconds
+    timerRef.current = setTimeout(async () => {
+      const measurement = await stop();
+      setResult(measurement);
+      setPhase('result');
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    }, CAPTURE_DURATION_MS);
+  }, [start, stop]);
+
+  const reset = useCallback(() => {
+    setPhase('idle');
+    setResult(null);
+    setCountdown(5);
+    pulseAnim.setValue(1);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      if (isListening) stop();
+    };
+  }, []);
+
+  // Determine axolotl mood from dB
+  const getMood = (dbVal: number): string => {
+    if (dbVal < 40) return '😊';  // happy
+    if (dbVal < 55) return '🤔';  // thinking
+    if (dbVal < 70) return '😐';  // alert
+    if (dbVal < 85) return '😰';  // stressed
+    return '😫';                   // overwhelmed
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {phase === 'idle' && (
+        <View style={styles.centered}>
+          {/* Axolotl placeholder — replace with <AxolotlSvg mood="happy" size={200} /> when Person C delivers */}
+          <View style={styles.axolotlPlaceholder}>
+            <Text style={styles.axolotlEmoji}>🦎</Text>
+          </View>
+          <Text style={styles.heading}>Quick Sense Check</Text>
+          <Text style={styles.body}>
+            Tap to measure the noise around you for 5 seconds.
+          </Text>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <TouchableOpacity
+            style={styles.captureButton}
+            onPress={startCapture}
+            accessibilityRole="button"
+            accessibilityLabel="Start 5-second noise capture"
+          >
+            <Text style={styles.captureButtonText}>🎙️  Start sensing</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {phase === 'capturing' && (
+        <View style={styles.captureOverlay}>
+          <Text style={styles.countdownText}>{countdown}</Text>
+          <Animated.View
+            style={[
+              styles.axolotlCapture,
+              { transform: [{ scale: pulseAnim }] },
+            ]}
+          >
+            <Text style={styles.axolotlCaptureEmoji}>{getMood(db)}</Text>
+          </Animated.View>
+          <Text style={styles.liveDb}>{db} dB</Text>
+          <Text style={styles.liveLabel}>{dbToLabel(db)}</Text>
+          <Text style={styles.listeningText}>Listening...</Text>
+        </View>
+      )}
+
+      {phase === 'result' && result && (
+        <View style={styles.centered}>
+          <View style={[styles.resultBadge, { backgroundColor: dbToLevel(result.avg).color + '20' }]}>
+            <Text style={[styles.resultDb, { color: dbToLevel(result.avg).color }]}>
+              {result.avg} dB
+            </Text>
+            <Text style={styles.resultLabel}>{dbToLabel(result.avg)}</Text>
+          </View>
+          <Text style={styles.resultContext}>{dbToLevel(result.avg).context}</Text>
+          <View style={styles.resultDetails}>
+            <Text style={styles.detailText}>Peak: {result.peak} dB</Text>
+            <Text style={styles.detailText}>Low: {result.min} dB</Text>
+          </View>
+          <View style={styles.resultActions}>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={reset}
+              accessibilityRole="button"
+            >
+              <Text style={styles.secondaryButtonText}>Measure again</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+    gap: spacing.lg,
+  },
+  heading: { ...typography.heading1, color: colors.textPrimary, textAlign: 'center' },
+  body: { ...typography.body, color: colors.textSecondary, textAlign: 'center', lineHeight: 24 },
+  errorText: { ...typography.bodySm, color: colors.error, textAlign: 'center' },
+
+  // Axolotl placeholder — replace with AxolotlSvg component
+  axolotlPlaceholder: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: colors.primaryMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  axolotlEmoji: { fontSize: 80 },
+
+  // Capture button
+  captureButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    marginTop: spacing.md,
+  },
+  captureButtonText: { ...typography.label, color: colors.textInverse, fontSize: 18 },
+
+  // Capture overlay — fullscreen during measurement
+  captureOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background,
+    gap: spacing.md,
+  },
+  countdownText: {
+    fontSize: 64,
+    fontWeight: '800',
+    color: colors.primary,
+    opacity: 0.3,
+  },
+  axolotlCapture: {
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: colors.primaryMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  axolotlCaptureEmoji: { fontSize: 100 },
+  liveDb: { ...typography.heading1, color: colors.textPrimary, fontSize: 48 },
+  liveLabel: { ...typography.body, color: colors.textSecondary, fontSize: 18 },
+  listeningText: { ...typography.bodySm, color: colors.textMuted },
+
+  // Result
+  resultBadge: {
+    borderRadius: 20,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  resultDb: { fontSize: 48, fontWeight: '800' },
+  resultLabel: { ...typography.heading3, color: colors.textPrimary },
+  resultContext: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
+  resultDetails: { flexDirection: 'row', gap: spacing.xl },
+  detailText: { ...typography.bodySm, color: colors.textMuted },
+  resultActions: { marginTop: spacing.lg },
+  secondaryButton: {
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xl,
+  },
+  secondaryButtonText: { ...typography.label, color: colors.primary },
+});

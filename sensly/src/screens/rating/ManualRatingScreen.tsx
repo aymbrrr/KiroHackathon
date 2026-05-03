@@ -57,6 +57,22 @@ const PREDICTABILITY_OPTIONS: SliderOption[] = [
   { value: 5, icon: '🎯', label: 'Routine' },
 ];
 
+const TEMPERATURE_OPTIONS: SliderOption[] = [
+  { value: 1, icon: '🥶', label: 'Very cold' },
+  { value: 2, icon: '❄️', label: 'Cool' },
+  { value: 3, icon: '👌', label: 'Comfortable' },
+  { value: 4, icon: '🌡️', label: 'Warm' },
+  { value: 5, icon: '🔥', label: 'Hot' },
+];
+
+const TEXTURE_OPTIONS: SliderOption[] = [
+  { value: 1, icon: '☁️', label: 'Soft/smooth' },
+  { value: 2, icon: '🧶', label: 'Mild' },
+  { value: 3, icon: '📦', label: 'Mixed' },
+  { value: 4, icon: '🪨', label: 'Rough' },
+  { value: 5, icon: '⚡', label: 'Overwhelming' },
+];
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function ManualRatingScreen({ navigation, route }: Props) {
@@ -67,6 +83,8 @@ export function ManualRatingScreen({ navigation, route }: Props) {
   const [crowding, setCrowding] = useState<number | null>(null);
   const [smell, setSmell] = useState<number | null>(null);
   const [predictability, setPredictability] = useState<number | null>(null);
+  const [temperature, setTemperature] = useState<number | null>(null);
+  const [texture, setTexture] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +113,8 @@ export function ManualRatingScreen({ navigation, route }: Props) {
         crowding: validate.rating(crowding!),
         smell: smell ? validate.rating(smell) : null,
         predictability: predictability ? validate.rating(predictability) : null,
+        temperature: temperature ? validate.rating(temperature) : null,
+        texture: texture ? validate.rating(texture) : null,
         notes: notes.trim() ? validate.text(notes) : null,
         time_of_day: timeOfDay,
         day_of_week: now.getDay(),
@@ -193,6 +213,18 @@ export function ManualRatingScreen({ navigation, route }: Props) {
           options={PREDICTABILITY_OPTIONS}
           value={predictability}
           onChange={setPredictability}
+        />
+        <SensorySlider
+          label="Temperature (optional)"
+          options={TEMPERATURE_OPTIONS}
+          value={temperature}
+          onChange={setTemperature}
+        />
+        <SensorySlider
+          label="Texture (optional)"
+          options={TEXTURE_OPTIONS}
+          value={texture}
+          onChange={setTexture}
         />
 
         {/* Notes */}
