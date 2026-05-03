@@ -22,10 +22,10 @@ import { dbToLabel, scoreToPinStyle } from '../../lib/sensoryUtils';
 import { AppRootParamList } from '../../navigation/types';
 
 const DEFAULT_REGION: Region = {
-  latitude: 37.7749,
-  longitude: -122.4194,
-  latitudeDelta: 0.01,
-  longitudeDelta: 0.01,
+  latitude: 35.2810,
+  longitude: -120.6600,
+  latitudeDelta: 0.02,
+  longitudeDelta: 0.02,
 };
 
 export function MapScreen() {
@@ -37,6 +37,11 @@ export function MapScreen() {
 
   const { position, permissionGranted, error: geoError, requestPermission } = useGeolocation();
   const { nearbyVenues, fetchNearbyFromDB, isLoading } = useVenueStore();
+
+  // Fetch venues for default region on mount (before GPS locks)
+  useEffect(() => {
+    fetchNearbyFromDB(DEFAULT_REGION.latitude, DEFAULT_REGION.longitude, 2);
+  }, []);
 
   // Center map on user when position first arrives
   useEffect(() => {
