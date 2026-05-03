@@ -13,6 +13,7 @@ export type AuthStackParamList = {
 // Tab order matches designer's Layout.tsx: Home → Journal → Sense → Map → Calm → Profile
 export type AppTabParamList = {
   Home: undefined;
+  Journal: undefined;
   Map: undefined;
   Calm: undefined;
   Profile: undefined;

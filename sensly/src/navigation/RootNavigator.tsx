@@ -21,11 +21,14 @@ import { SignUpScreen } from '../screens/auth/SignUpScreen';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { MapScreen } from '../screens/map/MapScreen';
 import { CalmScreen } from '../screens/calm/CalmScreen';
+import { JournalScreen } from '../screens/journal/JournalScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { AutoSenseScreen } from '../screens/rating/AutoSenseScreen';
 import { ManualRatingScreen } from '../screens/rating/ManualRatingScreen';
 import { VenueDetailScreen } from '../screens/venue/VenueDetailScreen';
 import { ProfileEditScreen } from '../screens/profile/ProfileEditScreen';
+import { DailyCheckIn } from '../components/profile/DailyCheckIn';
+import { useProfileStore } from '../stores/profileStore';
 
 import { AuthStackParamList, AppRootParamList, AppTabParamList } from './types';
 import { RatingStackParamList } from '../screens/rating/AutoSenseScreen';
@@ -51,7 +54,7 @@ function TabNavigator() {
   const selfMode = uiMode === 'self';
 
   const TAB_ICONS: Record<string, string> = {
-    Home: '🏠', Map: '🗺️', Calm: '🌊', Profile: '👤',
+    Home: '🏠', Journal: '📓', Map: '🗺️', Calm: '🌊', Profile: '👤',
   };
 
   return (
@@ -74,6 +77,7 @@ function TabNavigator() {
       })}
     >
       <Tab.Screen name="Home" component={DashboardScreen} />
+      <Tab.Screen name="Journal" component={JournalScreen} />
       <Tab.Screen name="Map" component={MapScreen} />
       <Tab.Screen name="Calm" component={CalmScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
@@ -126,16 +130,31 @@ function AppNavigator() {
 // ─── Root ─────────────────────────────────────────────────────────────────────
 export function RootNavigator() {
   const { session, setSession } = useAuthStore();
+  const { fetchProfile, clear: clearProfile } = useProfileStore();
   const [isInitializing, setIsInitializing] = React.useState(true);
+  const [showCheckIn, setShowCheckIn] = React.useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session) {
+        fetchProfile();
+        // Show daily check-in after a brief delay so the app loads first
+        setTimeout(() => setShowCheckIn(true), 1000);
+      }
       setIsInitializing(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => { setSession(session); }
+      (_event, session) => {
+        setSession(session);
+        if (session) {
+          fetchProfile();
+        } else {
+          clearProfile();
+          setShowCheckIn(false);
+        }
+      }
     );
 
     return () => subscription.unsubscribe();
@@ -151,7 +170,17 @@ export function RootNavigator() {
 
   return (
     <NavigationContainer>
-      {session ? <AppNavigator /> : <AuthNavigator />}
+      {session ? (
+        <>
+          <AppNavigator />
+          <DailyCheckIn
+            visible={showCheckIn}
+            onDismiss={() => setShowCheckIn(false)}
+          />
+        </>
+      ) : (
+        <AuthNavigator />
+      )}
     </NavigationContainer>
   );
 }
