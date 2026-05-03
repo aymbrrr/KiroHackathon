@@ -65,7 +65,7 @@ function TabNavigator() {
     Profile: require('../../assets/profile.png'),
   };
 
-  const iconSize = selfMode ? 38 : 32;
+  const iconSize = selfMode ? 86 : 72;
 
   return (
     <Tab.Navigator
@@ -78,9 +78,9 @@ function TabNavigator() {
           backgroundColor: 'rgba(255,255,255,0.92)',
           borderTopColor: 'rgba(79,179,191,0.2)',
           borderTopWidth: 1.5,
-          height: 72,
-          paddingBottom: 10,
-          paddingTop: 6,
+          height: 110,
+          paddingBottom: 18,
+          paddingTop: 10,
         },
         tabBarIcon: ({ focused }) => (
           <Image
@@ -88,7 +88,7 @@ function TabNavigator() {
             style={{
               width: iconSize,
               height: iconSize,
-              opacity: focused ? 1 : 0.5,
+              opacity: focused ? 1 : 0.7,
             }}
             resizeMode="contain"
           />
