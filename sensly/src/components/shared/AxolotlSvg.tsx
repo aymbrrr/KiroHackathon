@@ -88,6 +88,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'center',
   },
   image: {
     // PNG has transparent background — renders cleanly
