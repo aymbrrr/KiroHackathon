@@ -27,6 +27,8 @@ import { AutoSenseScreen } from '../screens/rating/AutoSenseScreen';
 import { ManualRatingScreen } from '../screens/rating/ManualRatingScreen';
 import { VenueDetailScreen } from '../screens/venue/VenueDetailScreen';
 import { ProfileEditScreen } from '../screens/profile/ProfileEditScreen';
+import { CurrentSenseScreen } from '../screens/dashboard/CurrentSenseScreen';
+import { InsightScreen } from '../screens/dashboard/InsightScreen';
 import { DailyCheckIn } from '../components/profile/DailyCheckIn';
 import { useProfileStore } from '../stores/profileStore';
 
@@ -118,6 +120,8 @@ function AppNavigator() {
       />
       <AppRootStack.Screen name="VenueDetail" component={VenueDetailScreen} />
       <AppRootStack.Screen name="ProfileEdit" component={ProfileEditScreen} />
+      <AppRootStack.Screen name="CurrentSense" component={CurrentSenseScreen} />
+      <AppRootStack.Screen name="Insight" component={InsightScreen} />
       <AppRootStack.Screen
         name="Calm"
         component={CalmScreen}

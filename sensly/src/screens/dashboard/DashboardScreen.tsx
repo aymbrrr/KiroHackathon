@@ -55,19 +55,25 @@ function SparkLine({ data, color, width = 110, height = 36 }: {
 }
 
 // ─── Sensor card ─────────────────────────────────────────────────────────────
-function SensorCard({ title, value, unit, label, data, color }: {
+function SensorCard({ title, value, unit, label, data, color, onPress }: {
   title: string; value: number | string; unit: string;
-  label: string; data: number[]; color: string;
+  label: string; data: number[]; color: string; onPress?: () => void;
 }) {
   return (
-    <View style={[styles.card, styles.sensorCard]}>
+    <TouchableOpacity
+      style={[styles.card, styles.sensorCard]}
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}: ${value} ${unit}, ${label}. Tap for details.`}
+    >
       <Text style={[styles.cardMono, { color: colors.textSecondary }]}>{title}</Text>
       <Text style={[styles.sensorValue, { color: colors.textPrimary }]}>
         {value}<Text style={styles.sensorUnit}> {unit}</Text>
       </Text>
       <SparkLine data={data} color={color} />
       <Text style={[styles.cardMono, { color, marginTop: 4 }]}>{label}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -102,6 +108,19 @@ export function DashboardScreen() {
   const soundLabel = db > 75 ? 'loud' : db > 55 ? 'moderate' : 'quiet';
   const motionLabel = motionLevel > 55 ? 'active' : 'steady';
 
+  const navigateToSense = () => {
+    navigation.navigate('CurrentSense' as any, {
+      risk,
+      mood,
+      label: level.label,
+      message: level.message,
+      levelColor: level.color,
+      soundLabel,
+      motionLabel,
+      db,
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -124,7 +143,7 @@ export function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Sensor cards */}
+        {/* Sensor cards — tap to see Current Sense */}
         <View style={styles.sensorGrid}>
           <SensorCard
             title="SOUND"
@@ -133,6 +152,7 @@ export function DashboardScreen() {
             label={soundLabel}
             data={soundHistory.current}
             color="#3AACB2"
+            onPress={navigateToSense}
           />
           <SensorCard
             title="MOTION"
@@ -141,56 +161,31 @@ export function DashboardScreen() {
             label={motionAvailable ? motionLabel : 'unavailable'}
             data={motionHistory.current}
             color="#FF8A8A"
+            onPress={navigateToSense}
           />
         </View>
 
-        {/* Current sense card */}
-        <View style={styles.card}>
-          <Text style={[styles.cardMono, { color: colors.textSecondary, marginBottom: spacing.sm }]}>
-            CURRENT SENSE
-          </Text>
-          <View style={styles.senseRow}>
+        {/* Quick status card — tap to see full Current Sense */}
+        <TouchableOpacity
+          style={styles.card}
+          onPress={navigateToSense}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="View current sense details"
+        >
+          <View style={styles.statusRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.senseMessage}>{level.message}</Text>
               <View style={[styles.riskBadge, { backgroundColor: level.color + '22', borderColor: level.color }]}>
                 <Text style={[styles.riskLabel, { color: level.color }]}>{level.label}</Text>
               </View>
-              <Text style={[styles.riskScore, { color: level.color }]}>
-                Risk: {risk}
-              </Text>
+              <Text style={styles.statusMessage}>{level.message}</Text>
             </View>
-            {/* Axolotl mascot */}
-            <AxolotlSvg mood={mood} size={100} animate />
+            <AxolotlSvg mood={mood} size={80} animate />
           </View>
-        </View>
+          <Text style={styles.tapHint}>Tap for details →</Text>
+        </TouchableOpacity>
 
-        {/* Insight / action card */}
-        <View style={styles.card}>
-          <View style={styles.insightRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.cardMono, { color: colors.primary, marginBottom: spacing.xs }]}>
-                Insight ✦
-              </Text>
-              <Text style={styles.insightText}>
-                {db > 0
-                  ? `${dbToLabel(db)} environment — ${soundLabel} noise, ${motionLabel} movement.`
-                  : 'Noise, motion, and light combine into your stress risk score.'}
-              </Text>
-            </View>
-            {risk >= 70 && (
-              <TouchableOpacity
-                style={styles.resetButton}
-                onPress={() => navigation.navigate('Calm')}
-                accessibilityRole="button"
-                accessibilityLabel="Start calm reset"
-              >
-                <Text style={styles.resetButtonText}>Reset</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Kelp background scene */}
+        {/* Kelp scene */}
         <View style={styles.kelpContainer}>
           <Image source={kelpBg} style={styles.kelpImage} resizeMode="cover" />
           <View style={styles.kelpOverlay}>
@@ -257,48 +252,29 @@ const styles = StyleSheet.create({
     lineHeight: 32,
   },
   sensorUnit: { fontSize: 14, fontWeight: '400' },
-  senseRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  senseMessage: {
-    ...typography.body,
-    color: colors.textPrimary,
-    lineHeight: 22,
-    marginBottom: spacing.sm,
-  },
   riskBadge: {
     alignSelf: 'flex-start',
     borderWidth: 1.5,
     borderRadius: 20,
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
-    marginBottom: spacing.xs,
   },
   riskLabel: { ...typography.bodySm, fontWeight: '600' },
-  riskScore: { ...typography.bodySm, fontWeight: '700' },
-  insightRow: {
+  statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
-  insightText: {
+  statusMessage: {
     ...typography.body,
     color: colors.textPrimary,
-    lineHeight: 22,
+    marginTop: spacing.xs,
   },
-  resetButton: {
-    backgroundColor: '#F46F61',
-    borderRadius: 14,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    flexShrink: 0,
-  },
-  resetButtonText: {
-    ...typography.label,
-    color: '#fff',
-    fontSize: 14,
+  tapHint: {
+    ...typography.bodySm,
+    color: colors.textMuted,
+    textAlign: 'right',
+    marginTop: spacing.sm,
   },
   // Kelp background image container
   kelpContainer: {

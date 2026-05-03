@@ -25,4 +25,20 @@ export type AppRootParamList = {
   VenueDetail: { venueId: string };
   ProfileEdit: undefined;
   Calm: undefined;
+  CurrentSense: {
+    risk: number;
+    mood: string;
+    label: string;
+    message: string;
+    levelColor: string;
+    soundLabel: string;
+    motionLabel: string;
+    db: number;
+  };
+  Insight: {
+    risk: number;
+    soundLabel: string;
+    motionLabel: string;
+    db: number;
+  };
 };
