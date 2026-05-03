@@ -1,0 +1,111 @@
+SENSLY — 3-MINUTE HACKATHON PITCH SCRIPT
+=========================================
+For use with ChatGPT or any AI presentation assistant.
+Tone: Infomercial energy. Punchy. Real. Fast.
+
+---
+
+[HOOK — 0:00–0:20]
+
+You know that feeling when you walk into a crowded restaurant and your brain just... shuts down?
+
+The fluorescent lights. The noise. The chaos.
+
+For 1 in 5 people — people with autism, ADHD, PTSD, sensory processing disorder — that's not just uncomfortable. That's a crisis.
+
+And right now? There's no app for that.
+
+Until Sensly.
+
+---
+
+[THE PROBLEM — 0:20–0:35]
+
+Neurodivergent people spend enormous energy just figuring out if a place is safe to enter.
+
+They can't Google "is this coffee shop too loud for me."
+They can't filter a map by "low sensory load."
+They're flying blind — every single time.
+
+---
+
+[THE SOLUTION — 0:35–1:10]
+
+Sensly is a crowdsourced sensory environment app.
+
+Open it up. Your phone's microphone is already measuring the noise level — live, in decibels, right now. Sound. Motion. Light. Temperature. Four sensors, one screen.
+
+Your axolotl mascot tells you at a glance: green means calm. Red means get out.
+
+Tap the Map tab. Every venue around you has a sensory score — color-coded pins, community-rated for noise, crowding, lighting, and predictability. Tap a pin, see the full breakdown. Tap Rate — and your 30-second mic measurement gets added to the community database automatically.
+
+That's the flywheel. Every user makes the map better for the next one.
+
+---
+
+[THE DEPTH — 1:10–1:40]
+
+But Sensly isn't just a map.
+
+Set up your profile — tell us your triggers, your diagnosis, your sensory preferences. The app learns what matters to you specifically.
+
+The Calm tab is a 4-phase sensory intervention: guided breathing, a personalized tool picker — headphones, deep pressure, grounding exercises — all ranked by what your profile says actually helps you. Walk in stressed. Walk out calm. Sensly logs the moment.
+
+The Journal tab shows your week at a glance — a risk chart, every venue you visited, AI-generated weekly insights powered by Groq. Not generic wellness tips. Patterns from your actual data.
+
+And there's a pattern detection engine running in the background — a Supabase Edge Function that warns you when you're about to visit a place that's triggered you before. No LLM. Pure SQL. Fast, private, and it works offline.
+
+---
+
+[THE BUILD — 1:40–2:10]
+
+Now here's where Kiro comes in.
+
+We didn't just use AI to write code. We built a custom AI development system first.
+
+A three-agent architecture: a conductor that orchestrates, a librarian that researches, and a development agent that implements. Every agent has a strict job. The conductor reads at most 3 files per task — everything else gets delegated. A 2-strike circuit breaker stops agents from patching symptoms instead of fixing root causes.
+
+Before writing a single line of app code, Kiro ran our full Prompt-Driven Development process — 6 steps, from raw idea to 1,200-line design doc. Requirements, architecture, security, GDPR compliance for health data, neurodivergent UX guidelines — all researched, all documented, all committed to GitHub automatically.
+
+The entire Supabase backend — 10 tables, 15 RLS policies, 4 Edge Functions, seed data for 15 real venues — was built in a single session. The TypeScript types were auto-generated from the live schema. The handoff doc for our second developer was written by Kiro after reading the existing code.
+
+We didn't vibe code our way to a prototype. We engineered a system that builds software the right way.
+
+---
+
+[SOCIAL GOOD — 2:10–2:40]
+
+Let's be clear about who this is for.
+
+Autism. ADHD. PTSD. Sensory processing disorder. Anxiety. Migraine. These aren't edge cases — they're hundreds of millions of people who navigate a world that wasn't designed for them.
+
+Sensly gives them something they've never had: real data about real places, from people who understand exactly what they're dealing with.
+
+The recommendation engine uses a weighted penalty system built from published clinical research — NIH, Frontiers in Psychiatry, Cleveland Clinic. The diagnosis data is GDPR Article 9 compliant. It never touches the LLM layer. Hard delete on account deletion.
+
+This isn't a wellness app with a pastel color scheme. It's infrastructure for a community that needs it.
+
+---
+
+[CLOSE — 2:40–3:00]
+
+Sensly. Sensory insights, simply.
+
+Built with Kiro. Backed by research. Designed for the people who need it most.
+
+The map gets better every time someone uses it.
+
+So does the world.
+
+---
+
+END OF SCRIPT
+=============
+
+NOTES FOR CHATGPT / PRESENTER:
+- Total runtime: ~3 minutes at a moderate pace
+- Pause briefly after each section header for breath
+- "Axolotl mascot" — pronounce: AX-oh-lot-ul
+- The Kiro section (1:40–2:10) is the implementation/AI strategy section — lean into the specifics, they're real
+- If demoing live: Dashboard screen → Map screen → Calm screen → Journal screen
+- Key numbers to remember: 1 in 5 people, 4 sensors, 30-second mic measurement, 10 tables, 15 RLS policies, 4 Edge Functions, 15 real venues
