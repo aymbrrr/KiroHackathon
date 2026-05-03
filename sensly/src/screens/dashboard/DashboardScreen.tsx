@@ -247,6 +247,7 @@ export function DashboardScreen() {
             label={soundLabel}
             data={soundHistory.current}
             color="#3AACB2"
+            bgImage={soundBg}
             onPress={navigateToSense}
           />
           <SensorCard
@@ -256,6 +257,7 @@ export function DashboardScreen() {
             label={motionAvailable ? motionLabel : 'unavailable'}
             data={motionHistory.current}
             color="#6BA3C7"
+            bgImage={motionBg}
             onPress={navigateToSense}
           />
         </View>
@@ -269,6 +271,7 @@ export function DashboardScreen() {
             label={lightLabel}
             data={lightHistory.current}
             color="#D4C98A"
+            bgImage={lightBg}
             onPress={navigateToSense}
           />
           <SensorCard
@@ -344,9 +347,20 @@ const styles = StyleSheet.create({
   card: {
     ...frostedCard,
     padding: spacing.md,
+    overflow: 'hidden',
   },
   sensorGrid: { flexDirection: 'row', gap: spacing.sm },
   sensorCard: { flex: 1, gap: spacing.xs },
+  sensorCardBg: {
+    position: 'absolute',
+    // Image is 1170×2532. We want to show the center ~1/3 of height.
+    // Render at 2× card width so the icon fills nicely, centered.
+    width: '200%',
+    height: '200%',
+    top: '-50%',
+    left: '-50%',
+    opacity: 0.12,
+  },
   cardMono: {
     fontSize: 10,
     fontWeight: '700',
