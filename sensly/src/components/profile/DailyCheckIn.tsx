@@ -56,13 +56,30 @@ export function DailyCheckIn({ visible, onDismiss }: DailyCheckInProps) {
 
   useEffect(() => {
     if (visible) {
+      // Reset to 0 first in case it was left at a non-zero value
+      fadeAnim.setValue(0);
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 200,
         useNativeDriver: true,
       }).start();
+    } else {
+      // Always animate back to 0 when hiding — prevents ghost overlay
+      fadeAnim.setValue(0);
     }
   }, [visible]);
+
+  const dismiss = () => {
+    // Animate out first, then call onDismiss
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      setSelected(null);
+      onDismiss();
+    });
+  };
 
   const handleSelect = async (key: string, offset: number) => {
     setSelected(key);
@@ -81,15 +98,14 @@ export function DailyCheckIn({ visible, onDismiss }: DailyCheckInProps) {
         notes: key === 'hard' ? 'Hard day — extra protection' : null,
       });
 
-      // Log activity for streak
       await supabase.from('user_activity').insert({
         user_id: user.id,
         activity_type: 'check_in',
       });
     }
 
-    // Brief pause to show selection, then dismiss
-    setTimeout(onDismiss, 400);
+    // Brief pause to show selection, then animate out and dismiss
+    setTimeout(dismiss, 400);
   };
 
   return (
@@ -97,7 +113,7 @@ export function DailyCheckIn({ visible, onDismiss }: DailyCheckInProps) {
       visible={visible}
       transparent
       animationType="none"
-      onRequestClose={onDismiss}
+      onRequestClose={dismiss}
     >
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
         <View style={styles.card}>
@@ -134,7 +150,7 @@ export function DailyCheckIn({ visible, onDismiss }: DailyCheckInProps) {
           {/* Skip */}
           <TouchableOpacity
             style={styles.skipButton}
-            onPress={onDismiss}
+            onPress={dismiss}
             accessibilityRole="button"
           >
             <Text style={styles.skipText}>Skip for now</Text>

@@ -35,7 +35,7 @@ export function InsightScreen() {
     risk > 70 && '🔴 Your risk is elevated — consider a sensory reset.',
     soundLabel === 'loud' && '🔊 Noise is the biggest factor right now. Headphones may help.',
     motionLabel === 'active' && '🏃 Lots of movement around you. A quieter spot might feel better.',
-    risk <= 40 && '🟢 You're in a calm environment. Good time to recharge.',
+    risk <= 40 && '🟢 You\'re in a calm environment. Good time to recharge.',
   ].filter(Boolean);
 
   return (
