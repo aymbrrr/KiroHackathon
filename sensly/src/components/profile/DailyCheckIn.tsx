@@ -26,6 +26,8 @@ const greenMood = require('../../../assets/greenMood.png');
 const yellowMood = require('../../../assets/yellowMood.png');
 // @ts-ignore
 const redMood = require('../../../assets/redMood.png');
+// @ts-ignore
+const questionIcon = require('../../../assets/question.png');
 
 interface DailyCheckInProps {
   visible: boolean;
@@ -126,7 +128,7 @@ export function DailyCheckIn({ visible, onDismiss }: DailyCheckInProps) {
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
         <View style={styles.card}>
           {/* Header */}
-          <ScaledText style={styles.emoji}>🌤️</ScaledText>
+          <Image source={questionIcon} style={styles.headerIcon} resizeMode="contain" />
           <ScaledText style={styles.heading}>How are you feeling today?</ScaledText>
           <ScaledText style={styles.subtitle}>
             This adjusts your sensory thresholds for today only.
@@ -192,7 +194,7 @@ const styles = StyleSheet.create({
     shadowRadius: 32,
     elevation: 8,
   },
-  emoji: { fontSize: 48, marginBottom: 8 },
+  headerIcon: { width: 126, height: 126, marginBottom: 8 },
   heading: {
     fontSize: 22,
     fontWeight: '700',
