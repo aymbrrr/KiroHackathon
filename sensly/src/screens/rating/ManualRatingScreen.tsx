@@ -67,14 +67,6 @@ const TEMPERATURE_OPTIONS: SliderOption[] = [
   { value: 5, icon: '🔥', label: 'Hot' },
 ];
 
-const TEXTURE_OPTIONS: SliderOption[] = [
-  { value: 1, icon: '☁️', label: 'Soft/smooth' },
-  { value: 2, icon: '🧶', label: 'Mild' },
-  { value: 3, icon: '📦', label: 'Mixed' },
-  { value: 4, icon: '🪨', label: 'Rough' },
-  { value: 5, icon: '⚡', label: 'Overwhelming' },
-];
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function ManualRatingScreen({ navigation, route }: Props) {
@@ -86,7 +78,6 @@ export function ManualRatingScreen({ navigation, route }: Props) {
   const [smell, setSmell] = useState<number | null>(null);
   const [predictability, setPredictability] = useState<number | null>(null);
   const [temperature, setTemperature] = useState<number | null>(null);
-  const [texture, setTexture] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +107,6 @@ export function ManualRatingScreen({ navigation, route }: Props) {
         smell: smell ? validate.rating(smell) : null,
         predictability: predictability ? validate.rating(predictability) : null,
         temperature: temperature ? validate.rating(temperature) : null,
-        texture: texture ? validate.rating(texture) : null,
         notes: notes.trim() ? validate.text(notes) : null,
         time_of_day: timeOfDay,
         day_of_week: now.getDay(),
@@ -144,11 +134,11 @@ export function ManualRatingScreen({ navigation, route }: Props) {
             Thanks for helping the community know what {venueName} is like.
           </ScaledText>
           <TouchableOpacity
-            style={styles.primaryButton}
+            style={styles.backToMapButton}
             onPress={() => navigation.getParent()?.goBack()}
             accessibilityRole="button"
           >
-            <ScaledText style={styles.primaryButtonText}>Back to map</ScaledText>
+            <ScaledText style={styles.backToMapText}>Back to map</ScaledText>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -163,8 +153,9 @@ export function ManualRatingScreen({ navigation, route }: Props) {
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
           accessibilityLabel="Go back"
+          style={styles.backButton}
         >
-          <ScaledText style={styles.backText}>← Back</ScaledText>
+          <ScaledText style={styles.backText}>←</ScaledText>
         </TouchableOpacity>
         <ScaledText style={styles.title} numberOfLines={1}>{venueName}</ScaledText>
         <View style={{ width: 48 }} />
@@ -223,12 +214,6 @@ export function ManualRatingScreen({ navigation, route }: Props) {
           value={temperature}
           onChange={setTemperature}
         />
-        <SensorySlider
-          label="Texture (optional)"
-          options={TEXTURE_OPTIONS}
-          value={texture}
-          onChange={setTexture}
-        />
 
         {/* Notes */}
         <View style={styles.notesField}>
@@ -278,7 +263,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.borderMuted,
   },
-  backText: { ...typography.body, color: colors.primary, width: 48 },
+  backButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backText: { fontSize: 24, color: colors.primary },
   title: { ...typography.heading3, color: colors.textPrimary, flex: 1, textAlign: 'center' },
   scroll: { flex: 1 },
   scrollContent: {
@@ -344,4 +335,20 @@ const styles = StyleSheet.create({
   successIcon: { fontSize: 56 },
   successHeading: { ...typography.heading2, color: colors.textPrimary, textAlign: 'center' },
   successBody: { ...typography.body, color: colors.textSecondary, textAlign: 'center', lineHeight: 24 },
+  backToMapButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 30,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+    minHeight: 52,
+    minWidth: 200,
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  backToMapText: { ...typography.label, color: colors.textInverse, fontSize: 17 },
 });

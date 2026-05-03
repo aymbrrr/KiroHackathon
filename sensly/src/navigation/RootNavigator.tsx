@@ -92,14 +92,14 @@ const RatingStack = createNativeStackNavigator<RatingStackParamList>();
 
 function RatingNavigator() {
   const route = useRoute<RouteProp<AppRootParamList, 'Rating'>>();
-  const { venueId, venueName } = route.params;
+  const { venueId, venueName, venueLat, venueLng } = route.params;
 
   return (
     <RatingStack.Navigator screenOptions={{ headerShown: false }}>
       <RatingStack.Screen
         name="AutoSense"
         component={AutoSenseScreen}
-        initialParams={{ venueId, venueName }}
+        initialParams={{ venueId, venueName, venueLat, venueLng }}
       />
       <RatingStack.Screen name="ManualRating" component={ManualRatingScreen} />
     </RatingStack.Navigator>

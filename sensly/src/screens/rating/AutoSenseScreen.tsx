@@ -20,7 +20,7 @@ import { dbToLabel } from '../../lib/sensoryUtils';
 import { ScaledText } from '../../components/shared/ScaledText';
 
 export type RatingStackParamList = {
-  AutoSense: { venueId: string; venueName: string };
+  AutoSense: { venueId: string; venueName: string; venueLat?: number; venueLng?: number };
   ManualRating: { venueId: string; venueName: string; noiseMeasurement?: MeasurementResult };
 };
 
@@ -32,20 +32,33 @@ type Props = {
 const MEASUREMENT_SECONDS = 30;
 
 export function AutoSenseScreen({ navigation, route }: Props) {
-  const { venueId, venueName } = route.params;
+  const { venueId, venueName, venueLat, venueLng } = route.params;
   const { db, isListening, start, stop, permissionGranted, error } = useAudioMeter();
   const { position } = useGeolocation();
   const [secondsLeft, setSecondsLeft] = useState(MEASUREMENT_SECONDS);
-  const [phase, setPhase] = useState<'idle' | 'measuring' | 'done'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'measuring' | 'done' | 'too-far'>('idle');
   const [result, setResult] = useState<MeasurementResult | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedRef = useRef(false);
 
-  // Auto-start measurement on mount (with guard against double-invoke in strict mode)
+  // Check if user is close enough to the venue to measure noise (within ~200m)
+  const isNearVenue = (): boolean => {
+    if (!position || !venueLat || !venueLng) return true; // If no GPS or no venue coords, allow it
+    const dLat = position.lat - venueLat;
+    const dLng = position.lng - venueLng;
+    const distKm = Math.sqrt(dLat * dLat + dLng * dLng) * 111; // rough km
+    return distKm < 0.2; // 200 meters
+  };
+
+  // Auto-start measurement on mount if near venue, otherwise show too-far
   useEffect(() => {
     if (!startedRef.current) {
       startedRef.current = true;
-      handleStart();
+      if (isNearVenue()) {
+        handleStart();
+      } else {
+        setPhase('too-far');
+      }
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -187,6 +200,25 @@ export function AutoSenseScreen({ navigation, route }: Props) {
             <ScaledText style={styles.skipHint}>
               Noise can only be measured when you're at the venue. Other ratings can be submitted anytime.
             </ScaledText>
+          </>
+        )}
+
+        {phase === 'too-far' && (
+          <>
+            <View style={[frostedCard, { padding: spacing.lg, alignItems: 'center', gap: spacing.sm }]}>
+              <ScaledText style={{ fontSize: 40 }}>📍</ScaledText>
+              <ScaledText style={styles.resultHeading}>You're not at this venue</ScaledText>
+              <ScaledText style={styles.resultLabel}>
+                Noise measurement requires being at the location. You can still rate other dimensions.
+              </ScaledText>
+            </View>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleSkip}
+              accessibilityRole="button"
+            >
+              <ScaledText style={styles.primaryButtonText}>Rate other dimensions →</ScaledText>
+            </TouchableOpacity>
           </>
         )}
       </View>

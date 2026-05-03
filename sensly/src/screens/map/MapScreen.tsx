@@ -159,6 +159,8 @@ export function MapScreen() {
                 navigation.navigate('Rating', {
                   venueId: selectedVenue.id,
                   venueName: selectedVenue.name,
+                  venueLat: selectedVenue.lat,
+                  venueLng: selectedVenue.lng,
                 });
               }}
             />
