@@ -13,6 +13,7 @@ import {
 import { colors, typography, spacing } from '../../constants/theme';
 import { useAudioMeter, MeasurementResult } from '../../hooks/useAudioMeter';
 import { dbToLabel, dbToLevel } from '../../lib/sensoryUtils';
+import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import { ScaledText } from '../../components/shared/ScaledText';
 
 const CAPTURE_DURATION_MS = 5_000;
@@ -98,10 +99,8 @@ export function SenseScreen() {
     <SafeAreaView style={styles.container}>
       {phase === 'idle' && (
         <View style={styles.centered}>
-          {/* Axolotl placeholder — replace with <AxolotlSvg mood="happy" size={200} /> when Person C delivers */}
-          <View style={styles.axolotlPlaceholder}>
-            <ScaledText style={styles.axolotlEmoji}>🦎</ScaledText>
-          </View>
+          {/* Axolotl mascot */}
+          <AxolotlSvg mood="happy" size={200} />
           <ScaledText style={styles.heading}>Quick Sense Check</ScaledText>
           <ScaledText style={styles.body}>
             Tap to measure the noise around you for 5 seconds.
@@ -127,7 +126,7 @@ export function SenseScreen() {
               { transform: [{ scale: pulseAnim }] },
             ]}
           >
-            <ScaledText style={styles.axolotlCaptureEmoji}>{getMood(db)}</ScaledText>
+            <AxolotlSvg mood={db > 70 ? 'stressed' : db > 55 ? 'thinking' : 'happy'} size={200} animate={false} />
           </Animated.View>
           <ScaledText style={styles.liveDb}>{db} dB</ScaledText>
           <ScaledText style={styles.liveLabel}>{dbToLabel(db)}</ScaledText>

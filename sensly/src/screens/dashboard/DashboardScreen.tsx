@@ -8,6 +8,7 @@ import {
   SafeAreaView, Animated, Image,
 } from 'react-native';
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
+import { KelpBackground } from '../../components/shared/KelpBackground';
 import kelpBg from '../../../assets/kelp-bg.png';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -134,6 +135,7 @@ export function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <KelpBackground showBottom>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -207,6 +209,7 @@ export function DashboardScreen() {
           </View>
         </View>
       </ScrollView>
+      </KelpBackground>
     </SafeAreaView>
   );
 }
