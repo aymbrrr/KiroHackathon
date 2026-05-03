@@ -63,7 +63,7 @@ Install **Expo Go** on your phone → scan the QR code.
 - Auth tokens are stored via `expo-sqlite` localStorage (handled by Supabase client) — never use AsyncStorage for tokens.
 - `react-native-worklets` is pinned to `0.5.1` — do not upgrade it. It must match what Expo Go SDK 54 ships with.
 
-### Current build state (Steps 1–7 complete — Person A scope done)
+### Current build state (Steps 1–7 + UI-A complete — Person A scope done)
 - ✅ Step 1: Scaffold, Supabase schema, utility libs (`sensoryUtils`, `validation`, `secureStorage`)
 - ✅ Step 2: Auth flow — Welcome, Sign In, Sign Up, session restore via `onAuthStateChange`
 - ✅ Step 3: Map screen — GPS, venue pins (colorblind-safe), bottom sheet, offline banner
@@ -71,6 +71,13 @@ Install **Expo Go** on your phone → scan the QR code.
 - ✅ Step 5: Rating flow — AutoSense → manual sliders → Supabase insert
 - ✅ Step 6: Venue detail — `VenueDetailScreen`, custom SVG radar chart, time heatmap
 - ✅ Step 7: Sensory profile — `ProfileScreen`, `ProfileEditScreen`, `SensoryBudgetBanner`, bottom tab bar
+- ✅ UI-A: `DashboardScreen` (Home tab, live sensors + risk score), `CalmScreen` (4-phase), `useMotionSensor`, navigation restructured (4 tabs: Home/Map/Calm/Profile)
+
+### Person C placeholders (marked with comments in code)
+- `AxolotlSvg` → colored circle in `DashboardScreen.tsx` + `CalmScreen.tsx`
+- Kelp background → teal `View` in `DashboardScreen.tsx`
+- Fredoka font → system font (C loads via `expo-font` in `App.tsx`)
+- Color tokens → still original blue palette (C updates `theme.ts`)
 
 ### Next steps (Person A — stretch if time allows)
 - Step 8: Offline queue + sync

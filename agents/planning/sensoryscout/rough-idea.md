@@ -157,7 +157,16 @@ The app learns your patterns over time and warns you proactively.
 | 5 | ✅ Done | Rating flow — `AutoSenseScreen`, `ManualRatingScreen`, `SensorySlider`, wired into map bottom sheet |
 | 6 | ✅ Done | Venue detail — `VenueDetailScreen`, `SensoryRadar` (custom SVG), `TimeHeatmap`, "Full details" + "Rate" buttons |
 | 7 | ✅ Done | Sensory profile — `ProfileScreen`, `ProfileEditScreen` (noise slider, lighting, triggers), `SensoryBudgetBanner`, bottom tab bar |
+| UI-A | ✅ Done | **Person A UI integration** — `DashboardScreen` (Home tab, live sensors + risk score), `CalmScreen` (4-phase breathing/intervention), `useMotionSensor` (`expo-sensors`), risk/mood utilities in `sensoryUtils.ts`, navigation restructured (Dashboard first, 4 tabs: Home/Map/Calm/Profile) |
 | 8–12 | 🔲 | Stretch features (offline queue, social, accessibility modes, health, journal) — Person B scope |
+
+## Person C Placeholders (replace when delivered)
+All placeholder locations are marked with `// Person C placeholder` comments:
+- `AxolotlSvg` → colored circle + emoji in `DashboardScreen.tsx` and `CalmScreen.tsx`
+- Kelp background → teal `View` in `DashboardScreen.tsx` (replace with `<Image source={kelpBg} />`)
+- Fredoka font → system font (load via `expo-font` in `App.tsx`, apply to wordmark + labels)
+- Frosted glass cards → semi-transparent white (add `backdropFilter` when C delivers)
+- Color tokens → still using original blue palette (C updates `theme.ts`)
 
 ## Known Issues / Gotchas
 - `expo-sqlite/localStorage/install` must be the **first import** in `App.tsx` — fixes Supabase + Hermes URL protocol error
@@ -167,6 +176,7 @@ The app learns your patterns over time and warns you proactively.
 - Always restart with `npx expo start --clear` after `.env` changes
 - `victory-native` v41 uses Skia API — do NOT use `VictoryChart`/`VictoryTheme` (web API). Use custom SVG via `react-native-svg` instead
 - All imports must be at the top of the file — mid-file imports after function declarations cause duplicate declaration errors
+- `expo-sensors` DeviceMotion returns `isAvailable: false` on iOS simulator — Dashboard still works with sound-only risk score
 
 ---
 

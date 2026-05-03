@@ -127,3 +127,41 @@ export function scoreToPinStyle(score: number | null): PinStyle {
   if (score <= 3.4)  return PIN_STYLES.moderate;
   return PIN_STYLES.loud;
 }
+
+// ─── Live environment risk score ──────────────────────────────────────────────
+
+/**
+ * Composite risk score from live sensor readings.
+ * Formula from designer's Dashboard.tsx:
+ *   risk = clamp(sound * 0.45 + motion * 0.25 + light / 35, 0, 100)
+ *
+ * Returns 0–100. Used to drive axolotl mood and alert state.
+ */
+export function computeRiskScore(soundDb: number, motionLevel: number): number {
+  return Math.round(Math.max(0, Math.min(100, soundDb * 0.45 + motionLevel * 0.25)));
+}
+
+/**
+ * Map a risk score to an axolotl mood.
+ * Matches the designer's moodCopy thresholds in Dashboard.tsx.
+ */
+export type AxolotlMood = 'happy' | 'thinking' | 'alert' | 'stressed' | 'relieved';
+
+export function riskToMood(risk: number): AxolotlMood {
+  if (risk > 75) return 'stressed';
+  if (risk > 55) return 'alert';
+  if (risk > 35) return 'thinking';
+  return 'happy';
+}
+
+export interface RiskLevel {
+  label: string;
+  message: string;
+  color: string;
+}
+
+export function riskToLevel(risk: number): RiskLevel {
+  if (risk > 75) return { label: 'Support recommended', message: 'Try a sensory reset soon.', color: '#EC7D6E' };
+  if (risk > 55) return { label: 'Stress may be rising', message: 'Noise and motion are trending up.', color: '#F2B85B' };
+  return { label: 'All systems calm', message: 'You seem regulated right now.', color: '#46B7AE' };
+}
