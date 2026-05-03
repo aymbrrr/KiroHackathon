@@ -166,7 +166,10 @@ function ToolPickerPhase({ onNext }: { onNext: (ids: string[]) => void }) {
     );
 
   return (
-    <ScrollView contentContainerStyle={styles.phaseContainer}>
+    <ScrollView
+      contentContainerStyle={styles.scrollPhaseContainer}
+      showsVerticalScrollIndicator={false}
+    >
       <ScaledText style={styles.phaseTitle}>Calm Steps</ScaledText>
       <ScaledText style={styles.phaseSubtitle}>Pick what helps you most right now.</ScaledText>
 
@@ -331,8 +334,8 @@ export function CalmScreen() {
   );
 
   const handleToolsSelected = (ids: string[]) => {
-    const tools = TOOLS.filter((t) => ids.includes(t.id));
-    setSelectedTools(tools.length > 0 ? tools : [TOOLS[0]]);
+    const tools = ALL_TOOLS.filter((t) => ids.includes(t.id));
+    setSelectedTools(tools.length > 0 ? tools : [ALL_TOOLS[0]]);
     setPhase(2);
   };
 
@@ -357,6 +360,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xl,
     paddingBottom: spacing.xl,
+    gap: spacing.lg,
+  },
+  scrollPhaseContainer: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxl,
     gap: spacing.lg,
   },
   phaseTitle: {
