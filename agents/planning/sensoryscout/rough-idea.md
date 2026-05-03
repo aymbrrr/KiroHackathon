@@ -150,33 +150,55 @@ The app learns your patterns over time and warns you proactively.
 
 | Step | Status | What was built |
 |---|---|---|
-| 1 | ✅ Done | Scaffold, Supabase schema (2 migrations), `sensoryUtils`, `validation`, `secureStorage`, `theme`, `sensoryScales` |
-| 2 | ✅ Done | Auth flow — Welcome, Sign In, Sign Up, `authStore`, `settingsStore`, `RootNavigator` with session restore |
-| 3 | ✅ Done | Map screen — GPS, colorblind-safe venue pins, bottom sheet, offline banner, `venueStore`, `overpass.ts` |
-| 4 | ✅ Done | Audio engine — `useAudioMeter`, `DbGauge`, `VenueDetector` |
-| 5 | ✅ Done | Rating flow — `AutoSenseScreen`, `ManualRatingScreen`, `SensorySlider`, wired into map bottom sheet |
-| 6 | ✅ Done | Venue detail — `VenueDetailScreen`, `SensoryRadar` (custom SVG), `TimeHeatmap`, "Full details" + "Rate" buttons |
-| 7 | ✅ Done | Sensory profile — `ProfileScreen`, `ProfileEditScreen` (noise slider, lighting, triggers), `SensoryBudgetBanner`, bottom tab bar |
-| UI-A | ✅ Done | **Person A UI integration** — `DashboardScreen` (Home tab, live sensors + risk score), `CalmScreen` (4-phase breathing/intervention), `useMotionSensor` (`expo-sensors`), risk/mood utilities in `sensoryUtils.ts`, navigation restructured (Dashboard first, 4 tabs: Home/Map/Calm/Profile) |
-| 8–12 | 🔲 | Stretch features (offline queue, social, accessibility modes, health, journal) — Person B scope |
+| 1 | ✅ Done | Scaffold, Supabase schema (3 migrations), `sensoryUtils`, `validation`, `secureStorage`, `theme`, `sensoryScales` |
+| 2 | ✅ Done | Auth flow — Welcome (3-slide axolotl story), Sign In, Sign Up, `authStore`, `settingsStore`, `RootNavigator` |
+| 3 | ✅ Done | Map screen — GPS, colorblind-safe venue pins, frosted glass bottom sheet, offline banner, `venueStore`, `overpass.ts` |
+| 4 | ✅ Done | Audio engine — `useAudioMeter`, `DbGauge` (teal/amber/coral), `VenueDetector` |
+| 5 | ✅ Done | Rating flow — AutoSense → 6-dimension sliders (incl. temperature + texture) → Supabase insert |
+| 6 | ✅ Done | Venue detail — `VenueDetailScreen`, custom SVG radar chart, time heatmap, frosted glass cards |
+| 7 | ✅ Done | Sensory profile — `ProfileScreen`, `ProfileEditScreen`, `SensoryBudgetBanner`, 4-tab nav |
+| UI-A | ✅ Done | Dashboard (Home tab, live sensors + risk score + axolotl), Calm screen (4-phase), `useMotionSensor`, navigation restructured |
+| UI-C | ✅ Done | Full visual pass — `AxolotlSvg` (5 moods, react-native-svg), teal palette, frosted glass, pill buttons, kelp bg, Figma design system on all screens |
+| Accessibility | ✅ Done | `AccessibilitySettingsScreen` (color blindness filters, dyslexia mode, high contrast, reduce motion, text size), `AccessibilityWrapper` (native ColorMatrix), caregiver mode removed |
 
-## Person C Placeholders (replace when delivered)
-All placeholder locations are marked with `// Person C placeholder` comments:
-- `AxolotlSvg` → colored circle + emoji in `DashboardScreen.tsx` and `CalmScreen.tsx`
-- Kelp background → teal `View` in `DashboardScreen.tsx` (replace with `<Image source={kelpBg} />`)
-- Fredoka font → system font (load via `expo-font` in `App.tsx`, apply to wordmark + labels)
-- Frosted glass cards → semi-transparent white (add `backdropFilter` when C delivers)
-- Color tokens → still using original blue palette (C updates `theme.ts`)
+## What's currently in the app (full feature list)
+
+### Screens
+- **Welcome** — 3-slide story (stressed → thinking → happy axolotl), auto-advances 2.8s, teal gradient
+- **Sign In / Sign Up** — teal bg, frosted glass form, "sensly" wordmark, pill buttons
+- **Dashboard (Home)** — live dB + motion sparkline cards, risk score, axolotl reacts to risk, kelp scene, "Reset" → Calm
+- **Map** — GPS venue pins (blue circle / orange square / red triangle), frosted glass bottom sheet, "Full details" + "Rate"
+- **Calm** — breathing circle → tool picker → sensory reset with 2-min timer → "You did it" success
+- **Profile** — Self/Support mode toggle, sensory preferences, sign out
+- **Profile Edit** — noise threshold slider (30–90 dB), lighting preference, trigger chips, saves to Supabase
+- **AutoSense** — 30s mic measurement, live dB gauge, countdown, "Done early"
+- **Manual Rating** — 6 sliders (lighting, crowding, smell, predictability, temperature, texture), notes
+- **Venue Detail** — score badge, stat chips, 5-axis radar chart, time heatmap, quiet hours, rate CTA
+- **Rating Success** — axolotl (happy) + confirmation
+
+### Components
+- `AxolotlSvg` — real Figma mascot, 5 moods, idle bob animation, scales to any size
+- `DbGauge` — animated SVG arc, teal/amber/coral colors
+- `SensoryRadar` — custom SVG 5-axis radar (3-axis in Self mode)
+- `TimeHeatmap` — day × time noise grid
+- `SensorySlider` — frosted glass option cards
+- `VenuePin` — colorblind-safe markers with shape redundancy
+- `SensoryBudgetBanner` — haptic + banner when threshold exceeded
+
+### Backend
+- 10 Supabase tables with RLS, triggers, indexes
+- 15 seeded demo venues (SF) with realistic ratings
+- Auth: email/password, session restore on launch
 
 ## Known Issues / Gotchas
-- `expo-sqlite/localStorage/install` must be the **first import** in `App.tsx` — fixes Supabase + Hermes URL protocol error
-- `react-native-worklets` pinned to `0.5.1` — do not upgrade without checking Expo Go SDK 54 compatibility
-- `@gorhom/bottom-sheet` must be v5+ for Reanimated v4 compatibility
-- Email confirmation must be disabled in Supabase for development (Auth → Providers → Email → uncheck "Confirm email")
-- Always restart with `npx expo start --clear` after `.env` changes
-- `victory-native` v41 uses Skia API — do NOT use `VictoryChart`/`VictoryTheme` (web API). Use custom SVG via `react-native-svg` instead
-- All imports must be at the top of the file — mid-file imports after function declarations cause duplicate declaration errors
-- `expo-sensors` DeviceMotion returns `isAvailable: false` on iOS simulator — Dashboard still works with sound-only risk score
+- `expo-sqlite/localStorage/install` must be the **first import** in `App.tsx`
+- `react-native-worklets` pinned to `0.5.1` — do not upgrade
+- `@gorhom/bottom-sheet` must be v5+ (Reanimated v4 compatibility)
+- `victory-native` v41 uses Skia — do NOT use `VictoryChart`/`VictoryTheme`. Use custom SVG
+- All imports must be at the top of files
+- Restart with `npx expo start --clear` after `.env` changes
+- `expo-sensors` DeviceMotion returns `isAvailable: false` on iOS simulator
+- Email confirmation must be disabled in Supabase for development
 
 ---
 

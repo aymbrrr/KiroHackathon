@@ -29,6 +29,7 @@ import { VenueDetailScreen } from '../screens/venue/VenueDetailScreen';
 import { ProfileEditScreen } from '../screens/profile/ProfileEditScreen';
 import { CurrentSenseScreen } from '../screens/dashboard/CurrentSenseScreen';
 import { InsightScreen } from '../screens/dashboard/InsightScreen';
+import { AccessibilitySettingsScreen } from '../screens/settings/AccessibilitySettingsScreen';
 import { DailyCheckIn } from '../components/profile/DailyCheckIn';
 import { useProfileStore } from '../stores/profileStore';
 
@@ -120,6 +121,7 @@ function AppNavigator() {
       />
       <AppRootStack.Screen name="VenueDetail" component={VenueDetailScreen} />
       <AppRootStack.Screen name="ProfileEdit" component={ProfileEditScreen} />
+      <AppRootStack.Screen name="AccessibilitySettings" component={AccessibilitySettingsScreen} />
       <AppRootStack.Screen name="CurrentSense" component={CurrentSenseScreen} />
       <AppRootStack.Screen name="Insight" component={InsightScreen} />
       <AppRootStack.Screen

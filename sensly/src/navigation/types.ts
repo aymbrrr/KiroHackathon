@@ -10,7 +10,7 @@ export type AuthStackParamList = {
   Onboarding: undefined;
 };
 
-// Tab order matches designer's Layout.tsx: Home → Journal → Sense → Map → Calm → Profile
+// Tab order matches designer's Layout.tsx: Home → Journal → Map → Calm → Profile
 export type AppTabParamList = {
   Home: undefined;
   Journal: undefined;
@@ -25,6 +25,7 @@ export type AppRootParamList = {
   VenueDetail: { venueId: string };
   ProfileEdit: undefined;
   Calm: undefined;
+  AccessibilitySettings: undefined;
   CurrentSense: {
     risk: number;
     mood: string;

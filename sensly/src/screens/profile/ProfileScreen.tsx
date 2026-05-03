@@ -10,50 +10,16 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, frostedCard } from '../../constants/theme';
 import { useAuthStore } from '../../stores/authStore';
-import { useSettingsStore } from '../../stores/settingsStore';
 import { AppRootParamList } from '../../navigation/types';
 
 export function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppRootParamList>>();
   const { user, signOut } = useAuthStore();
-  const { uiMode, setUiMode } = useSettingsStore();
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>Profile</Text>
-
-        {/* UI Mode toggle */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Who is using this app?</Text>
-          <View style={styles.modeRow}>
-            <TouchableOpacity
-              style={[styles.modeButton, uiMode === 'self' && styles.modeButtonActive]}
-              onPress={() => setUiMode('self')}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: uiMode === 'self' }}
-            >
-              <Text style={styles.modeIcon}>🧠</Text>
-              <Text style={[styles.modeLabel, uiMode === 'self' && styles.modeLabelActive]}>
-                Me
-              </Text>
-              <Text style={styles.modeDesc}>Large text, simple view</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.modeButton, uiMode === 'support' && styles.modeButtonActive]}
-              onPress={() => setUiMode('support')}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: uiMode === 'support' }}
-            >
-              <Text style={styles.modeIcon}>🤝</Text>
-              <Text style={[styles.modeLabel, uiMode === 'support' && styles.modeLabelActive]}>
-                Supporting someone
-              </Text>
-              <Text style={styles.modeDesc}>Full details, caregiver view</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
         {/* Sensory preferences */}
         <View style={styles.section}>
@@ -64,6 +30,19 @@ export function ProfileScreen() {
             accessibilityRole="button"
           >
             <Text style={styles.menuRowText}>Edit noise threshold & triggers</Text>
+            <Text style={styles.menuRowArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Accessibility */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Accessibility</Text>
+          <TouchableOpacity
+            style={styles.menuRow}
+            onPress={() => navigation.navigate('AccessibilitySettings')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.menuRowText}>Color vision, dyslexia, text size</Text>
             <Text style={styles.menuRowArrow}>›</Text>
           </TouchableOpacity>
         </View>
