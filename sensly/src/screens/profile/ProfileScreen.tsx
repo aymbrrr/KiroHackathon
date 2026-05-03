@@ -41,7 +41,7 @@ export function ProfileScreen() {
             onPress={() => navigation.navigate('ProfileEdit')}
             accessibilityRole="button"
           >
-            <ScaledText style={styles.menuRowText}>Edit noise threshold &amp; triggers</ScaledText>
+            <ScaledText style={styles.menuRowText}>Sensory preferences</ScaledText>
             <ScaledText style={styles.menuRowArrow}>›</ScaledText>
           </TouchableOpacity>
         </View>
