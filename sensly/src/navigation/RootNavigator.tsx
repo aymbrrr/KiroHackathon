@@ -18,6 +18,7 @@ import { colors } from '../constants/theme';
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
 import { SignInScreen } from '../screens/auth/SignInScreen';
 import { SignUpScreen } from '../screens/auth/SignUpScreen';
+import { OnboardingScreen } from '../screens/auth/OnboardingScreen';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { MapScreen } from '../screens/map/MapScreen';
 import { CalmScreen } from '../screens/calm/CalmScreen';
@@ -110,8 +111,14 @@ function RatingNavigator() {
 const AppRootStack = createNativeStackNavigator<AppRootParamList>();
 
 function AppNavigator() {
+  const { hasCompletedOnboarding } = useSettingsStore();
+
   return (
-    <AppRootStack.Navigator screenOptions={{ headerShown: false }}>
+    <AppRootStack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={hasCompletedOnboarding ? 'MainTabs' : 'Onboarding'}
+    >
+      <AppRootStack.Screen name="Onboarding" component={OnboardingScreen} />
       <AppRootStack.Screen name="MainTabs" component={TabNavigator} />
       <AppRootStack.Screen
         name="Rating"
@@ -135,6 +142,7 @@ function AppNavigator() {
 export function RootNavigator() {
   const { session, setSession } = useAuthStore();
   const { fetchProfile, clear: clearProfile } = useProfileStore();
+  const { hasCompletedOnboarding } = useSettingsStore();
   const [isInitializing, setIsInitializing] = React.useState(true);
   const [showCheckIn, setShowCheckIn] = React.useState(false);
   const checkInShownRef = React.useRef(false);
@@ -144,8 +152,8 @@ export function RootNavigator() {
       setSession(session);
       if (session) {
         fetchProfile();
-        // Show daily check-in once per app launch, after a brief delay
-        if (!checkInShownRef.current) {
+        // Only show daily check-in once onboarding is complete
+        if (!checkInShownRef.current && hasCompletedOnboarding) {
           checkInShownRef.current = true;
           setTimeout(() => setShowCheckIn(true), 1000);
         }

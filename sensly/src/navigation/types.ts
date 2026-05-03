@@ -20,6 +20,7 @@ export type AppTabParamList = {
 };
 
 export type AppRootParamList = {
+  Onboarding: undefined;
   MainTabs: undefined;
   Rating: { venueId: string; venueName: string; venueLat?: number; venueLng?: number };
   VenueDetail: { venueId: string };
