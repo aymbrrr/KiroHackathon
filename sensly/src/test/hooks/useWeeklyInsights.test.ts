@@ -18,11 +18,10 @@ jest.mock('expo-notifications', () => ({
   scheduleNotificationAsync: (opts: any) => mockScheduleNotification(opts),
 }));
 
-// Suppress AppState subscription in tests by mocking just AppState
-jest.mock('react-native/Libraries/AppState/AppState', () => ({
-  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
-  currentState: 'active',
-}));
+import { AppState } from 'react-native';
+
+// Prevent AppState.addEventListener from running during tests
+jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: jest.fn() } as any);
 
 beforeEach(() => jest.clearAllMocks());
 

@@ -260,12 +260,6 @@ the seed rows, and never run a destructive `DELETE` in a numbered migration.
 |----|----------|----------|---------|-----------|
 | S7 | HIGH | Security | `001_initial_schema.sql` | Venue upsert allows score fabrication |
 | FS3 | MEDIUM | Separation | `VenueDetailScreen.tsx`, `JournalScreen.tsx` | Direct Supabase reads skip cache layer |
-| T1 | HIGH | Tests | `src/stores/` | Zero tests for all Zustand stores |
-| T2 | HIGH | Tests | `supabase/functions/` | Zero tests for all edge functions |
-| T3 | HIGH | Tests | `sensoryUtils.ts` | Live-sensing functions untested |
-| T4 | MEDIUM | Tests | `src/hooks/` | No hook tests — permission-denied paths untested |
-| T5 | MEDIUM | Tests | `overpass.ts` | Cache TTL and malformed-response paths untested |
-| T6 | LOW | Tests | — | No E2E or integration tests |
 | P3 | MEDIUM | Perf | `VenueDetailScreen.tsx` | Fetches 100 raw rows for a heatmap |
 | A5 | MEDIUM | Arch | `JournalScreen.tsx` | 20+ hard-coded colors bypass theme system |
 | A7 | LOW | Arch | `DashboardScreen.tsx` | `as any` navigation cast hides type error |
