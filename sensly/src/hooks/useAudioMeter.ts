@@ -12,7 +12,6 @@
  *
  * NOTE: This is a relative measurement, not calibrated SPL.
  * Label readings as "quieter than a busy café" not absolute dB.
- * Phone mics vary — readings are consistent within a device, not across devices.
  */
 import { useState, useRef, useCallback } from 'react';
 import { Audio } from 'expo-av';
@@ -27,7 +26,7 @@ export interface MeasurementResult {
 interface UseAudioMeterResult {
   db: number;                          // current live dB reading
   isListening: boolean;
-  start: () => Promise<void>;
+  start: () => Promise<boolean>;
   stop: () => Promise<MeasurementResult | null>;
   permissionGranted: boolean | null;
   error: string | null;

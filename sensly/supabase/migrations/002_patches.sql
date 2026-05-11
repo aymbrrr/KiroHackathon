@@ -15,26 +15,34 @@ alter table venues add column if not exists is_home boolean default false;
 create or replace function recalculate_venue_aggregates()
 returns trigger as $$
 begin
-  update venues set
-    avg_noise_db       = (select avg(noise_db)       from ratings where venue_id = NEW.venue_id and noise_db       is not null),
-    avg_lighting       = (select avg(lighting)       from ratings where venue_id = NEW.venue_id and lighting       is not null),
-    avg_crowding       = (select avg(crowding)       from ratings where venue_id = NEW.venue_id and crowding       is not null),
-    avg_smell          = (select avg(smell)          from ratings where venue_id = NEW.venue_id and smell          is not null),
-    avg_predictability = (select avg(predictability) from ratings where venue_id = NEW.venue_id and predictability is not null),
-    overall_score      = (
-      select
-        least(5, greatest(1,
-          coalesce((avg(noise_db) - 30) / 14.0, 3) * 0.35 +
-          coalesce(avg(lighting), 3)                * 0.25 +
-          coalesce(avg(crowding), 3)                * 0.20 +
-          coalesce(avg(predictability), 3)          * 0.15 +
-          coalesce(avg(smell), 3)                   * 0.05
-        ))
-      from ratings where venue_id = NEW.venue_id
-    ),
-    total_ratings      = (select count(*) from ratings where venue_id = NEW.venue_id),
+  update venues v
+  set
+    avg_noise_db       = r.avg_noise_db,
+    avg_lighting       = r.avg_lighting,
+    avg_crowding       = r.avg_crowding,
+    avg_smell          = r.avg_smell,
+    avg_predictability = r.avg_predictability,
+    overall_score      = least(5, greatest(1,
+      coalesce((r.avg_noise_db - 30) / 14.0, 3) * 0.35 +
+      coalesce(r.avg_lighting, 3)                * 0.25 +
+      coalesce(r.avg_crowding, 3)                * 0.20 +
+      coalesce(r.avg_predictability, 3)          * 0.15 +
+      coalesce(r.avg_smell, 3)                   * 0.05
+    )),
+    total_ratings      = r.total_ratings,
     updated_at         = now()
-  where id = NEW.venue_id;
+  from (
+    select
+      avg(noise_db)       filter (where noise_db       is not null) as avg_noise_db,
+      avg(lighting)       filter (where lighting       is not null) as avg_lighting,
+      avg(crowding)       filter (where crowding       is not null) as avg_crowding,
+      avg(smell)          filter (where smell          is not null) as avg_smell,
+      avg(predictability) filter (where predictability is not null) as avg_predictability,
+      count(*)                                                      as total_ratings
+    from ratings
+    where venue_id = NEW.venue_id
+  ) r
+  where v.id = NEW.venue_id;
   return NEW;
 end;
 $$ language plpgsql;

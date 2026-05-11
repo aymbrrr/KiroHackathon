@@ -2,12 +2,11 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // Pattern detection thresholds
-const QUICK_LEAVE_MINUTES = 20   // dwell time under this = "left quickly"
-const QUICK_LEAVE_COUNT   = 3    // how many times before we warn
+const QUICK_LEAVE_COUNT = 3    // how many times before we warn
 const PATTERN_DAYS        = 90   // look back window in days
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 

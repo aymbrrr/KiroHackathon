@@ -2,7 +2,7 @@
  * Dashboard screen — Home tab.
  * Shows live sensor readings (sound + motion), risk score, and axolotl mood.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, StyleSheet, ScrollView, TouchableOpacity,
   SafeAreaView, Animated, Image,
@@ -125,15 +125,14 @@ export function DashboardScreen() {
   const { nearbyVenues } = useVenueStore();
   const { position } = useGeolocation();
 
-  const getNearestVenueLight = (): number | null => {
+  const venueLight = useMemo((): number | null => {
     if (!position || nearbyVenues.length === 0) return null;
-    // Find closest venue with lighting data
     let closest: { dist: number; lighting: number } | null = null;
     for (const v of nearbyVenues) {
       if (v.avg_lighting == null) continue;
       const dLat = position.lat - v.lat;
       const dLng = position.lng - v.lng;
-      const dist = Math.sqrt(dLat * dLat + dLng * dLng) * 111; // rough km
+      const dist = Math.sqrt(dLat * dLat + dLng * dLng) * 111;
       if (dist < 0.2 && (!closest || dist < closest.dist)) {
         // Convert 1-5 scale to approximate lux: 1=30, 2=100, 3=250, 4=400, 5=600
         const luxMap = [0, 30, 100, 250, 400, 600];
@@ -141,9 +140,7 @@ export function DashboardScreen() {
       }
     }
     return closest?.lighting ?? null;
-  };
-
-  const venueLight = getNearestVenueLight();
+  }, [position, nearbyVenues]);
   const hour = new Date().getHours();
   const outdoorEstimate = hour >= 6 && hour < 9 ? 200
     : hour >= 9 && hour < 17 ? 450
@@ -173,7 +170,7 @@ export function DashboardScreen() {
       .catch(() => {}); // Silently fail — use fallback
   }, [position?.lat, position?.lng]);
 
-  const getNearestVenueTemp = (): number | null => {
+  const venueTemp = useMemo((): number | null => {
     if (!position || nearbyVenues.length === 0) return null;
     for (const v of nearbyVenues) {
       const dLat = position.lat - v.lat;
@@ -185,9 +182,7 @@ export function DashboardScreen() {
       }
     }
     return null;
-  };
-
-  const venueTemp = getNearestVenueTemp();
+  }, [position, nearbyVenues]);
   const tempEstimate = venueTemp ?? weatherTemp ?? 65; // venue → weather API → fallback
   const isIndoor = venueTemp !== null;
   const tempLabel = isIndoor ? 'indoor' : (weatherTemp != null ? 'live' : 'outside');

@@ -3,7 +3,7 @@
  *
  * The profile is loaded from Supabase on auth, and kept in memory.
  * Daily check-in can override the noise threshold for the day.
- * effectiveNoiseThreshold is the value all other code should use.
+ * Use selectEffectiveNoiseThreshold(state) everywhere — not profile.noise_threshold directly.
  */
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
@@ -30,9 +30,6 @@ interface ProfileState {
   error: string | null;
   dailyThresholdOverride: number | null;
 
-  // Derived — use this everywhere, not profile.noise_threshold directly
-  effectiveNoiseThreshold: number;
-
   // Actions
   fetchProfile: () => Promise<void>;
   saveProfile: (data: Partial<SensoryProfile>) => Promise<void>;
@@ -40,16 +37,15 @@ interface ProfileState {
   clear: () => void;
 }
 
+// Use this selector everywhere instead of profile.noise_threshold directly
+export const selectEffectiveNoiseThreshold = (state: ProfileState) =>
+  state.dailyThresholdOverride ?? state.profile?.noise_threshold ?? 65;
+
 export const useProfileStore = create<ProfileState>((set, get) => ({
   profile: null,
   isLoading: false,
   error: null,
   dailyThresholdOverride: null,
-
-  get effectiveNoiseThreshold() {
-    const state = get();
-    return state.dailyThresholdOverride ?? state.profile?.noise_threshold ?? 65;
-  },
 
   fetchProfile: async () => {
     set({ isLoading: true, error: null });

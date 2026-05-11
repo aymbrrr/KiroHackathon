@@ -1,7 +1,6 @@
 /**
  * Root navigator.
  * Tab order: Home (Dashboard) → Map → Calm → Profile
- * Matches designer's Layout.tsx intent with Dashboard as default.
  */
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';

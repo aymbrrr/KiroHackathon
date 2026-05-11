@@ -10,7 +10,7 @@ npm-debug.*
 *.orig.*
 web-build/
 
-# Environment variables — never commit real keys
+# Environment variables
 .env
 .env.local
 .env.production

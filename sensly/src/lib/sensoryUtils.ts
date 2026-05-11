@@ -137,7 +137,16 @@ export function scoreToPinStyle(score: number | null): PinStyle {
  *
  * Returns 0–100. Used to drive axolotl mood and alert state.
  */
-export function computeRiskScore(soundDb: number, motionLevel: number): number {
+export function computeRiskScore(
+  soundDb: number,
+  motionLevel: number,
+  opts?: { crowding?: number | null }
+): number {
+  if (opts !== undefined) {
+    const noiseRisk = soundDb ? Math.min(100, Math.round(((soundDb - 30) / 70) * 100)) : 0;
+    const crowdRisk = opts.crowding ? (opts.crowding / 5) * 100 : 0;
+    return Math.round(Math.max(0, Math.min(100, noiseRisk * 0.6 + crowdRisk * 0.4)));
+  }
   return Math.round(Math.max(0, Math.min(100, soundDb * 0.45 + motionLevel * 0.25)));
 }
 

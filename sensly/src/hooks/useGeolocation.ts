@@ -1,6 +1,6 @@
 /**
  * GPS location hook using expo-location.
- * Requests "while using" permission only — never background location.
+ * Requests "while using" permission only
  * Returns current position and a permission status.
  */
 import { useState, useEffect, useRef } from 'react';
@@ -27,21 +27,10 @@ export function useGeolocation(): UseGeolocationResult {
   const [error, setError] = useState<string | null>(null);
   const watchRef = useRef<Location.LocationSubscription | null>(null);
 
-  const requestPermission = async () => {
+  const startWatch = async () => {
     setIsLoading(true);
     setError(null);
 
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    const granted = status === 'granted';
-    setPermissionGranted(granted);
-
-    if (!granted) {
-      setIsLoading(false);
-      setError('Location permission denied. Enable it in Settings to see nearby venues.');
-      return;
-    }
-
-    // Get initial position quickly
     try {
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
@@ -55,12 +44,11 @@ export function useGeolocation(): UseGeolocationResult {
       setError('Could not get your location. Check GPS settings.');
     }
 
-    // Watch for position updates
     watchRef.current = await Location.watchPositionAsync(
       {
         accuracy: Location.Accuracy.Balanced,
-        distanceInterval: 20, // update every 20 metres
-        timeInterval: 10000,  // or every 10 seconds
+        distanceInterval: 20,
+        timeInterval: 10000,
       },
       (loc) => {
         setPosition({
@@ -74,12 +62,25 @@ export function useGeolocation(): UseGeolocationResult {
     setIsLoading(false);
   };
 
+  const requestPermission = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    const granted = status === 'granted';
+    setPermissionGranted(granted);
+
+    if (!granted) {
+      setError('Location permission denied. Enable it in Settings to see nearby venues.');
+      return;
+    }
+
+    await startWatch();
+  };
+
   // Check existing permission on mount without prompting
   useEffect(() => {
     Location.getForegroundPermissionsAsync().then(({ status }) => {
       if (status === 'granted') {
         setPermissionGranted(true);
-        requestPermission(); // already granted — start watching
+        startWatch(); // already granted — skip the permission prompt
       } else {
         setPermissionGranted(false);
       }

@@ -211,7 +211,7 @@ create policy "profiles_owner" on profiles using (auth.uid() = user_id);
 -- Comments: public read (non-flagged), authenticated insert
 alter table comments enable row level security;
 create policy "comments_read"   on comments for select using (not is_flagged);
-create policy "comments_insert" on comments for insert with check (auth.uid() is not null);
+create policy "comments_insert" on comments for insert with check (auth.uid() = user_id);
 
 -- Venue follows: private to owner
 alter table venue_follows enable row level security;
@@ -228,12 +228,11 @@ create policy "checkins_owner" on daily_checkins using (auth.uid() = user_id);
 -- Companion sessions: host manages; anyone can read active session by join_code
 alter table companion_sessions enable row level security;
 create policy "companion_host"      on companion_sessions using (auth.uid() = host_user_id);
-create policy "companion_join_read" on companion_sessions for select using (is_active = true);
+create policy "companion_join_read" on companion_sessions for select using (auth.uid() = host_user_id);
 
--- Profile shares: owner manages; anyone can read by token
+-- Profile shares: owner manages; token lookup must go through an edge function with service role
 alter table profile_shares enable row level security;
-create policy "share_owner"      on profile_shares using (auth.uid() = user_id);
-create policy "share_token_read" on profile_shares for select using (true);
+create policy "share_owner" on profile_shares using (auth.uid() = user_id);
 
 -- Journal insights: private to owner
 alter table journal_insights enable row level security;

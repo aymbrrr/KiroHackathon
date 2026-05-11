@@ -20,7 +20,7 @@ import {
 import { colors, spacing, typography } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
-import { dbToLabel } from '../../lib/sensoryUtils';
+import { dbToLabel, computeRiskScore } from '../../lib/sensoryUtils';
 import { ScaledText } from '../../components/shared/ScaledText';
 import { KelpBackground } from '../../components/shared/KelpBackground';
 
@@ -32,6 +32,7 @@ interface Insight {
 interface LogEntry {
   id: string;
   time: string;
+  createdAt: string;
   title: string;
   detail: string;
   risk: number;
@@ -43,8 +44,14 @@ function riskColor(risk: number): string {
   return '#46B7AE';
 }
 
+const INSIGHT_ICONS: Record<string, string> = {
+  pattern: '📊',
+  wellbeing: '💙',
+  streak: '🌱',
+  prompt: '💬',
+};
 function insightIcon(type: string): string {
-  return '•';
+  return INSIGHT_ICONS[type] ?? '•';
 }
 
 export function JournalScreen() {
@@ -90,9 +97,7 @@ export function JournalScreen() {
       const venueMap = new Map(venues?.map(v => [v.id, v.name]) ?? []);
 
       const entries: LogEntry[] = ratings.map(r => {
-        const noiseRisk = r.noise_db ? Math.min(100, Math.round(((r.noise_db - 30) / 70) * 100)) : 0;
-        const crowdRisk = r.crowding ? (r.crowding / 5) * 100 : 0;
-        const risk = Math.round(noiseRisk * 0.6 + crowdRisk * 0.4);
+        const risk = computeRiskScore(r.noise_db ?? 0, 0, { crowding: r.crowding });
 
         const date = new Date(r.created_at);
         const timeStr = date.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' +
@@ -101,6 +106,7 @@ export function JournalScreen() {
         return {
           id: r.id,
           time: timeStr,
+          createdAt: r.created_at,
           title: venueMap.get(r.venue_id) ?? 'Unknown venue',
           detail: r.noise_db ? `${r.noise_db} dB — ${dbToLabel(r.noise_db)}` : 'Manual rating',
           risk,
@@ -195,8 +201,8 @@ export function JournalScreen() {
                 const today = new Date().getDay();
                 const dayRisks: Record<number, number[]> = {};
                 logs.forEach(log => {
-                  const d = new Date(log.time);
-                  const day = d.getDay?.() ?? 0;
+                  const d = new Date(log.createdAt);
+                  const day = d.getDay();
                   if (!dayRisks[day]) dayRisks[day] = [];
                   dayRisks[day].push(log.risk);
                 });

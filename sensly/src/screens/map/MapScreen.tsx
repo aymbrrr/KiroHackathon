@@ -32,6 +32,7 @@ const DEFAULT_REGION: Region = {
 export function MapScreen() {
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const lastFetchCoord = useRef({ lat: DEFAULT_REGION.latitude, lng: DEFAULT_REGION.longitude });
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [region, setRegion] = useState<Region>(DEFAULT_REGION);
   const navigation = useNavigation<NativeStackNavigationProp<AppRootParamList>>();
@@ -105,8 +106,12 @@ export function MapScreen() {
         showsMyLocationButton={false}
         onRegionChangeComplete={(r) => {
           setRegion(r);
-          // Refetch venues when map moves significantly
-          fetchNearbyFromDB(r.latitude, r.longitude, 5);
+          const dLat = Math.abs(r.latitude - lastFetchCoord.current.lat);
+          const dLng = Math.abs(r.longitude - lastFetchCoord.current.lng);
+          if (dLat > 0.01 || dLng > 0.01) {
+            lastFetchCoord.current = { lat: r.latitude, lng: r.longitude };
+            fetchNearbyFromDB(r.latitude, r.longitude, 5);
+          }
         }}
       >
         {nearbyVenues.map((venue) => (
@@ -205,9 +210,9 @@ function VenueCard({ venue, onRate }: { venue: Venue; onRate: () => void }) {
         <StatChip icon="⭐" label={`${venue.total_ratings} rating${venue.total_ratings !== 1 ? 's' : ''}`} />
       </View>
 
-      {venue.sensory_features && Array.isArray(venue.sensory_features) && venue.sensory_features.length > 0 && (
+      {venue.sensory_features && venue.sensory_features.length > 0 && (
         <View style={cardStyles.features}>
-          {(venue.sensory_features as string[]).slice(0, 3).map((f, i) => (
+          {venue.sensory_features.slice(0, 3).map((f, i) => (
             <View key={i} style={cardStyles.featureChip}>
               <ScaledText style={cardStyles.featureText}>{f}</ScaledText>
             </View>

@@ -9,7 +9,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // Falls back to template strings if Groq is unavailable.
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -104,7 +104,7 @@ serve(async (req) => {
     })
     const worstDayNum = Object.entries(byDay)
       .map(([day, scores]) => ({ day: Number(day), avg: avg(scores) }))
-      .sort((a, b) => b.avg - a.avg)[0]
+      .sort((a, b) => (b.avg ?? -1) - (a.avg ?? -1))[0]
     const worstDay = worstDayNum ? days[worstDayNum.day] : null
 
     // Hard days (check-ins with lowered threshold)
@@ -125,12 +125,12 @@ serve(async (req) => {
     })
     const bestTime = Object.entries(byTime)
       .map(([time, dbs]) => ({ time, avg: avg(dbs) }))
-      .sort((a, b) => a.avg - b.avg)[0]?.time ?? null
+      .sort((a, b) => (a.avg ?? Infinity) - (b.avg ?? Infinity))[0]?.time ?? null
 
     const summary = {
       ratings_count: ratings.length,
-      avg_noise_db: Math.round(avgNoise ?? 0),
-      avg_crowding: avgCrowding?.toFixed(1),
+      avg_noise_db: avgNoise != null ? Math.round(avgNoise) : null,
+      avg_crowding: avgCrowding != null ? avgCrowding.toFixed(1) : null,
       worst_day: worstDay,
       hard_day_count: hardDayCount,
       streak_days: streakDays,
@@ -171,9 +171,9 @@ serve(async (req) => {
 
 // --- Helpers ---
 
-function avg(nums: (number | null | undefined)[]): number {
+function avg(nums: (number | null | undefined)[]): number | null {
   const valid = nums.filter((n): n is number => n != null)
-  return valid.length ? valid.reduce((a, b) => a + b, 0) / valid.length : 0
+  return valid.length ? valid.reduce((a, b) => a + b, 0) / valid.length : null
 }
 
 function getWeekStart(): string {
@@ -253,7 +253,19 @@ Return ONLY the JSON array, no other text.`
 
   const data = await response.json()
   const content = data.choices?.[0]?.message?.content ?? '[]'
-  return JSON.parse(content)
+  return parseGroqInsights(content)
+}
+
+function parseGroqInsights(content: string): { text: string; type: string }[] {
+  const parsed = JSON.parse(content)
+  if (!Array.isArray(parsed)) throw new Error('Expected array')
+  const VALID_TYPES = ['pattern', 'wellbeing', 'streak', 'prompt']
+  return parsed
+    .filter(item => typeof item?.text === 'string' && typeof item?.type === 'string')
+    .map(item => ({
+      text: item.text.slice(0, 280),
+      type: VALID_TYPES.includes(item.type) ? item.type : 'pattern',
+    }))
 }
 
 function capitalize(s: string): string {

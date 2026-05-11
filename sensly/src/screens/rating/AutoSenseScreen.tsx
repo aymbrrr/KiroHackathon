@@ -150,7 +150,7 @@ export function AutoSenseScreen({ navigation, route }: Props) {
           <View style={styles.statusBlock}>
             <ScaledText style={styles.statusMono}>MEASURING</ScaledText>
             <ScaledText style={styles.countdown}>{secondsLeft}s remaining</ScaledText>
-            {error && <ScaledText style={styles.errorText}>{error}</ScaledText>}
+            {error && <ScaledText style={styles.inlineErrorText}>{error}</ScaledText>}
           </View>
         )}
 
@@ -318,5 +318,5 @@ const styles = StyleSheet.create({
   skipLink: { alignItems: 'center', paddingVertical: spacing.sm },
   skipLinkText: { ...typography.body, color: colors.textMuted },
   skipHint: { ...typography.bodySm, color: colors.textMuted, textAlign: 'center', lineHeight: 18, paddingHorizontal: spacing.md },
-  errorText: { ...typography.bodySm, color: colors.error, textAlign: 'center', marginTop: spacing.xs },
+  inlineErrorText: { ...typography.bodySm, color: colors.error, textAlign: 'center', marginTop: spacing.xs },
 });

@@ -6,6 +6,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 serve(async (req) => {
   try {
+    const webhookSecret = Deno.env.get('SUPABASE_WEBHOOK_SECRET')
+    const signature = req.headers.get('x-supabase-signature')
+    if (!webhookSecret || signature !== webhookSecret) {
+      return new Response('Unauthorized', { status: 401 })
+    }
+
     const payload = await req.json()
     const newRating = payload.record  // the newly inserted rating row
 

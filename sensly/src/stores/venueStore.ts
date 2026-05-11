@@ -7,6 +7,13 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { scoreToPinStyle, weightedOverallScore } from '../lib/sensoryUtils';
 
+export interface QuietHour {
+  day: string;
+  start: string;
+  end: string;
+  label: string;
+}
+
 export interface Venue {
   id: string;
   osm_id: string | null;
@@ -22,8 +29,8 @@ export interface Venue {
   avg_predictability: number | null;
   overall_score: number | null;
   total_ratings: number;
-  quiet_hours: any;
-  sensory_features: any;
+  quiet_hours: QuietHour[] | null;
+  sensory_features: string[] | null;
 }
 
 interface VenueState {

@@ -151,11 +151,11 @@ export function VenueDetailScreen({ navigation, route }: Props) {
         )}
 
         {/* Sensory features */}
-        {venue.sensory_features && Array.isArray(venue.sensory_features) && venue.sensory_features.length > 0 && (
+        {venue.sensory_features && venue.sensory_features.length > 0 && (
           <View style={styles.section}>
             <ScaledText style={styles.sectionTitle}>Sensory features</ScaledText>
             <View style={styles.featureChips}>
-              {(venue.sensory_features as string[]).map((f, i) => (
+              {venue.sensory_features.map((f, i) => (
                 <View key={i} style={styles.featureChip}>
                   <ScaledText style={styles.featureChipText}>{f}</ScaledText>
                 </View>
@@ -179,10 +179,10 @@ export function VenueDetailScreen({ navigation, route }: Props) {
         )}
 
         {/* Quiet hours */}
-        {venue.quiet_hours && Array.isArray(venue.quiet_hours) && venue.quiet_hours.length > 0 && (
+        {venue.quiet_hours && venue.quiet_hours.length > 0 && (
           <View style={styles.section}>
             <ScaledText style={styles.sectionTitle}>Quiet hours</ScaledText>
-            {(venue.quiet_hours as any[]).map((qh, i) => (
+            {venue.quiet_hours.map((qh, i) => (
               <View key={i} style={styles.quietHourRow}>
                 <ScaledText style={styles.quietHourText}>
                   🔇 {qh.label} — {qh.day?.toUpperCase()} {qh.start}–{qh.end}

@@ -1,5 +1,5 @@
--- Enable Supabase Realtime on companion_sessions table
--- This allows the "Going With Me" companion mode to receive live dB updates
--- Run this in Supabase SQL Editor
+-- Companion sessions Realtime — NOT YET ACTIVE
+-- The "Going With Me" companion mode is not yet implemented in the app.
+-- Uncomment when the companion subscription is built.
 
-alter publication supabase_realtime add table companion_sessions;
+-- alter publication supabase_realtime add table companion_sessions;

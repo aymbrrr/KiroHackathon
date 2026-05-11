@@ -2,11 +2,7 @@
  * Weekly insights check — runs on app foreground.
  *
  * Checks if journal insights exist for the current week.
- * If not, calls the generate-insights Edge Function and
- * fires a local push notification.
- *
- * Person A: call useWeeklyInsights() in your root component
- * or wherever you handle app foreground events.
+ * If not, calls the generate-insights
  */
 import { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
