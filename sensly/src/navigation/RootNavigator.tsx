@@ -171,8 +171,9 @@ export function RootNavigator() {
       setSession(session);
       if (session) {
         fetchProfile();
-        // Only show daily check-in once onboarding is complete for this user
-        const alreadyDone = session.user.id === onboardingCompletedForUserId;
+        // Read from store directly — closure captures the pre-hydration null value
+        const completedForId = useSettingsStore.getState().onboardingCompletedForUserId;
+        const alreadyDone = session.user.id === completedForId;
         if (!checkInShownRef.current && alreadyDone) {
           checkInShownRef.current = true;
           setTimeout(() => setShowCheckIn(true), 1000);

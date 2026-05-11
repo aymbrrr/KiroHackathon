@@ -21,7 +21,6 @@ const STORY = [
     textColor: 'rgba(255,255,255,0.92)',
     subColor: 'rgba(255,255,255,0.55)',
     title: 'Some days feel like too much.',
-    sub: 'The noise. The lights. The chaos.',
     axolotlSize: 110,
     cta: false,
   },
@@ -31,8 +30,7 @@ const STORY = [
     bgEnd: '#3A9EA5',
     textColor: 'rgba(255,255,255,0.92)',
     subColor: 'rgba(255,255,255,0.6)',
-    title: 'Sensly watches quietly for you.',
-    sub: "Learning what feels safe, before it's too late.",
+    title: 'Sensly watches out for you.',
     axolotlSize: 120,
     cta: false,
   },
@@ -42,7 +40,7 @@ const STORY = [
     bgEnd: '#B8E5EA',
     textColor: '#1A4D55',
     subColor: '#4A8A96',
-    title: 'Your calm companion.',
+    title: 'Sensory insights, simply.',
     sub: 'Monitor · Predict · Prevent',
     axolotlSize: 130,
     cta: true,
@@ -58,7 +56,7 @@ export function WelcomeScreen({ navigation }: Props) {
   // Auto-advance first two slides
   useEffect(() => {
     if (slide < 2) {
-      const timer = setTimeout(() => advanceSlide(), 2800);
+      const timer = setTimeout(() => advanceSlide(), 4000);
       return () => clearTimeout(timer);
     }
   }, [slide]);

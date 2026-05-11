@@ -1,7 +1,5 @@
 # Sensly
 
-> **Know before you go. Your phone listens so you can prepare.**
-
 Sensly is a crowdsourced sensory environment map for neurodivergent people. It uses your phone's microphone to automatically measure ambient noise at venues, combined with community ratings on lighting, crowding, smell, and predictability — so you can know what a place *feels like* before you walk in.
 
 Built for autistic individuals, people with ADHD, PTSD, sensory processing disorder, anxiety, and migraine. Estimated 300M+ people worldwide who are neurodivergent have no tool like this today.
@@ -129,16 +127,6 @@ supabase db push
 Or apply manually from `sensly/supabase/migrations/` in order (001 → 007).
 
 Disable email confirmation in your Supabase project settings for local development.
-
----
-
-## Known Issues
-
-- `expo-sqlite/localStorage/install` must be the **first import** in `App.tsx` — fixes a Hermes URL protocol error with the Supabase client
-- `react-native-worklets` is pinned to `0.5.1` — do not upgrade, must match the version bundled in Expo Go SDK 54
-- `@gorhom/bottom-sheet` must be v5+ for Reanimated v4 compatibility
-- `expo-sensors` DeviceMotion returns `isAvailable: false` on the iOS simulator — test motion features on a physical device
-- Restart with `npx expo start --clear` after any `.env` or theme changes
 
 ---
 

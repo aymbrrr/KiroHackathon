@@ -13,8 +13,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { colors, typography, spacing, frostedCard } from '../../constants/theme';
 import { SensorySlider, SliderOption } from '../../components/rating/SensorySlider';
-import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
+import { useVenueStore } from '../../stores/venueStore';
 import { validate } from '../../lib/validation';
 import { AxolotlSvg } from '../../components/shared/AxolotlSvg';
 import { RatingStackParamList } from './AutoSenseScreen';
@@ -59,25 +59,17 @@ const PREDICTABILITY_OPTIONS: SliderOption[] = [
   { value: 5, icon: '🎯', label: 'Routine' },
 ];
 
-const TEMPERATURE_OPTIONS: SliderOption[] = [
-  { value: 1, icon: '🥶', label: 'Very cold' },
-  { value: 2, icon: '❄️', label: 'Cool' },
-  { value: 3, icon: '👌', label: 'Comfortable' },
-  { value: 4, icon: '🌡️', label: 'Warm' },
-  { value: 5, icon: '🔥', label: 'Hot' },
-];
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function ManualRatingScreen({ navigation, route }: Props) {
   const { venueId, venueName, noiseMeasurement } = route.params;
   const { user } = useAuthStore();
+  const { submitRating } = useVenueStore();
 
   const [lighting, setLighting] = useState<number | null>(null);
   const [crowding, setCrowding] = useState<number | null>(null);
   const [smell, setSmell] = useState<number | null>(null);
   const [predictability, setPredictability] = useState<number | null>(null);
-  const [temperature, setTemperature] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,14 +98,13 @@ export function ManualRatingScreen({ navigation, route }: Props) {
         crowding: validate.rating(crowding!),
         smell: smell ? validate.rating(smell) : null,
         predictability: predictability ? validate.rating(predictability) : null,
-        temperature: temperature ? validate.rating(temperature) : null,
         notes: notes.trim() ? validate.text(notes) : null,
         time_of_day: timeOfDay,
         day_of_week: now.getDay(),
       };
 
-      const { error: dbError } = await supabase.from('ratings').insert(payload);
-      if (dbError) throw dbError;
+      const { error: dbError } = await submitRating(payload);
+      if (dbError) throw new Error(dbError);
 
       setSubmitted(true);
     } catch (e: any) {
@@ -207,12 +198,6 @@ export function ManualRatingScreen({ navigation, route }: Props) {
           options={PREDICTABILITY_OPTIONS}
           value={predictability}
           onChange={setPredictability}
-        />
-        <SensorySlider
-          label="Temperature (optional)"
-          options={TEMPERATURE_OPTIONS}
-          value={temperature}
-          onChange={setTemperature}
         />
 
         {/* Notes */}

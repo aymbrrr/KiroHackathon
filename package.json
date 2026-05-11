@@ -1,7 +1,7 @@
 {
   "name": "sensly",
   "version": "1.0.0",
-  "main": "App.tsx",
+  "main": "sensly/App.tsx",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -22,6 +22,7 @@
     "expo-av": "~15.1.4",
     "expo-haptics": "~14.0.1",
     "expo-location": "~18.1.5",
+    "expo-secure-store": "~15.0.8",
     "expo-sensors": "~15.0.8",
     "expo-sqlite": "~16.0.10",
     "expo-status-bar": "~3.0.9",
@@ -57,7 +58,8 @@
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|victory-native|@gorhom/.*)"
     ],
     "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
+      "^@/(.*)$": "<rootDir>/src/$1",
+      "^expo-notifications$": "<rootDir>/sensly/src/test/__mocks__/expo-notifications.ts"
     }
   }
 }

@@ -2,7 +2,7 @@
  * Dashboard screen — Home tab.
  * Shows live sensor readings (sound + motion), risk score, and axolotl mood.
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View, StyleSheet, ScrollView, TouchableOpacity,
   SafeAreaView, Animated, Image,
@@ -14,9 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAudioMeter } from '../../hooks/useAudioMeter';
 import { useMotionSensor } from '../../hooks/useMotionSensor';
-import { useVenueStore } from '../../stores/venueStore';
-import { useGeolocation } from '../../hooks/useGeolocation';
-import { computeRiskScore, riskToMood, riskToLevel, dbToLabel } from '../../lib/sensoryUtils';
+import { computeRiskScore, riskToMood, riskToLevel } from '../../lib/sensoryUtils';
 import { colors, spacing, typography, frostedCard } from '../../constants/theme';
 import { AppRootParamList } from '../../navigation/types';
 import { ScaledText } from '../../components/shared/ScaledText';
@@ -120,74 +118,6 @@ export function DashboardScreen() {
   const soundLabel = db > 75 ? 'loud' : db > 55 ? 'moderate' : 'quiet';
   const motionLabel = motionLevel > 55 ? 'active' : 'steady';
 
-  // Light — use crowdsourced avg_lighting from nearest venue if available,
-  // otherwise estimate from time of day (outdoor ambient)
-  const { nearbyVenues } = useVenueStore();
-  const { position } = useGeolocation();
-
-  const venueLight = useMemo((): number | null => {
-    if (!position || nearbyVenues.length === 0) return null;
-    let closest: { dist: number; lighting: number } | null = null;
-    for (const v of nearbyVenues) {
-      if (v.avg_lighting == null) continue;
-      const dLat = position.lat - v.lat;
-      const dLng = position.lng - v.lng;
-      const dist = Math.sqrt(dLat * dLat + dLng * dLng) * 111;
-      if (dist < 0.2 && (!closest || dist < closest.dist)) {
-        // Convert 1-5 scale to approximate lux: 1=30, 2=100, 3=250, 4=400, 5=600
-        const luxMap = [0, 30, 100, 250, 400, 600];
-        closest = { dist, lighting: luxMap[Math.round(v.avg_lighting)] ?? 250 };
-      }
-    }
-    return closest?.lighting ?? null;
-  }, [position, nearbyVenues]);
-  const hour = new Date().getHours();
-  const outdoorEstimate = hour >= 6 && hour < 9 ? 200
-    : hour >= 9 && hour < 17 ? 450
-    : hour >= 17 && hour < 20 ? 150
-    : 30;
-  const lightEstimate = venueLight ?? outdoorEstimate;
-  const lightLabel = venueLight
-    ? (lightEstimate > 300 ? 'bright (reported)' : lightEstimate > 100 ? 'ambient (reported)' : 'dim (reported)')
-    : (lightEstimate > 300 ? 'bright' : lightEstimate > 100 ? 'ambient' : 'dim');
-  const lightHistory = useRef<number[]>(Array(12).fill(lightEstimate));
-
-  // Temperature — real weather data from Open-Meteo (free, no API key)
-  // Falls back to indoor estimate if near an indoor venue
-  const [weatherTemp, setWeatherTemp] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!position) return;
-    // Open-Meteo free API — no key needed
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${position.lat}&longitude=${position.lng}&current=temperature_2m&temperature_unit=fahrenheit`;
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        if (data?.current?.temperature_2m != null) {
-          setWeatherTemp(Math.round(data.current.temperature_2m));
-        }
-      })
-      .catch(() => {}); // Silently fail — use fallback
-  }, [position?.lat, position?.lng]);
-
-  const venueTemp = useMemo((): number | null => {
-    if (!position || nearbyVenues.length === 0) return null;
-    for (const v of nearbyVenues) {
-      const dLat = position.lat - v.lat;
-      const dLng = position.lng - v.lng;
-      const dist = Math.sqrt(dLat * dLat + dLng * dLng) * 111;
-      if (dist < 0.2) {
-        if (v.category === 'park' || v.category === 'street') return null;
-        return 70; // indoor default
-      }
-    }
-    return null;
-  }, [position, nearbyVenues]);
-  const tempEstimate = venueTemp ?? weatherTemp ?? 65; // venue → weather API → fallback
-  const isIndoor = venueTemp !== null;
-  const tempLabel = isIndoor ? 'indoor' : (weatherTemp != null ? 'live' : 'outside');
-  const tempHistory = useRef<number[]>(Array(12).fill(tempEstimate));
-
   const navigateToSense = () => {
     navigation.navigate('CurrentSense' as any, {
       risk,
@@ -234,28 +164,6 @@ export function DashboardScreen() {
             label={motionAvailable ? motionLabel : 'unavailable'}
             data={motionHistory.current}
             color="#6BA3C7"
-            onPress={navigateToSense}
-          />
-        </View>
-
-        {/* Light + Temperature cards — second row */}
-        <View style={styles.sensorGrid}>
-          <SensorCard
-            title="LIGHT"
-            value={lightEstimate}
-            unit="lux"
-            label={lightLabel}
-            data={lightHistory.current}
-            color="#D4C98A"
-            onPress={navigateToSense}
-          />
-          <SensorCard
-            title="TEMP"
-            value={tempEstimate}
-            unit="°F"
-            label={tempLabel}
-            data={tempHistory.current}
-            color="#8BC5A3"
             onPress={navigateToSense}
           />
         </View>

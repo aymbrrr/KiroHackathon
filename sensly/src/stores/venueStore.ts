@@ -7,6 +7,19 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { scoreToPinStyle, weightedOverallScore } from '../lib/sensoryUtils';
 
+export interface RatingPayload {
+  venue_id: string;
+  user_id: string;
+  noise_db: number | null;
+  lighting: number;
+  crowding: number;
+  smell: number | null;
+  predictability: number | null;
+  notes: string | null;
+  time_of_day: string;
+  day_of_week: number;
+}
+
 export interface QuietHour {
   day: string;
   start: string;
@@ -42,6 +55,7 @@ interface VenueState {
   fetchNearbyFromDB: (lat: number, lng: number, radiusKm?: number) => Promise<void>;
   getVenueById: (id: string) => Promise<Venue | null>;
   upsertVenue: (venue: Partial<Venue>) => Promise<Venue | null>;
+  submitRating: (payload: RatingPayload) => Promise<{ error: string | null }>;
   clearError: () => void;
 }
 
@@ -112,5 +126,18 @@ export const useVenueStore = create<VenueState>((set, get) => ({
       venueCache: { ...state.venueCache, [saved.id]: saved },
     }));
     return saved;
+  },
+
+  submitRating: async (payload) => {
+    const { error } = await supabase.from('ratings').insert(payload);
+    if (!error) {
+      // Bust cached venue so aggregate scores re-fetch on next visit
+      set((state) => {
+        const next = { ...state.venueCache };
+        delete next[payload.venue_id];
+        return { venueCache: next };
+      });
+    }
+    return { error: error?.message ?? null };
   },
 }));

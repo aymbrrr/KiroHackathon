@@ -34,7 +34,19 @@ falls through to `INSERT ... ON CONFLICT DO UPDATE`, which **bypasses the insert
 check** and updates the row. Any authenticated user can overwrite a venue's
 `avg_noise_db`, `avg_lighting`, etc. with fabricated values.
 
-**Proposed fix:** Add a strict UPDATE policy allowing only admins, or use a stored procedure that validates contributor identity.
+**Proposed fix:** Add a strict UPDATE policy allowing only admins, or use a stored procedure that validates contributor identity. We need to rework how venues are added, maybe people can rate places but it shows up as unverified until an admin verifies the location? 
+
+User taps Add location
+They search Google/Apple/Mapbox places or drop a pin
+They choose category: restaurant, classroom, venue, store, transit stop, etc.
+They rate sensory factors like noise, lighting, crowding, smell, seating, bathroom access, escape/quiet space
+App checks duplicates
+Location appears as pending / community-submitted
+It becomes verified after moderator approval, partner confirmation, or enough consistent reviews
+
+For judging/demo purposes, I’d describe it as:
+
+“Any user can contribute sensory ratings and suggest new locations, but new places are labeled as community-submitted until verified through moderation, repeated consistent reviews, or trusted accessibility partners. Venue owners can claim listings to update factual details, but community sensory ratings remain independent.”
 
 ---
 
@@ -43,24 +55,6 @@ check** and updates the row. Any authenticated user can overwrite a venue's
 ---
 
 ## 3. Frontend / Backend Separation
-
----
-
-### [HIGH-FS1] Rating submission bypasses the store — direct Supabase call in ManualRatingScreen
-
-**File:** [sensly/src/screens/rating/ManualRatingScreen.tsx](sensly/src/screens/rating/ManualRatingScreen.tsx#L115)
-
-```ts
-const { error: dbError } = await supabase.from('ratings').insert(payload);
-```
-
-This is the only mutation in the app that doesn't go through a Zustand store. It
-means there's no central place to add optimistic updates, offline queuing, or
-re-fetch of related state (e.g., the venue's aggregate scores). It also makes the
-screen impossible to test without a live Supabase connection.
-
-**Proposed fix:** Add `submitRating(payload)` to `venueStore.ts` (or a new
-`ratingsStore.ts`) and call it from the screen.
 
 ---
 
@@ -200,32 +194,6 @@ ratings.
 
 ---
 
-### [LOW-P4] `lightHistory` and `tempHistory` sparklines are initialized but never updated
-
-**File:** [sensly/src/screens/dashboard/DashboardScreen.tsx](sensly/src/screens/dashboard/DashboardScreen.tsx#L156-L194)
-
-```ts
-const lightHistory = useRef<number[]>(Array(12).fill(lightEstimate));
-const tempHistory  = useRef<number[]>(Array(12).fill(tempEstimate));
-```
-
-Unlike `soundHistory` and `motionHistory`, these refs are never pushed into when
-`lightEstimate` or `tempEstimate` change. The light and temperature sparklines always
-display a flat line.
-
-**Proposed fix:**
-```ts
-useEffect(() => {
-  lightHistory.current = [...lightHistory.current.slice(1), lightEstimate];
-}, [lightEstimate]);
-
-useEffect(() => {
-  tempHistory.current = [...tempHistory.current.slice(1), tempEstimate];
-}, [tempEstimate]);
-```
-
----
-
 ## 6. Architecture & Style
 
 ---
@@ -291,7 +259,6 @@ the seed rows, and never run a destructive `DELETE` in a numbered migration.
 | ID | Priority | Category | File(s) | One-liner |
 |----|----------|----------|---------|-----------|
 | S7 | HIGH | Security | `001_initial_schema.sql` | Venue upsert allows score fabrication |
-| FS1 | HIGH | Separation | `ManualRatingScreen.tsx` | Rating insert bypasses store |
 | FS3 | MEDIUM | Separation | `VenueDetailScreen.tsx`, `JournalScreen.tsx` | Direct Supabase reads skip cache layer |
 | T1 | HIGH | Tests | `src/stores/` | Zero tests for all Zustand stores |
 | T2 | HIGH | Tests | `supabase/functions/` | Zero tests for all edge functions |
@@ -300,7 +267,6 @@ the seed rows, and never run a destructive `DELETE` in a numbered migration.
 | T5 | MEDIUM | Tests | `overpass.ts` | Cache TTL and malformed-response paths untested |
 | T6 | LOW | Tests | — | No E2E or integration tests |
 | P3 | MEDIUM | Perf | `VenueDetailScreen.tsx` | Fetches 100 raw rows for a heatmap |
-| P4 | LOW | Perf | `DashboardScreen.tsx` | Light/temp sparklines never update |
 | A5 | MEDIUM | Arch | `JournalScreen.tsx` | 20+ hard-coded colors bypass theme system |
 | A7 | LOW | Arch | `DashboardScreen.tsx` | `as any` navigation cast hides type error |
 | A8 | LOW | Arch | `004_slo_seed_data.sql` | Destructive `DELETE` in numbered migration |
