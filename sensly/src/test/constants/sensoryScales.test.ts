@@ -50,6 +50,17 @@ describe('Scale arrays — 5 entries each (scores 1–5)', () => {
   it('CROWDING_SCALE scores are 1–5 in order', () => {
     CROWDING_SCALE.forEach((entry, i) => expect(entry.score).toBe(i + 1));
   });
+
+  // Labels are intentionally short (≤7 chars) to prevent wrapping in the 5-column slider
+  it('no label exceeds 7 characters', () => {
+    const allLabels = [
+      ...LIGHTING_SCALE.map(e => e.label),
+      ...CROWDING_SCALE.map(e => e.label),
+      ...SMELL_SCALE.map(e => e.label),
+      ...PREDICTABILITY_SCALE.map(e => e.label),
+    ];
+    allLabels.forEach(label => expect(label.length).toBeLessThanOrEqual(7));
+  });
 });
 
 describe('TRIGGER_OPTIONS — all 5 categories present', () => {

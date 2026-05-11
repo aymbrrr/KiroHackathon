@@ -12,7 +12,7 @@
 export const LIGHTING_SCALE = [
   {
     score: 1,
-    label: 'Very dim',
+    label: 'Dark',
     illuminance: '< 50 lux',
     colorTemp: 'Warm (2700K)',
     example: 'Candlelit restaurant, dim lounge',
@@ -26,7 +26,7 @@ export const LIGHTING_SCALE = [
   },
   {
     score: 3,
-    label: 'Moderate',
+    label: 'Medium',
     illuminance: '150–300 lux',
     colorTemp: 'Neutral white (3000–4000K)',
     example: 'Standard office, casual restaurant',
@@ -52,7 +52,7 @@ export const LIGHTING_SCALE = [
 export const CROWDING_SCALE = [
   { score: 1, label: 'Empty',    description: 'Almost no one here' },
   { score: 2, label: 'Quiet',    description: 'A few people, plenty of space' },
-  { score: 3, label: 'Moderate', description: 'Noticeable but manageable' },
+  { score: 3, label: 'Medium',   description: 'Noticeable but manageable' },
   { score: 4, label: 'Busy',     description: 'Crowded, limited personal space' },
   { score: 5, label: 'Packed',   description: 'Very crowded, overwhelming' },
 ] as const;
@@ -60,21 +60,21 @@ export const CROWDING_SCALE = [
 // ─── Smell ────────────────────────────────────────────────────────────────────
 
 export const SMELL_SCALE = [
-  { score: 1, label: 'Neutral',      description: 'No noticeable smell' },
-  { score: 2, label: 'Mild',         description: 'Faint, pleasant or neutral' },
-  { score: 3, label: 'Noticeable',   description: 'Present but not overwhelming' },
-  { score: 4, label: 'Strong',       description: 'Hard to ignore' },
-  { score: 5, label: 'Overwhelming', description: 'Very strong, may cause distress' },
+  { score: 1, label: 'Neutral',    description: 'No noticeable smell' },
+  { score: 2, label: 'Mild',       description: 'Faint, pleasant or neutral' },
+  { score: 3, label: 'Notable',    description: 'Present but not overwhelming' },
+  { score: 4, label: 'Strong',     description: 'Hard to ignore' },
+  { score: 5, label: 'Intense',    description: 'Very strong, may cause distress' },
 ] as const;
 
 // ─── Predictability ───────────────────────────────────────────────────────────
 
 export const PREDICTABILITY_SCALE = [
-  { score: 1, label: 'Chaotic',      description: 'Unpredictable, constantly changing' },
-  { score: 2, label: 'Variable',     description: 'Some unpredictability' },
-  { score: 3, label: 'Moderate',     description: 'Mostly predictable' },
-  { score: 4, label: 'Consistent',   description: 'Reliable, few surprises' },
-  { score: 5, label: 'Very routine', description: 'Highly predictable environment' },
+  { score: 1, label: 'Chaotic',   description: 'Unpredictable, constantly changing' },
+  { score: 2, label: 'Varied',   description: 'Some unpredictability' },
+  { score: 3, label: 'Medium',    description: 'Mostly predictable' },
+  { score: 4, label: 'Steady',    description: 'Reliable, few surprises' },
+  { score: 5, label: 'Routine',   description: 'Highly predictable environment' },
 ] as const;
 
 // ─── Noise threshold defaults by profile type ─────────────────────────────────
